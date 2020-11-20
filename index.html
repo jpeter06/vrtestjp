@@ -4,7 +4,6 @@
         <title>PlayCanvas Basic VR</title>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
-        <link rel="icon" type="image/png" href="../playcanvas-favicon.png" />
         <script src="./playcanvas/playcanvas.js"></script>
         <style>
             body {
@@ -71,21 +70,24 @@
             l.translate(0, 10, 0);
             app.root.addChild(l);
 
+            var cubes = [];
 
             var createCube = function (x, y, z) {
                 var cube = new pc.Entity();
                 cube.addComponent("model", {
-                    type: "box"
+                    type: "box",
+                    material: new pc.StandardMaterial()
                 });
                 cube.setLocalScale(1, 1, 1);
                 cube.translate(x, y, z);
                 app.root.addChild(cube);
+                cubes.push(cube);
             };
 
             // create a grid of cubes
-            var SIZE = 16;
-            for (var x = 0; x < SIZE; x++) {
-                for (var y = 0; y < SIZE; y++) {
+            var SIZE = 4;
+            for (var x = 0; x <= SIZE; x++) {
+                for (var y = 0; y <= SIZE; y++) {
                     createCube(2 * x - SIZE, -1.5, 2 * y - SIZE);
                 }
             }
@@ -95,7 +97,7 @@
                     if (app.xr.isAvailable(pc.XRTYPE_VR)) {
                         c.camera.startXr(pc.XRTYPE_VR, pc.XRSPACE_LOCAL, {
                             callback: function (err) {
-                                if (err) message("WebXR Immersive VR failed to start: " + err.message);
+                                if (err) message("Immersive VR failed to start: " + err.message);
                             }
                         });
                     } else {
@@ -130,19 +132,57 @@
                     }
                 });
 
-                app.xr.on('start', function () {
-                    message("Immersive VR session has started");
-                });
-                app.xr.on('end', function () {
-                    message("Immersive VR session has ended");
-                });
-                app.xr.on('available:' + pc.XRTYPE_VR, function (available) {
-                    message("Immersive VR is " + (available ? 'available' : 'unavailable'));
+                message("Tap on screen to enter VR, and then pick objects");
+
+                // when input source is triggers select
+                // pick closest box and change its color
+                var ray = new pc.Ray();
+                app.xr.input.on('select', function (inputSource) {
+                    var candidate = null;
+                    var candidateDist = Infinity;
+
+                    for (var i = 0; i < cubes.length; i++) {
+                        var mesh = cubes[i].model.meshInstances[0];
+
+                        // check if mesh bounding box intersects with input source ray
+                        ray.set(inputSource.getOrigin(), inputSource.getDirection());
+                        if (mesh.aabb.intersectsRay(ray)) {
+                            // check distance to camera
+                            var dist = mesh.aabb.center.distance(c.getPosition());
+
+                            // if it is closer than previous distance
+                            if (dist < candidateDist) {
+
+                                // set new candidate
+                                candidate = mesh;
+                                candidateDist = dist;
+                            }
+                        }
+                    }
+
+                    // if we have picked candidate
+                    if (candidate) {
+                        // randomize its color
+                        candidate.material.diffuse.set(Math.random(), Math.random(), Math.random());
+                        candidate.material.update();
+                    }
                 });
 
-                if (! app.xr.isAvailable(pc.XRTYPE_VR)) {
-                    message("Immersive VR is not available");
-                }
+                var tmpVec = new pc.Vec3();
+                var lineColor = new pc.Color(1, 1, 1);
+
+                // on each app update
+                // render input source rays as a line
+                app.on('update', function () {
+                    for (var i = 0; i < app.xr.input.inputSources.length; i++) {
+                        var inputSource = app.xr.input.inputSources[i];
+
+                        tmpVec.copy(inputSource.getDirection());
+                        tmpVec.scale(100).add(inputSource.getOrigin());
+
+                        app.renderLine(inputSource.getOrigin(), tmpVec, lineColor);
+                    }
+                });
             } else {
                 message("WebXR is not supported");
             }
