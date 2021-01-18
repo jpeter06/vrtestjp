@@ -71510,7 +71510,7 @@ function queryKey(uri, query) {
 								}
 							}
 						}
-
+						console.log("HTMLImageElement src:",texture.src);
 						this.setUnpackFlipY(texture._flipY);
 						this.setUnpackPremultiplyAlpha(texture._premultiplyAlpha);
 						gl.texImage2D(gl.TEXTURE_2D, mipLevel, texture._glInternalFormat, texture._glFormat, texture._glPixelType, mipObject);
