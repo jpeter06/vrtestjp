@@ -83209,7 +83209,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "getAssetPath", function() { return getAssetPath; });
 function getAssetPath(assetPath) {
     // @ts-ignore: path variable injected at build time
-    return (undefined ? undefined : '/static/') + assetPath;
+    return (undefined ? undefined : './static/') + assetPath;
 }
 
 
