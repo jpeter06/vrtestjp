@@ -63,7 +63,7 @@
 /******/
 /******/ 	var hotApplyOnUpdate = true;
 /******/ 	// eslint-disable-next-line no-unused-vars
-/******/ 	var hotCurrentHash = "a1ceafa4e13279eea0c8";
+/******/ 	var hotCurrentHash = "2f967ee55e4bd95529d3";
 /******/ 	var hotRequestTimeout = 10000;
 /******/ 	var hotCurrentModuleData = {};
 /******/ 	var hotCurrentChildModule;
@@ -82309,10 +82309,16 @@ __webpack_require__.r(__webpack_exports__);
 
 var Cameras = /** @class */ (function () {
     function Cameras(app, entities) {
-        this.enableOrbitChange = localStorage.getItem('enableOrbitChange') ?
-            localStorage.getItem('enableOrbitChange') == "true" : true;
+        this.enableOrbitChange = false;
         this.app = app;
         this.entities = entities;
+        try {
+            this.enableOrbitChange = localStorage.getItem('enableOrbitChange') ?
+                localStorage.getItem('enableOrbitChange') == "true" : true;
+        }
+        catch (error) {
+            console.log("PROBLEM:", error);
+        }
     }
     Cameras.prototype.createOrbitCamera = function (lookatEntity, defaultLookatEntity, enabled) {
         var camera = new _entity__WEBPACK_IMPORTED_MODULE_0__["Entity"]("orbitCamera");
@@ -82352,9 +82358,17 @@ var Cameras = /** @class */ (function () {
         var _a;
         var ground = this.app.app.root.findByName("ground");
         var camera = (this.app.app.root.findByName("orbitCamera"));
-        var orbitCyaw = localStorage.getItem('orbitCyaw');
-        var orbitCpitch = localStorage.getItem('orbitCpitch');
-        var orbitCdistance = localStorage.getItem('orbitCdistance');
+        var orbitCyaw = null;
+        var orbitCpitch = null;
+        var orbitCdistance = null;
+        try {
+            orbitCyaw = localStorage.getItem('orbitCyaw');
+            orbitCpitch = localStorage.getItem('orbitCpitch');
+            orbitCdistance = localStorage.getItem('orbitCdistance');
+        }
+        catch (error) {
+            console.log("PROBLEM:", error);
+        }
         var orbitCamera = (_a = camera.script) === null || _a === void 0 ? void 0 : _a.get('orbitCamera');
         orbitCamera.pivotPoint = ground.getLocalPosition().clone(); //new pc.Vec3();
         orbitCamera.yaw = yaw || (orbitCyaw ? parseFloat(orbitCyaw) : 5.22);
@@ -84262,4 +84276,4 @@ else {
 /***/ })
 
 /******/ });
-//# sourceMappingURL=app.a1ceafa4e13279eea0c8.js.map
+//# sourceMappingURL=app.2f967ee55e4bd95529d3.js.map
