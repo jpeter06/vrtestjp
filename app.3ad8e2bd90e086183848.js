@@ -63,7 +63,7 @@
 /******/
 /******/ 	var hotApplyOnUpdate = true;
 /******/ 	// eslint-disable-next-line no-unused-vars
-/******/ 	var hotCurrentHash = "2f967ee55e4bd95529d3";
+/******/ 	var hotCurrentHash = "96b7ec118f605ff899d9";
 /******/ 	var hotRequestTimeout = 10000;
 /******/ 	var hotCurrentModuleData = {};
 /******/ 	var hotCurrentChildModule;
@@ -82312,13 +82312,13 @@ var Cameras = /** @class */ (function () {
         this.enableOrbitChange = false;
         this.app = app;
         this.entities = entities;
+        /*
         try {
             this.enableOrbitChange = localStorage.getItem('enableOrbitChange') ?
-                localStorage.getItem('enableOrbitChange') == "true" : true;
-        }
-        catch (error) {
-            console.log("PROBLEM:", error);
-        }
+                localStorage.getItem('enableOrbitChange') =="true" : true
+        } catch (error) {
+            console.log("PROBLEM:",error)
+        }*/
     }
     Cameras.prototype.createOrbitCamera = function (lookatEntity, defaultLookatEntity, enabled) {
         var camera = new _entity__WEBPACK_IMPORTED_MODULE_0__["Entity"]("orbitCamera");
@@ -82361,14 +82361,15 @@ var Cameras = /** @class */ (function () {
         var orbitCyaw = null;
         var orbitCpitch = null;
         var orbitCdistance = null;
+        /*
         try {
-            orbitCyaw = localStorage.getItem('orbitCyaw');
-            orbitCpitch = localStorage.getItem('orbitCpitch');
-            orbitCdistance = localStorage.getItem('orbitCdistance');
+             orbitCyaw = localStorage.getItem('orbitCyaw');
+             orbitCpitch = localStorage.getItem('orbitCpitch');
+             orbitCdistance = localStorage.getItem('orbitCdistance');
+        } catch (error) {
+            console.log("PROBLEM:",error)
         }
-        catch (error) {
-            console.log("PROBLEM:", error);
-        }
+*/
         var orbitCamera = (_a = camera.script) === null || _a === void 0 ? void 0 : _a.get('orbitCamera');
         orbitCamera.pivotPoint = ground.getLocalPosition().clone(); //new pc.Vec3();
         orbitCamera.yaw = yaw || (orbitCyaw ? parseFloat(orbitCyaw) : 5.22);
@@ -84276,4 +84277,4 @@ else {
 /***/ })
 
 /******/ });
-//# sourceMappingURL=app.2f967ee55e4bd95529d3.js.map
+//# sourceMappingURL=app.96b7ec118f605ff899d9.js.map
