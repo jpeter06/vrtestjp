@@ -106,6 +106,8 @@
 				}
 			);
 			
+			//TExto
+			addTexto(app);
 			
             if (app.xr.supported) {
                 var activate = function () {
@@ -201,6 +203,39 @@
             } else {
                 message("WebXR is not supported");
             }
+			
+			
+			function addTexto(app){
+				app.assets.loadFromUrl(
+					"./fonts/arial.json",
+					"font",
+					function (err, fontAsset) {
+						var texto = new pc.Entity("texto");
+						texto.addComponent("element", {
+							anchor: [0.5, 0.5, 0.5, 0.5],
+							autoWidth: true,
+							autoHeigth: true,
+							fontSize: 0.2,
+							color: new pc.Color(0.9, 0.9, 0.9),
+							Alignment:[0,1],
+							pivot: [0.5, 0.5],
+							//shadowColor: new pc.Color(0, 0, 0),
+							//shadowOffset: new pc.Vec2(0.25, -0.25),
+							text: "AAAAAAAAA",
+							type: pc.ELEMENTTYPE_TEXT
+						});
+						texto.element.fontAsset = fontAsset;
+						texto.tags.add("texto");
+						texto.tags.add("scalable");
+						texto.setLocalPosition(2,2,2);
+						//texto.setLocalRotation(-40*pc.math.DEG_TO_RAD, 0, 0, 1);
+						texto.setLocalEulerAngles(45, 0, 0);
+						app.root.addChild(texto);
+						console.log("texto creado");
+					}
+				);
+				
+			}
         </script>
     </body>
 </html>
