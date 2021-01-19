@@ -1,12 +1,879 @@
+/******/ (function(modules) { // webpackBootstrap
+/******/ 	function hotDisposeChunk(chunkId) {
+/******/ 		delete installedChunks[chunkId];
+/******/ 	}
+/******/ 	var parentHotUpdateCallback = window["webpackHotUpdate"];
+/******/ 	window["webpackHotUpdate"] = // eslint-disable-next-line no-unused-vars
+/******/ 	function webpackHotUpdateCallback(chunkId, moreModules) {
+/******/ 		hotAddUpdateChunk(chunkId, moreModules);
+/******/ 		if (parentHotUpdateCallback) parentHotUpdateCallback(chunkId, moreModules);
+/******/ 	} ;
+/******/
+/******/ 	// eslint-disable-next-line no-unused-vars
+/******/ 	function hotDownloadUpdateChunk(chunkId) {
+/******/ 		var script = document.createElement("script");
+/******/ 		script.charset = "utf-8";
+/******/ 		script.src = __webpack_require__.p + "" + chunkId + "." + hotCurrentHash + ".hot-update.js";
+/******/ 		if (null) script.crossOrigin = null;
+/******/ 		document.head.appendChild(script);
+/******/ 	}
+/******/
+/******/ 	// eslint-disable-next-line no-unused-vars
+/******/ 	function hotDownloadManifest(requestTimeout) {
+/******/ 		requestTimeout = requestTimeout || 10000;
+/******/ 		return new Promise(function(resolve, reject) {
+/******/ 			if (typeof XMLHttpRequest === "undefined") {
+/******/ 				return reject(new Error("No browser support"));
+/******/ 			}
+/******/ 			try {
+/******/ 				var request = new XMLHttpRequest();
+/******/ 				var requestPath = __webpack_require__.p + "" + hotCurrentHash + ".hot-update.json";
+/******/ 				request.open("GET", requestPath, true);
+/******/ 				request.timeout = requestTimeout;
+/******/ 				request.send(null);
+/******/ 			} catch (err) {
+/******/ 				return reject(err);
+/******/ 			}
+/******/ 			request.onreadystatechange = function() {
+/******/ 				if (request.readyState !== 4) return;
+/******/ 				if (request.status === 0) {
+/******/ 					// timeout
+/******/ 					reject(
+/******/ 						new Error("Manifest request to " + requestPath + " timed out.")
+/******/ 					);
+/******/ 				} else if (request.status === 404) {
+/******/ 					// no update available
+/******/ 					resolve();
+/******/ 				} else if (request.status !== 200 && request.status !== 304) {
+/******/ 					// other failure
+/******/ 					reject(new Error("Manifest request to " + requestPath + " failed."));
+/******/ 				} else {
+/******/ 					// success
+/******/ 					try {
+/******/ 						var update = JSON.parse(request.responseText);
+/******/ 					} catch (e) {
+/******/ 						reject(e);
+/******/ 						return;
+/******/ 					}
+/******/ 					resolve(update);
+/******/ 				}
+/******/ 			};
+/******/ 		});
+/******/ 	}
+/******/
+/******/ 	var hotApplyOnUpdate = true;
+/******/ 	// eslint-disable-next-line no-unused-vars
+/******/ 	var hotCurrentHash = "ec9abe8a88afe8c5338e";
+/******/ 	var hotRequestTimeout = 10000;
+/******/ 	var hotCurrentModuleData = {};
+/******/ 	var hotCurrentChildModule;
+/******/ 	// eslint-disable-next-line no-unused-vars
+/******/ 	var hotCurrentParents = [];
+/******/ 	// eslint-disable-next-line no-unused-vars
+/******/ 	var hotCurrentParentsTemp = [];
+/******/
+/******/ 	// eslint-disable-next-line no-unused-vars
+/******/ 	function hotCreateRequire(moduleId) {
+/******/ 		var me = installedModules[moduleId];
+/******/ 		if (!me) return __webpack_require__;
+/******/ 		var fn = function(request) {
+/******/ 			if (me.hot.active) {
+/******/ 				if (installedModules[request]) {
+/******/ 					if (installedModules[request].parents.indexOf(moduleId) === -1) {
+/******/ 						installedModules[request].parents.push(moduleId);
+/******/ 					}
+/******/ 				} else {
+/******/ 					hotCurrentParents = [moduleId];
+/******/ 					hotCurrentChildModule = request;
+/******/ 				}
+/******/ 				if (me.children.indexOf(request) === -1) {
+/******/ 					me.children.push(request);
+/******/ 				}
+/******/ 			} else {
+/******/ 				console.warn(
+/******/ 					"[HMR] unexpected require(" +
+/******/ 						request +
+/******/ 						") from disposed module " +
+/******/ 						moduleId
+/******/ 				);
+/******/ 				hotCurrentParents = [];
+/******/ 			}
+/******/ 			return __webpack_require__(request);
+/******/ 		};
+/******/ 		var ObjectFactory = function ObjectFactory(name) {
+/******/ 			return {
+/******/ 				configurable: true,
+/******/ 				enumerable: true,
+/******/ 				get: function() {
+/******/ 					return __webpack_require__[name];
+/******/ 				},
+/******/ 				set: function(value) {
+/******/ 					__webpack_require__[name] = value;
+/******/ 				}
+/******/ 			};
+/******/ 		};
+/******/ 		for (var name in __webpack_require__) {
+/******/ 			if (
+/******/ 				Object.prototype.hasOwnProperty.call(__webpack_require__, name) &&
+/******/ 				name !== "e" &&
+/******/ 				name !== "t"
+/******/ 			) {
+/******/ 				Object.defineProperty(fn, name, ObjectFactory(name));
+/******/ 			}
+/******/ 		}
+/******/ 		fn.e = function(chunkId) {
+/******/ 			if (hotStatus === "ready") hotSetStatus("prepare");
+/******/ 			hotChunksLoading++;
+/******/ 			return __webpack_require__.e(chunkId).then(finishChunkLoading, function(err) {
+/******/ 				finishChunkLoading();
+/******/ 				throw err;
+/******/ 			});
+/******/
+/******/ 			function finishChunkLoading() {
+/******/ 				hotChunksLoading--;
+/******/ 				if (hotStatus === "prepare") {
+/******/ 					if (!hotWaitingFilesMap[chunkId]) {
+/******/ 						hotEnsureUpdateChunk(chunkId);
+/******/ 					}
+/******/ 					if (hotChunksLoading === 0 && hotWaitingFiles === 0) {
+/******/ 						hotUpdateDownloaded();
+/******/ 					}
+/******/ 				}
+/******/ 			}
+/******/ 		};
+/******/ 		fn.t = function(value, mode) {
+/******/ 			if (mode & 1) value = fn(value);
+/******/ 			return __webpack_require__.t(value, mode & ~1);
+/******/ 		};
+/******/ 		return fn;
+/******/ 	}
+/******/
+/******/ 	// eslint-disable-next-line no-unused-vars
+/******/ 	function hotCreateModule(moduleId) {
+/******/ 		var hot = {
+/******/ 			// private stuff
+/******/ 			_acceptedDependencies: {},
+/******/ 			_declinedDependencies: {},
+/******/ 			_selfAccepted: false,
+/******/ 			_selfDeclined: false,
+/******/ 			_selfInvalidated: false,
+/******/ 			_disposeHandlers: [],
+/******/ 			_main: hotCurrentChildModule !== moduleId,
+/******/
+/******/ 			// Module API
+/******/ 			active: true,
+/******/ 			accept: function(dep, callback) {
+/******/ 				if (dep === undefined) hot._selfAccepted = true;
+/******/ 				else if (typeof dep === "function") hot._selfAccepted = dep;
+/******/ 				else if (typeof dep === "object")
+/******/ 					for (var i = 0; i < dep.length; i++)
+/******/ 						hot._acceptedDependencies[dep[i]] = callback || function() {};
+/******/ 				else hot._acceptedDependencies[dep] = callback || function() {};
+/******/ 			},
+/******/ 			decline: function(dep) {
+/******/ 				if (dep === undefined) hot._selfDeclined = true;
+/******/ 				else if (typeof dep === "object")
+/******/ 					for (var i = 0; i < dep.length; i++)
+/******/ 						hot._declinedDependencies[dep[i]] = true;
+/******/ 				else hot._declinedDependencies[dep] = true;
+/******/ 			},
+/******/ 			dispose: function(callback) {
+/******/ 				hot._disposeHandlers.push(callback);
+/******/ 			},
+/******/ 			addDisposeHandler: function(callback) {
+/******/ 				hot._disposeHandlers.push(callback);
+/******/ 			},
+/******/ 			removeDisposeHandler: function(callback) {
+/******/ 				var idx = hot._disposeHandlers.indexOf(callback);
+/******/ 				if (idx >= 0) hot._disposeHandlers.splice(idx, 1);
+/******/ 			},
+/******/ 			invalidate: function() {
+/******/ 				this._selfInvalidated = true;
+/******/ 				switch (hotStatus) {
+/******/ 					case "idle":
+/******/ 						hotUpdate = {};
+/******/ 						hotUpdate[moduleId] = modules[moduleId];
+/******/ 						hotSetStatus("ready");
+/******/ 						break;
+/******/ 					case "ready":
+/******/ 						hotApplyInvalidatedModule(moduleId);
+/******/ 						break;
+/******/ 					case "prepare":
+/******/ 					case "check":
+/******/ 					case "dispose":
+/******/ 					case "apply":
+/******/ 						(hotQueuedInvalidatedModules =
+/******/ 							hotQueuedInvalidatedModules || []).push(moduleId);
+/******/ 						break;
+/******/ 					default:
+/******/ 						// ignore requests in error states
+/******/ 						break;
+/******/ 				}
+/******/ 			},
+/******/
+/******/ 			// Management API
+/******/ 			check: hotCheck,
+/******/ 			apply: hotApply,
+/******/ 			status: function(l) {
+/******/ 				if (!l) return hotStatus;
+/******/ 				hotStatusHandlers.push(l);
+/******/ 			},
+/******/ 			addStatusHandler: function(l) {
+/******/ 				hotStatusHandlers.push(l);
+/******/ 			},
+/******/ 			removeStatusHandler: function(l) {
+/******/ 				var idx = hotStatusHandlers.indexOf(l);
+/******/ 				if (idx >= 0) hotStatusHandlers.splice(idx, 1);
+/******/ 			},
+/******/
+/******/ 			//inherit from previous dispose call
+/******/ 			data: hotCurrentModuleData[moduleId]
+/******/ 		};
+/******/ 		hotCurrentChildModule = undefined;
+/******/ 		return hot;
+/******/ 	}
+/******/
+/******/ 	var hotStatusHandlers = [];
+/******/ 	var hotStatus = "idle";
+/******/
+/******/ 	function hotSetStatus(newStatus) {
+/******/ 		hotStatus = newStatus;
+/******/ 		for (var i = 0; i < hotStatusHandlers.length; i++)
+/******/ 			hotStatusHandlers[i].call(null, newStatus);
+/******/ 	}
+/******/
+/******/ 	// while downloading
+/******/ 	var hotWaitingFiles = 0;
+/******/ 	var hotChunksLoading = 0;
+/******/ 	var hotWaitingFilesMap = {};
+/******/ 	var hotRequestedFilesMap = {};
+/******/ 	var hotAvailableFilesMap = {};
+/******/ 	var hotDeferred;
+/******/
+/******/ 	// The update info
+/******/ 	var hotUpdate, hotUpdateNewHash, hotQueuedInvalidatedModules;
+/******/
+/******/ 	function toModuleId(id) {
+/******/ 		var isNumber = +id + "" === id;
+/******/ 		return isNumber ? +id : id;
+/******/ 	}
+/******/
+/******/ 	function hotCheck(apply) {
+/******/ 		if (hotStatus !== "idle") {
+/******/ 			throw new Error("check() is only allowed in idle status");
+/******/ 		}
+/******/ 		hotApplyOnUpdate = apply;
+/******/ 		hotSetStatus("check");
+/******/ 		return hotDownloadManifest(hotRequestTimeout).then(function(update) {
+/******/ 			if (!update) {
+/******/ 				hotSetStatus(hotApplyInvalidatedModules() ? "ready" : "idle");
+/******/ 				return null;
+/******/ 			}
+/******/ 			hotRequestedFilesMap = {};
+/******/ 			hotWaitingFilesMap = {};
+/******/ 			hotAvailableFilesMap = update.c;
+/******/ 			hotUpdateNewHash = update.h;
+/******/
+/******/ 			hotSetStatus("prepare");
+/******/ 			var promise = new Promise(function(resolve, reject) {
+/******/ 				hotDeferred = {
+/******/ 					resolve: resolve,
+/******/ 					reject: reject
+/******/ 				};
+/******/ 			});
+/******/ 			hotUpdate = {};
+/******/ 			var chunkId = "app";
+/******/ 			// eslint-disable-next-line no-lone-blocks
+/******/ 			{
+/******/ 				hotEnsureUpdateChunk(chunkId);
+/******/ 			}
+/******/ 			if (
+/******/ 				hotStatus === "prepare" &&
+/******/ 				hotChunksLoading === 0 &&
+/******/ 				hotWaitingFiles === 0
+/******/ 			) {
+/******/ 				hotUpdateDownloaded();
+/******/ 			}
+/******/ 			return promise;
+/******/ 		});
+/******/ 	}
+/******/
+/******/ 	// eslint-disable-next-line no-unused-vars
+/******/ 	function hotAddUpdateChunk(chunkId, moreModules) {
+/******/ 		if (!hotAvailableFilesMap[chunkId] || !hotRequestedFilesMap[chunkId])
+/******/ 			return;
+/******/ 		hotRequestedFilesMap[chunkId] = false;
+/******/ 		for (var moduleId in moreModules) {
+/******/ 			if (Object.prototype.hasOwnProperty.call(moreModules, moduleId)) {
+/******/ 				hotUpdate[moduleId] = moreModules[moduleId];
+/******/ 			}
+/******/ 		}
+/******/ 		if (--hotWaitingFiles === 0 && hotChunksLoading === 0) {
+/******/ 			hotUpdateDownloaded();
+/******/ 		}
+/******/ 	}
+/******/
+/******/ 	function hotEnsureUpdateChunk(chunkId) {
+/******/ 		if (!hotAvailableFilesMap[chunkId]) {
+/******/ 			hotWaitingFilesMap[chunkId] = true;
+/******/ 		} else {
+/******/ 			hotRequestedFilesMap[chunkId] = true;
+/******/ 			hotWaitingFiles++;
+/******/ 			hotDownloadUpdateChunk(chunkId);
+/******/ 		}
+/******/ 	}
+/******/
+/******/ 	function hotUpdateDownloaded() {
+/******/ 		hotSetStatus("ready");
+/******/ 		var deferred = hotDeferred;
+/******/ 		hotDeferred = null;
+/******/ 		if (!deferred) return;
+/******/ 		if (hotApplyOnUpdate) {
+/******/ 			// Wrap deferred object in Promise to mark it as a well-handled Promise to
+/******/ 			// avoid triggering uncaught exception warning in Chrome.
+/******/ 			// See https://bugs.chromium.org/p/chromium/issues/detail?id=465666
+/******/ 			Promise.resolve()
+/******/ 				.then(function() {
+/******/ 					return hotApply(hotApplyOnUpdate);
+/******/ 				})
+/******/ 				.then(
+/******/ 					function(result) {
+/******/ 						deferred.resolve(result);
+/******/ 					},
+/******/ 					function(err) {
+/******/ 						deferred.reject(err);
+/******/ 					}
+/******/ 				);
+/******/ 		} else {
+/******/ 			var outdatedModules = [];
+/******/ 			for (var id in hotUpdate) {
+/******/ 				if (Object.prototype.hasOwnProperty.call(hotUpdate, id)) {
+/******/ 					outdatedModules.push(toModuleId(id));
+/******/ 				}
+/******/ 			}
+/******/ 			deferred.resolve(outdatedModules);
+/******/ 		}
+/******/ 	}
+/******/
+/******/ 	function hotApply(options) {
+/******/ 		if (hotStatus !== "ready")
+/******/ 			throw new Error("apply() is only allowed in ready status");
+/******/ 		options = options || {};
+/******/ 		return hotApplyInternal(options);
+/******/ 	}
+/******/
+/******/ 	function hotApplyInternal(options) {
+/******/ 		hotApplyInvalidatedModules();
+/******/
+/******/ 		var cb;
+/******/ 		var i;
+/******/ 		var j;
+/******/ 		var module;
+/******/ 		var moduleId;
+/******/
+/******/ 		function getAffectedStuff(updateModuleId) {
+/******/ 			var outdatedModules = [updateModuleId];
+/******/ 			var outdatedDependencies = {};
+/******/
+/******/ 			var queue = outdatedModules.map(function(id) {
+/******/ 				return {
+/******/ 					chain: [id],
+/******/ 					id: id
+/******/ 				};
+/******/ 			});
+/******/ 			while (queue.length > 0) {
+/******/ 				var queueItem = queue.pop();
+/******/ 				var moduleId = queueItem.id;
+/******/ 				var chain = queueItem.chain;
+/******/ 				module = installedModules[moduleId];
+/******/ 				if (
+/******/ 					!module ||
+/******/ 					(module.hot._selfAccepted && !module.hot._selfInvalidated)
+/******/ 				)
+/******/ 					continue;
+/******/ 				if (module.hot._selfDeclined) {
+/******/ 					return {
+/******/ 						type: "self-declined",
+/******/ 						chain: chain,
+/******/ 						moduleId: moduleId
+/******/ 					};
+/******/ 				}
+/******/ 				if (module.hot._main) {
+/******/ 					return {
+/******/ 						type: "unaccepted",
+/******/ 						chain: chain,
+/******/ 						moduleId: moduleId
+/******/ 					};
+/******/ 				}
+/******/ 				for (var i = 0; i < module.parents.length; i++) {
+/******/ 					var parentId = module.parents[i];
+/******/ 					var parent = installedModules[parentId];
+/******/ 					if (!parent) continue;
+/******/ 					if (parent.hot._declinedDependencies[moduleId]) {
+/******/ 						return {
+/******/ 							type: "declined",
+/******/ 							chain: chain.concat([parentId]),
+/******/ 							moduleId: moduleId,
+/******/ 							parentId: parentId
+/******/ 						};
+/******/ 					}
+/******/ 					if (outdatedModules.indexOf(parentId) !== -1) continue;
+/******/ 					if (parent.hot._acceptedDependencies[moduleId]) {
+/******/ 						if (!outdatedDependencies[parentId])
+/******/ 							outdatedDependencies[parentId] = [];
+/******/ 						addAllToSet(outdatedDependencies[parentId], [moduleId]);
+/******/ 						continue;
+/******/ 					}
+/******/ 					delete outdatedDependencies[parentId];
+/******/ 					outdatedModules.push(parentId);
+/******/ 					queue.push({
+/******/ 						chain: chain.concat([parentId]),
+/******/ 						id: parentId
+/******/ 					});
+/******/ 				}
+/******/ 			}
+/******/
+/******/ 			return {
+/******/ 				type: "accepted",
+/******/ 				moduleId: updateModuleId,
+/******/ 				outdatedModules: outdatedModules,
+/******/ 				outdatedDependencies: outdatedDependencies
+/******/ 			};
+/******/ 		}
+/******/
+/******/ 		function addAllToSet(a, b) {
+/******/ 			for (var i = 0; i < b.length; i++) {
+/******/ 				var item = b[i];
+/******/ 				if (a.indexOf(item) === -1) a.push(item);
+/******/ 			}
+/******/ 		}
+/******/
+/******/ 		// at begin all updates modules are outdated
+/******/ 		// the "outdated" status can propagate to parents if they don't accept the children
+/******/ 		var outdatedDependencies = {};
+/******/ 		var outdatedModules = [];
+/******/ 		var appliedUpdate = {};
+/******/
+/******/ 		var warnUnexpectedRequire = function warnUnexpectedRequire() {
+/******/ 			console.warn(
+/******/ 				"[HMR] unexpected require(" + result.moduleId + ") to disposed module"
+/******/ 			);
+/******/ 		};
+/******/
+/******/ 		for (var id in hotUpdate) {
+/******/ 			if (Object.prototype.hasOwnProperty.call(hotUpdate, id)) {
+/******/ 				moduleId = toModuleId(id);
+/******/ 				/** @type {TODO} */
+/******/ 				var result;
+/******/ 				if (hotUpdate[id]) {
+/******/ 					result = getAffectedStuff(moduleId);
+/******/ 				} else {
+/******/ 					result = {
+/******/ 						type: "disposed",
+/******/ 						moduleId: id
+/******/ 					};
+/******/ 				}
+/******/ 				/** @type {Error|false} */
+/******/ 				var abortError = false;
+/******/ 				var doApply = false;
+/******/ 				var doDispose = false;
+/******/ 				var chainInfo = "";
+/******/ 				if (result.chain) {
+/******/ 					chainInfo = "\nUpdate propagation: " + result.chain.join(" -> ");
+/******/ 				}
+/******/ 				switch (result.type) {
+/******/ 					case "self-declined":
+/******/ 						if (options.onDeclined) options.onDeclined(result);
+/******/ 						if (!options.ignoreDeclined)
+/******/ 							abortError = new Error(
+/******/ 								"Aborted because of self decline: " +
+/******/ 									result.moduleId +
+/******/ 									chainInfo
+/******/ 							);
+/******/ 						break;
+/******/ 					case "declined":
+/******/ 						if (options.onDeclined) options.onDeclined(result);
+/******/ 						if (!options.ignoreDeclined)
+/******/ 							abortError = new Error(
+/******/ 								"Aborted because of declined dependency: " +
+/******/ 									result.moduleId +
+/******/ 									" in " +
+/******/ 									result.parentId +
+/******/ 									chainInfo
+/******/ 							);
+/******/ 						break;
+/******/ 					case "unaccepted":
+/******/ 						if (options.onUnaccepted) options.onUnaccepted(result);
+/******/ 						if (!options.ignoreUnaccepted)
+/******/ 							abortError = new Error(
+/******/ 								"Aborted because " + moduleId + " is not accepted" + chainInfo
+/******/ 							);
+/******/ 						break;
+/******/ 					case "accepted":
+/******/ 						if (options.onAccepted) options.onAccepted(result);
+/******/ 						doApply = true;
+/******/ 						break;
+/******/ 					case "disposed":
+/******/ 						if (options.onDisposed) options.onDisposed(result);
+/******/ 						doDispose = true;
+/******/ 						break;
+/******/ 					default:
+/******/ 						throw new Error("Unexception type " + result.type);
+/******/ 				}
+/******/ 				if (abortError) {
+/******/ 					hotSetStatus("abort");
+/******/ 					return Promise.reject(abortError);
+/******/ 				}
+/******/ 				if (doApply) {
+/******/ 					appliedUpdate[moduleId] = hotUpdate[moduleId];
+/******/ 					addAllToSet(outdatedModules, result.outdatedModules);
+/******/ 					for (moduleId in result.outdatedDependencies) {
+/******/ 						if (
+/******/ 							Object.prototype.hasOwnProperty.call(
+/******/ 								result.outdatedDependencies,
+/******/ 								moduleId
+/******/ 							)
+/******/ 						) {
+/******/ 							if (!outdatedDependencies[moduleId])
+/******/ 								outdatedDependencies[moduleId] = [];
+/******/ 							addAllToSet(
+/******/ 								outdatedDependencies[moduleId],
+/******/ 								result.outdatedDependencies[moduleId]
+/******/ 							);
+/******/ 						}
+/******/ 					}
+/******/ 				}
+/******/ 				if (doDispose) {
+/******/ 					addAllToSet(outdatedModules, [result.moduleId]);
+/******/ 					appliedUpdate[moduleId] = warnUnexpectedRequire;
+/******/ 				}
+/******/ 			}
+/******/ 		}
+/******/
+/******/ 		// Store self accepted outdated modules to require them later by the module system
+/******/ 		var outdatedSelfAcceptedModules = [];
+/******/ 		for (i = 0; i < outdatedModules.length; i++) {
+/******/ 			moduleId = outdatedModules[i];
+/******/ 			if (
+/******/ 				installedModules[moduleId] &&
+/******/ 				installedModules[moduleId].hot._selfAccepted &&
+/******/ 				// removed self-accepted modules should not be required
+/******/ 				appliedUpdate[moduleId] !== warnUnexpectedRequire &&
+/******/ 				// when called invalidate self-accepting is not possible
+/******/ 				!installedModules[moduleId].hot._selfInvalidated
+/******/ 			) {
+/******/ 				outdatedSelfAcceptedModules.push({
+/******/ 					module: moduleId,
+/******/ 					parents: installedModules[moduleId].parents.slice(),
+/******/ 					errorHandler: installedModules[moduleId].hot._selfAccepted
+/******/ 				});
+/******/ 			}
+/******/ 		}
+/******/
+/******/ 		// Now in "dispose" phase
+/******/ 		hotSetStatus("dispose");
+/******/ 		Object.keys(hotAvailableFilesMap).forEach(function(chunkId) {
+/******/ 			if (hotAvailableFilesMap[chunkId] === false) {
+/******/ 				hotDisposeChunk(chunkId);
+/******/ 			}
+/******/ 		});
+/******/
+/******/ 		var idx;
+/******/ 		var queue = outdatedModules.slice();
+/******/ 		while (queue.length > 0) {
+/******/ 			moduleId = queue.pop();
+/******/ 			module = installedModules[moduleId];
+/******/ 			if (!module) continue;
+/******/
+/******/ 			var data = {};
+/******/
+/******/ 			// Call dispose handlers
+/******/ 			var disposeHandlers = module.hot._disposeHandlers;
+/******/ 			for (j = 0; j < disposeHandlers.length; j++) {
+/******/ 				cb = disposeHandlers[j];
+/******/ 				cb(data);
+/******/ 			}
+/******/ 			hotCurrentModuleData[moduleId] = data;
+/******/
+/******/ 			// disable module (this disables requires from this module)
+/******/ 			module.hot.active = false;
+/******/
+/******/ 			// remove module from cache
+/******/ 			delete installedModules[moduleId];
+/******/
+/******/ 			// when disposing there is no need to call dispose handler
+/******/ 			delete outdatedDependencies[moduleId];
+/******/
+/******/ 			// remove "parents" references from all children
+/******/ 			for (j = 0; j < module.children.length; j++) {
+/******/ 				var child = installedModules[module.children[j]];
+/******/ 				if (!child) continue;
+/******/ 				idx = child.parents.indexOf(moduleId);
+/******/ 				if (idx >= 0) {
+/******/ 					child.parents.splice(idx, 1);
+/******/ 				}
+/******/ 			}
+/******/ 		}
+/******/
+/******/ 		// remove outdated dependency from module children
+/******/ 		var dependency;
+/******/ 		var moduleOutdatedDependencies;
+/******/ 		for (moduleId in outdatedDependencies) {
+/******/ 			if (
+/******/ 				Object.prototype.hasOwnProperty.call(outdatedDependencies, moduleId)
+/******/ 			) {
+/******/ 				module = installedModules[moduleId];
+/******/ 				if (module) {
+/******/ 					moduleOutdatedDependencies = outdatedDependencies[moduleId];
+/******/ 					for (j = 0; j < moduleOutdatedDependencies.length; j++) {
+/******/ 						dependency = moduleOutdatedDependencies[j];
+/******/ 						idx = module.children.indexOf(dependency);
+/******/ 						if (idx >= 0) module.children.splice(idx, 1);
+/******/ 					}
+/******/ 				}
+/******/ 			}
+/******/ 		}
+/******/
+/******/ 		// Now in "apply" phase
+/******/ 		hotSetStatus("apply");
+/******/
+/******/ 		if (hotUpdateNewHash !== undefined) {
+/******/ 			hotCurrentHash = hotUpdateNewHash;
+/******/ 			hotUpdateNewHash = undefined;
+/******/ 		}
+/******/ 		hotUpdate = undefined;
+/******/
+/******/ 		// insert new code
+/******/ 		for (moduleId in appliedUpdate) {
+/******/ 			if (Object.prototype.hasOwnProperty.call(appliedUpdate, moduleId)) {
+/******/ 				modules[moduleId] = appliedUpdate[moduleId];
+/******/ 			}
+/******/ 		}
+/******/
+/******/ 		// call accept handlers
+/******/ 		var error = null;
+/******/ 		for (moduleId in outdatedDependencies) {
+/******/ 			if (
+/******/ 				Object.prototype.hasOwnProperty.call(outdatedDependencies, moduleId)
+/******/ 			) {
+/******/ 				module = installedModules[moduleId];
+/******/ 				if (module) {
+/******/ 					moduleOutdatedDependencies = outdatedDependencies[moduleId];
+/******/ 					var callbacks = [];
+/******/ 					for (i = 0; i < moduleOutdatedDependencies.length; i++) {
+/******/ 						dependency = moduleOutdatedDependencies[i];
+/******/ 						cb = module.hot._acceptedDependencies[dependency];
+/******/ 						if (cb) {
+/******/ 							if (callbacks.indexOf(cb) !== -1) continue;
+/******/ 							callbacks.push(cb);
+/******/ 						}
+/******/ 					}
+/******/ 					for (i = 0; i < callbacks.length; i++) {
+/******/ 						cb = callbacks[i];
+/******/ 						try {
+/******/ 							cb(moduleOutdatedDependencies);
+/******/ 						} catch (err) {
+/******/ 							if (options.onErrored) {
+/******/ 								options.onErrored({
+/******/ 									type: "accept-errored",
+/******/ 									moduleId: moduleId,
+/******/ 									dependencyId: moduleOutdatedDependencies[i],
+/******/ 									error: err
+/******/ 								});
+/******/ 							}
+/******/ 							if (!options.ignoreErrored) {
+/******/ 								if (!error) error = err;
+/******/ 							}
+/******/ 						}
+/******/ 					}
+/******/ 				}
+/******/ 			}
+/******/ 		}
+/******/
+/******/ 		// Load self accepted modules
+/******/ 		for (i = 0; i < outdatedSelfAcceptedModules.length; i++) {
+/******/ 			var item = outdatedSelfAcceptedModules[i];
+/******/ 			moduleId = item.module;
+/******/ 			hotCurrentParents = item.parents;
+/******/ 			hotCurrentChildModule = moduleId;
+/******/ 			try {
+/******/ 				__webpack_require__(moduleId);
+/******/ 			} catch (err) {
+/******/ 				if (typeof item.errorHandler === "function") {
+/******/ 					try {
+/******/ 						item.errorHandler(err);
+/******/ 					} catch (err2) {
+/******/ 						if (options.onErrored) {
+/******/ 							options.onErrored({
+/******/ 								type: "self-accept-error-handler-errored",
+/******/ 								moduleId: moduleId,
+/******/ 								error: err2,
+/******/ 								originalError: err
+/******/ 							});
+/******/ 						}
+/******/ 						if (!options.ignoreErrored) {
+/******/ 							if (!error) error = err2;
+/******/ 						}
+/******/ 						if (!error) error = err;
+/******/ 					}
+/******/ 				} else {
+/******/ 					if (options.onErrored) {
+/******/ 						options.onErrored({
+/******/ 							type: "self-accept-errored",
+/******/ 							moduleId: moduleId,
+/******/ 							error: err
+/******/ 						});
+/******/ 					}
+/******/ 					if (!options.ignoreErrored) {
+/******/ 						if (!error) error = err;
+/******/ 					}
+/******/ 				}
+/******/ 			}
+/******/ 		}
+/******/
+/******/ 		// handle errors in accept handlers and self accepted module load
+/******/ 		if (error) {
+/******/ 			hotSetStatus("fail");
+/******/ 			return Promise.reject(error);
+/******/ 		}
+/******/
+/******/ 		if (hotQueuedInvalidatedModules) {
+/******/ 			return hotApplyInternal(options).then(function(list) {
+/******/ 				outdatedModules.forEach(function(moduleId) {
+/******/ 					if (list.indexOf(moduleId) < 0) list.push(moduleId);
+/******/ 				});
+/******/ 				return list;
+/******/ 			});
+/******/ 		}
+/******/
+/******/ 		hotSetStatus("idle");
+/******/ 		return new Promise(function(resolve) {
+/******/ 			resolve(outdatedModules);
+/******/ 		});
+/******/ 	}
+/******/
+/******/ 	function hotApplyInvalidatedModules() {
+/******/ 		if (hotQueuedInvalidatedModules) {
+/******/ 			if (!hotUpdate) hotUpdate = {};
+/******/ 			hotQueuedInvalidatedModules.forEach(hotApplyInvalidatedModule);
+/******/ 			hotQueuedInvalidatedModules = undefined;
+/******/ 			return true;
+/******/ 		}
+/******/ 	}
+/******/
+/******/ 	function hotApplyInvalidatedModule(moduleId) {
+/******/ 		if (!Object.prototype.hasOwnProperty.call(hotUpdate, moduleId))
+/******/ 			hotUpdate[moduleId] = modules[moduleId];
+/******/ 	}
+/******/
+/******/ 	// The module cache
+/******/ 	var installedModules = {};
+/******/
+/******/ 	// The require function
+/******/ 	function __webpack_require__(moduleId) {
+/******/
+/******/ 		// Check if module is in cache
+/******/ 		if(installedModules[moduleId]) {
+/******/ 			return installedModules[moduleId].exports;
+/******/ 		}
+/******/ 		// Create a new module (and put it into the cache)
+/******/ 		var module = installedModules[moduleId] = {
+/******/ 			i: moduleId,
+/******/ 			l: false,
+/******/ 			exports: {},
+/******/ 			hot: hotCreateModule(moduleId),
+/******/ 			parents: (hotCurrentParentsTemp = hotCurrentParents, hotCurrentParents = [], hotCurrentParentsTemp),
+/******/ 			children: []
+/******/ 		};
+/******/
+/******/ 		// Execute the module function
+/******/ 		modules[moduleId].call(module.exports, module, module.exports, hotCreateRequire(moduleId));
+/******/
+/******/ 		// Flag the module as loaded
+/******/ 		module.l = true;
+/******/
+/******/ 		// Return the exports of the module
+/******/ 		return module.exports;
+/******/ 	}
+/******/
+/******/
+/******/ 	// expose the modules object (__webpack_modules__)
+/******/ 	__webpack_require__.m = modules;
+/******/
+/******/ 	// expose the module cache
+/******/ 	__webpack_require__.c = installedModules;
+/******/
+/******/ 	// define getter function for harmony exports
+/******/ 	__webpack_require__.d = function(exports, name, getter) {
+/******/ 		if(!__webpack_require__.o(exports, name)) {
+/******/ 			Object.defineProperty(exports, name, { enumerable: true, get: getter });
+/******/ 		}
+/******/ 	};
+/******/
+/******/ 	// define __esModule on exports
+/******/ 	__webpack_require__.r = function(exports) {
+/******/ 		if(typeof Symbol !== 'undefined' && Symbol.toStringTag) {
+/******/ 			Object.defineProperty(exports, Symbol.toStringTag, { value: 'Module' });
+/******/ 		}
+/******/ 		Object.defineProperty(exports, '__esModule', { value: true });
+/******/ 	};
+/******/
+/******/ 	// create a fake namespace object
+/******/ 	// mode & 1: value is a module id, require it
+/******/ 	// mode & 2: merge all properties of value into the ns
+/******/ 	// mode & 4: return value when already ns object
+/******/ 	// mode & 8|1: behave like require
+/******/ 	__webpack_require__.t = function(value, mode) {
+/******/ 		if(mode & 1) value = __webpack_require__(value);
+/******/ 		if(mode & 8) return value;
+/******/ 		if((mode & 4) && typeof value === 'object' && value && value.__esModule) return value;
+/******/ 		var ns = Object.create(null);
+/******/ 		__webpack_require__.r(ns);
+/******/ 		Object.defineProperty(ns, 'default', { enumerable: true, value: value });
+/******/ 		if(mode & 2 && typeof value != 'string') for(var key in value) __webpack_require__.d(ns, key, function(key) { return value[key]; }.bind(null, key));
+/******/ 		return ns;
+/******/ 	};
+/******/
+/******/ 	// getDefaultExport function for compatibility with non-harmony modules
+/******/ 	__webpack_require__.n = function(module) {
+/******/ 		var getter = module && module.__esModule ?
+/******/ 			function getDefault() { return module['default']; } :
+/******/ 			function getModuleExports() { return module; };
+/******/ 		__webpack_require__.d(getter, 'a', getter);
+/******/ 		return getter;
+/******/ 	};
+/******/
+/******/ 	// Object.prototype.hasOwnProperty.call
+/******/ 	__webpack_require__.o = function(object, property) { return Object.prototype.hasOwnProperty.call(object, property); };
+/******/
+/******/ 	// __webpack_public_path__
+/******/ 	__webpack_require__.p = "/";
+/******/
+/******/ 	// __webpack_hash__
+/******/ 	__webpack_require__.h = function() { return hotCurrentHash; };
+/******/
+/******/
+/******/ 	// Load entry module and return exports
+/******/ 	return hotCreateRequire("./src/main.ts")(__webpack_require__.s = "./src/main.ts");
+/******/ })
+/************************************************************************/
+/******/ ({
+
+/***/ "./node_modules/playcanvas/build/playcanvas.js":
+/*!*****************************************************!*\
+  !*** ./node_modules/playcanvas/build/playcanvas.js ***!
+  \*****************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
 /**
  * @license
- * PlayCanvas Engine v1.38.0 revision 98cb89ec5
+ * PlayCanvas Engine v1.38.3 revision a9cf16e58
  * Copyright 2011-2021 PlayCanvas Ltd. All rights reserved.
  */
 (function (global, factory) {
-	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
-	typeof define === 'function' && define.amd ? define(['exports'], factory) :
-	(global = typeof globalThis !== 'undefined' ? globalThis : global || self, factory(global.pc = {}));
+	 true ? factory(exports) :
+	undefined;
 }(this, (function (exports) { 'use strict';
 
 	if (!Array.prototype.find) {
@@ -541,8 +1408,8 @@
 		return result;
 	}();
 
-	var version = "1.38.0";
-	var revision = "98cb89ec5";
+	var version = "1.38.3";
+	var revision = "a9cf16e58";
 	var config = {};
 	var common = {};
 	var apps = {};
@@ -14783,8 +15650,8 @@
 	var viewPosL = new Vec3();
 	var viewPosR = new Vec3();
 	var projL, projR;
-	var viewMat3L = new Mat4();
-	var viewMat3R = new Mat4();
+	var viewMat3L = new Mat3();
+	var viewMat3R = new Mat3();
 	var viewProjMatL = new Mat4();
 	var viewProjMatR = new Mat4();
 	var worldMatX$1 = new Vec3();
@@ -22778,89 +23645,80 @@
 		return AnimTrack;
 	}();
 
+	var AnimBinder = function () {
+		function AnimBinder() {}
+
+		AnimBinder.joinPath = function joinPath(pathSegments, character) {
+			character = character || '.';
+
+			var escape = function escape(string) {
+				return string.replace(/\\/g, '\\\\').replace(new RegExp('\\' + character, 'g'), '\\' + character);
+			};
+
+			return pathSegments.map(escape).join(character);
+		};
+
+		AnimBinder.splitPath = function splitPath(path, character) {
+			character = character || '.';
+			var result = [];
+			var curr = "";
+			var i = 0;
+
+			while (i < path.length) {
+				var c = path[i++];
+
+				if (c === '\\' && i < path.length) {
+					c = path[i++];
+
+					if (c === '\\' || c === character) {
+						curr += c;
+					} else {
+						curr += '\\' + c;
+					}
+				} else if (c === character) {
+					result.push(curr);
+					curr = '';
+				} else {
+					curr += c;
+				}
+			}
+
+			if (curr.length > 0) {
+				result.push(curr);
+			}
+
+			return result;
+		};
+
+		AnimBinder.encode = function encode(locator) {
+			return AnimBinder.joinPath([AnimBinder.joinPath(Array.isArray(locator.entityPath) ? locator.entityPath : [locator.entityPath]), locator.component, AnimBinder.joinPath(Array.isArray(locator.propertyPath) ? locator.propertyPath : [locator.propertyPath])], '/');
+		};
+
+		AnimBinder.decode = function decode(locator) {
+			var locatorSections = AnimBinder.splitPath(locator, '/');
+			return {
+				entityPath: AnimBinder.splitPath(locatorSections[0]),
+				component: locatorSections[1],
+				propertyPath: AnimBinder.splitPath(locatorSections[2])
+			};
+		};
+
+		var _proto = AnimBinder.prototype;
+
+		_proto.resolve = function resolve(path) {
+			return null;
+		};
+
+		_proto.unresolve = function unresolve(path) {};
+
+		_proto.update = function update(deltaTime) {};
+
+		return AnimBinder;
+	}();
+
 	var INTERPOLATION_STEP = 0;
 	var INTERPOLATION_LINEAR = 1;
 	var INTERPOLATION_CUBIC = 2;
-
-	var I18nParser = function () {
-		function I18nParser() {}
-
-		var _proto = I18nParser.prototype;
-
-		_proto._validate = function _validate(data) {
-			if (!data.header) {
-				throw new Error('pc.I18n#addData: Missing "header" field');
-			}
-
-			if (!data.header.version) {
-				throw new Error('pc.I18n#addData: Missing "header.version" field');
-			}
-
-			if (data.header.version !== 1) {
-				throw new Error('pc.I18n#addData: Invalid "header.version" field');
-			}
-
-			if (!data.data) {
-				throw new Error('pc.I18n#addData: Missing "data" field');
-			} else if (!Array.isArray(data.data)) {
-				throw new Error('pc.I18n#addData: "data" field must be an array');
-			}
-
-			for (var i = 0, len = data.data.length; i < len; i++) {
-				var entry = data.data[i];
-
-				if (!entry.info) {
-					throw new Error('pc.I18n#addData: missing "data[' + i + '].info" field');
-				}
-
-				if (!entry.info.locale) {
-					throw new Error('pc.I18n#addData: missing "data[' + i + '].info.locale" field');
-				}
-
-				if (typeof entry.info.locale !== 'string') {
-					throw new Error('pc.I18n#addData: "data[' + i + '].info.locale" must be a string');
-				}
-
-				if (!entry.messages) {
-					throw new Error('pc.I18n#addData: missing "data[' + i + '].messages" field');
-				}
-			}
-		};
-
-		_proto.parse = function parse(data) {
-			return data.data;
-		};
-
-		return I18nParser;
-	}();
-
-	var PLURALS = {};
-
-	var definePluralFn = function definePluralFn(locales, fn) {
-		for (var i = 0, len = locales.length; i < len; i++) {
-			PLURALS[locales[i]] = fn;
-		}
-	};
-
-	var getLang = function getLang(locale) {
-		var idx = locale.indexOf('-');
-
-		if (idx !== -1) {
-			return locale.substring(0, idx);
-		}
-
-		return locale;
-	};
-
-	var replaceLang = function replaceLang(locale, desiredLang) {
-		var idx = locale.indexOf('-');
-
-		if (idx !== -1) {
-			return desiredLang + locale.substring(idx);
-		}
-
-		return desiredLang;
-	};
 
 	var DEFAULT_LOCALE = 'en-US';
 	var DEFAULT_LOCALE_FALLBACKS = {
@@ -22876,6 +23734,60 @@
 		'ru': 'ru-RU',
 		'ja': 'ja-JP'
 	};
+
+	var PLURALS = {};
+
+	function definePluralFn(locales, fn) {
+		for (var i = 0, len = locales.length; i < len; i++) {
+			PLURALS[locales[i]] = fn;
+		}
+	}
+
+	function getLang(locale) {
+		var idx = locale.indexOf('-');
+
+		if (idx !== -1) {
+			return locale.substring(0, idx);
+		}
+
+		return locale;
+	}
+
+	function replaceLang(locale, desiredLang) {
+		var idx = locale.indexOf('-');
+
+		if (idx !== -1) {
+			return desiredLang + locale.substring(idx);
+		}
+
+		return desiredLang;
+	}
+
+	function findAvailableLocale(desiredLocale, availableLocales) {
+		if (availableLocales[desiredLocale]) {
+			return desiredLocale;
+		}
+
+		var fallback = DEFAULT_LOCALE_FALLBACKS[desiredLocale];
+
+		if (fallback && availableLocales[fallback]) {
+			return fallback;
+		}
+
+		var lang = getLang(desiredLocale);
+		fallback = DEFAULT_LOCALE_FALLBACKS[lang];
+
+		if (availableLocales[fallback]) {
+			return fallback;
+		}
+
+		if (availableLocales[lang]) {
+			return lang;
+		}
+
+		return DEFAULT_LOCALE;
+	}
+
 	definePluralFn(['ja', 'ko', 'th', 'vi', 'zh', 'id'], function (n) {
 		return 0;
 	});
@@ -22964,342 +23876,9 @@
 	});
 	var DEFAULT_PLURAL_FN = PLURALS[getLang(DEFAULT_LOCALE)];
 
-	var getPluralFn = function getPluralFn(lang) {
+	function getPluralFn(lang) {
 		return PLURALS[lang] || DEFAULT_PLURAL_FN;
-	};
-
-	var I18n = function (_EventHandler) {
-		_inheritsLoose(I18n, _EventHandler);
-
-		function I18n(app) {
-			var _this;
-
-			_this = _EventHandler.call(this) || this;
-
-			_this.destroy = function () {
-				this._translations = null;
-				this._availableLangs = null;
-				this._assets = null;
-				this._parser = null;
-				this.off();
-			};
-
-			_this.locale = DEFAULT_LOCALE;
-			_this._translations = {};
-			_this._availableLangs = {};
-			_this._app = app;
-			_this._assets = [];
-			_this._parser = new I18nParser();
-			return _this;
-		}
-
-		I18n.findAvailableLocale = function findAvailableLocale(desiredLocale, availableLocales) {
-			if (availableLocales[desiredLocale]) {
-				return desiredLocale;
-			}
-
-			var fallback = DEFAULT_LOCALE_FALLBACKS[desiredLocale];
-
-			if (fallback && availableLocales[fallback]) {
-				return fallback;
-			}
-
-			var lang = getLang(desiredLocale);
-			fallback = DEFAULT_LOCALE_FALLBACKS[lang];
-
-			if (availableLocales[fallback]) {
-				return fallback;
-			}
-
-			if (availableLocales[lang]) {
-				return lang;
-			}
-
-			return DEFAULT_LOCALE;
-		};
-
-		var _proto = I18n.prototype;
-
-		_proto.getText = function getText(key, locale) {
-			var result = key;
-			var lang;
-
-			if (!locale) {
-				locale = this._locale;
-				lang = this._lang;
-			}
-
-			var translations = this._translations[locale];
-
-			if (!translations) {
-				if (!lang) {
-					lang = getLang(locale);
-				}
-
-				locale = this._findFallbackLocale(locale, lang);
-				translations = this._translations[locale];
-			}
-
-			if (translations && translations.hasOwnProperty(key)) {
-				result = translations[key];
-
-				if (Array.isArray(result)) {
-					result = result[0];
-				}
-
-				if (result === null || result === undefined) {
-					result = key;
-				}
-			}
-
-			return result;
-		};
-
-		_proto.getPluralText = function getPluralText(key, n, locale) {
-			var result = key;
-			var pluralFn;
-			var lang;
-
-			if (!locale) {
-				locale = this._locale;
-				lang = this._lang;
-				pluralFn = this._pluralFn;
-			} else {
-				lang = getLang(locale);
-				pluralFn = getPluralFn(lang);
-			}
-
-			var translations = this._translations[locale];
-
-			if (!translations) {
-				locale = this._findFallbackLocale(locale, lang);
-				lang = getLang(locale);
-				pluralFn = getPluralFn(lang);
-				translations = this._translations[locale];
-			}
-
-			if (translations && translations[key] && pluralFn) {
-				var index = pluralFn(n);
-				result = translations[key][index];
-
-				if (result === null || result === undefined) {
-					result = key;
-				}
-			}
-
-			return result;
-		};
-
-		_proto.addData = function addData(data) {
-			var parsed;
-
-			try {
-				parsed = this._parser.parse(data);
-			} catch (err) {
-				console.error(err);
-				return;
-			}
-
-			for (var i = 0, len = parsed.length; i < len; i++) {
-				var entry = parsed[i];
-				var locale = entry.info.locale;
-				var messages = entry.messages;
-
-				if (!this._translations[locale]) {
-					this._translations[locale] = {};
-					var lang = getLang(locale);
-
-					if (!this._availableLangs[lang]) {
-						this._availableLangs[lang] = locale;
-					}
-				}
-
-				Object.assign(this._translations[locale], messages);
-				this.fire('data:add', locale, messages);
-			}
-		};
-
-		_proto.removeData = function removeData(data) {
-			var parsed;
-			var key;
-
-			try {
-				parsed = this._parser.parse(data);
-			} catch (err) {
-				console.error(err);
-				return;
-			}
-
-			for (var i = 0, len = parsed.length; i < len; i++) {
-				var entry = parsed[i];
-				var locale = entry.info.locale;
-				var translations = this._translations[locale];
-				if (!translations) continue;
-				var messages = entry.messages;
-
-				for (key in messages) {
-					delete translations[key];
-				}
-
-				var hasAny = false;
-
-				for (key in translations) {
-					hasAny = true;
-					break;
-				}
-
-				if (!hasAny) {
-					delete this._translations[locale];
-					delete this._availableLangs[getLang(locale)];
-				}
-
-				this.fire('data:remove', locale, messages);
-			}
-		};
-
-		_proto._findFallbackLocale = function _findFallbackLocale(locale, lang) {
-			var result = DEFAULT_LOCALE_FALLBACKS[locale];
-
-			if (result && this._translations[result]) {
-				return result;
-			}
-
-			result = DEFAULT_LOCALE_FALLBACKS[lang];
-
-			if (result && this._translations[result]) {
-				return result;
-			}
-
-			result = this._availableLangs[lang];
-
-			if (result && this._translations[result]) {
-				return result;
-			}
-
-			return DEFAULT_LOCALE;
-		};
-
-		_proto._onAssetAdd = function _onAssetAdd(asset) {
-			asset.on('load', this._onAssetLoad, this);
-			asset.on('change', this._onAssetChange, this);
-			asset.on('remove', this._onAssetRemove, this);
-			asset.on('unload', this._onAssetUnload, this);
-
-			if (asset.resource) {
-				this._onAssetLoad(asset);
-			}
-		};
-
-		_proto._onAssetLoad = function _onAssetLoad(asset) {
-			this.addData(asset.resource);
-		};
-
-		_proto._onAssetChange = function _onAssetChange(asset) {
-			if (asset.resource) {
-				this.addData(asset.resource);
-			}
-		};
-
-		_proto._onAssetRemove = function _onAssetRemove(asset) {
-			asset.off('load', this._onAssetLoad, this);
-			asset.off('change', this._onAssetChange, this);
-			asset.off('remove', this._onAssetRemove, this);
-			asset.off('unload', this._onAssetUnload, this);
-
-			if (asset.resource) {
-				this.removeData(asset.resource);
-			}
-
-			this._app.assets.once('add:' + asset.id, this._onAssetAdd, this);
-		};
-
-		_proto._onAssetUnload = function _onAssetUnload(asset) {
-			if (asset.resource) {
-				this.removeData(asset.resource);
-			}
-		};
-
-		_createClass(I18n, [{
-			key: "locale",
-			get: function get() {
-				return this._locale;
-			},
-			set: function set(value) {
-				if (this._locale === value) {
-					return;
-				}
-
-				var lang = getLang(value);
-
-				if (lang === 'in') {
-					lang = 'id';
-					value = replaceLang(value, lang);
-
-					if (this._locale === value) {
-						return;
-					}
-				}
-
-				var old = this._locale;
-				this._locale = value;
-				this._lang = lang;
-				this._pluralFn = getPluralFn(this._lang);
-				this.fire('set:locale', value, old);
-			}
-		}, {
-			key: "assets",
-			get: function get() {
-				return this._assets;
-			},
-			set: function set(value) {
-				var i;
-				var len;
-				var id;
-				var asset;
-				var index = {};
-
-				for (i = 0, len = value.length; i < len; i++) {
-					id = value[i] instanceof Asset ? value[i].id : value[i];
-					index[id] = true;
-				}
-
-				i = this._assets.length;
-
-				while (i--) {
-					id = this._assets[i];
-
-					if (!index[id]) {
-						this._app.assets.off('add:' + id, this._onAssetAdd, this);
-
-						asset = this._app.assets.get(id);
-
-						if (asset) {
-							this._onAssetRemove(asset);
-						}
-
-						this._assets.splice(i, 1);
-					}
-				}
-
-				for (id in index) {
-					id = parseInt(id, 10);
-					if (this._assets.indexOf(id) !== -1) continue;
-
-					this._assets.push(id);
-
-					asset = this._app.assets.get(id);
-
-					if (!asset) {
-						this._app.assets.once('add:' + id, this._onAssetAdd, this);
-					} else {
-						this._onAssetAdd(asset);
-					}
-				}
-			}
-		}]);
-
-		return I18n;
-	}(EventHandler);
+	}
 
 	var ABSOLUTE_URL = new RegExp('^' + '\\s*' + '(?:' + '(?:' + '[a-z]+[a-z0-9\\-\\+\\.]*' + ':' + ')?' + '//' + '|' + 'data:' + '|blob:' + ')', 'i');
 	var ASSET_ANIMATION = 'animation';
@@ -23462,7 +24041,7 @@
 		};
 
 		_proto.getLocalizedAssetId = function getLocalizedAssetId(locale) {
-			locale = I18n.findAvailableLocale(locale, this._i18n);
+			locale = findAvailableLocale(locale, this._i18n);
 			return this._i18n[locale] || null;
 		};
 
@@ -23638,81 +24217,6 @@
 
 		return Asset;
 	}(EventHandler);
-
-	var AnimBinder = function () {
-		function AnimBinder() {}
-
-		AnimBinder.joinPath = function joinPath(pathSegments, character) {
-			character = character || '.';
-
-			var escape = function escape(string) {
-				return string.replace(/\\/g, '\\\\').replace(new RegExp('\\' + character, 'g'), '\\' + character);
-			};
-
-			return pathSegments.map(escape).join(character);
-		};
-
-		AnimBinder.splitPath = function splitPath(path, character) {
-			character = character || '.';
-			var result = [];
-			var curr = "";
-			var i = 0;
-
-			while (i < path.length) {
-				var c = path[i++];
-
-				if (c === '\\' && i < path.length) {
-					c = path[i++];
-
-					if (c === '\\' || c === character) {
-						curr += c;
-					} else {
-						curr += '\\' + c;
-					}
-				} else if (c === character) {
-					result.push(curr);
-					curr = '';
-				} else {
-					curr += c;
-				}
-			}
-
-			if (curr.length > 0) {
-				result.push(curr);
-			}
-
-			return result;
-		};
-
-		var _proto = AnimBinder.prototype;
-
-		_proto.resolve = function resolve(path) {
-			return null;
-		};
-
-		_proto.unresolve = function unresolve(path) {};
-
-		_proto.update = function update(deltaTime) {};
-
-		return AnimBinder;
-	}();
-
-	var AnimPropertyLocator = function () {
-		function AnimPropertyLocator() {}
-
-		var _proto = AnimPropertyLocator.prototype;
-
-		_proto.encode = function encode(locator) {
-			return AnimBinder.joinPath([AnimBinder.joinPath(locator[0]), locator[1], AnimBinder.joinPath(locator[2])], '/');
-		};
-
-		_proto.decode = function decode(locator) {
-			var locatorSections = AnimBinder.splitPath(locator, '/');
-			return [AnimBinder.splitPath(locatorSections[0]), locatorSections[1], AnimBinder.splitPath(locatorSections[2])];
-		};
-
-		return AnimPropertyLocator;
-	}();
 
 	var isDataURI = function isDataURI(uri) {
 		return /^data:.*,.*$/i.test(uri);
@@ -24474,9 +24978,9 @@
 						options.name = targets.length.toString(10);
 					}
 
-					targets.push(new MorphTarget(device, options));
+					targets.push(new MorphTarget(options));
 				});
-				mesh.morph = new Morph(targets);
+				mesh.morph = new Morph(targets, device);
 
 				if (gltfMesh.hasOwnProperty('weights')) {
 					for (var i = 0; i < gltfMesh.weights.length; ++i) {
@@ -24802,7 +25306,6 @@
 		}
 
 		var quatArrays = [];
-		var propertyLocator = new AnimPropertyLocator();
 		var transformSchema = {
 			'translation': 'localPosition',
 			'rotation': 'localRotation',
@@ -24815,7 +25318,11 @@
 			var target = channel.target;
 			var curve = curves[channel.sampler];
 
-			curve._paths.push(propertyLocator.encode([[nodes[target.node].name], 'graph', [transformSchema[target.path]]]));
+			curve._paths.push(AnimBinder.encode({
+				entityPath: [nodes[target.node].path],
+				component: 'graph',
+				propertyPath: [transformSchema[target.path]]
+			}));
 
 			if (target.path.startsWith('rotation') && curve.interpolation !== INTERPOLATION_CUBIC) {
 				quatArrays.push(curve.output);
@@ -31168,18 +31675,18 @@
 			none: BASIS_FORMAT.cTFRGBA4444
 		};
 		var basisToEngineMapping = {};
-		basisToEngineMapping[BASIS_FORMAT.cTFETC1] = PIXELFORMAT_ETC1;
-		basisToEngineMapping[BASIS_FORMAT.cTFETC2] = PIXELFORMAT_ETC2_RGBA;
-		basisToEngineMapping[BASIS_FORMAT.cTFBC1] = PIXELFORMAT_DXT1;
-		basisToEngineMapping[BASIS_FORMAT.cTFBC3] = PIXELFORMAT_DXT5;
-		basisToEngineMapping[BASIS_FORMAT.cTFPVRTC1_4_RGB] = PIXELFORMAT_PVRTC_4BPP_RGB_1;
-		basisToEngineMapping[BASIS_FORMAT.cTFPVRTC1_4_RGBA] = PIXELFORMAT_PVRTC_4BPP_RGBA_1;
-		basisToEngineMapping[BASIS_FORMAT.cTFASTC_4x4] = PIXELFORMAT_ASTC_4x4;
-		basisToEngineMapping[BASIS_FORMAT.cTFATC_RGB] = PIXELFORMAT_ATC_RGB;
-		basisToEngineMapping[BASIS_FORMAT.cTFATC_RGBA_INTERPOLATED_ALPHA] = PIXELFORMAT_ATC_RGBA;
-		basisToEngineMapping[BASIS_FORMAT.cTFRGBA32] = PIXELFORMAT_R8_G8_B8_A8;
-		basisToEngineMapping[BASIS_FORMAT.cTFRGB565] = PIXELFORMAT_R5_G6_B5;
-		basisToEngineMapping[BASIS_FORMAT.cTFRGBA4444] = PIXELFORMAT_R4_G4_B4_A4;
+		basisToEngineMapping[BASIS_FORMAT.cTFETC1] = 21;
+		basisToEngineMapping[BASIS_FORMAT.cTFETC2] = 23;
+		basisToEngineMapping[BASIS_FORMAT.cTFBC1] = 8;
+		basisToEngineMapping[BASIS_FORMAT.cTFBC3] = 10;
+		basisToEngineMapping[BASIS_FORMAT.cTFPVRTC1_4_RGB] = 26;
+		basisToEngineMapping[BASIS_FORMAT.cTFPVRTC1_4_RGBA] = 27;
+		basisToEngineMapping[BASIS_FORMAT.cTFASTC_4x4] = 28;
+		basisToEngineMapping[BASIS_FORMAT.cTFATC_RGB] = 29;
+		basisToEngineMapping[BASIS_FORMAT.cTFATC_RGBA_INTERPOLATED_ALPHA] = 30;
+		basisToEngineMapping[BASIS_FORMAT.cTFRGBA32] = 7;
+		basisToEngineMapping[BASIS_FORMAT.cTFRGB565] = 3;
+		basisToEngineMapping[BASIS_FORMAT.cTFRGBA4444] = 5;
 		var hasPerformance = typeof performance !== 'undefined';
 
 		var unswizzleGGGR = function unswizzleGGGR(data) {
@@ -31457,7 +31964,7 @@
 	}
 
 	function basisInitialize(basisCode, basisModule, callback) {
-		var code = ["/* basis.js */", basisCode, "/* mappings */", "var PIXELFORMAT_ETC1 = " + PIXELFORMAT_ETC1 + ";", "var PIXELFORMAT_ETC2_RGBA = " + PIXELFORMAT_ETC2_RGBA + ";", "var PIXELFORMAT_DXT1 = " + PIXELFORMAT_DXT1 + ";", "var PIXELFORMAT_DXT5 = " + PIXELFORMAT_DXT5 + ";", "var PIXELFORMAT_PVRTC_4BPP_RGB_1 = " + PIXELFORMAT_PVRTC_4BPP_RGB_1 + ";", "var PIXELFORMAT_PVRTC_4BPP_RGBA_1 = " + PIXELFORMAT_PVRTC_4BPP_RGBA_1 + ";", "var PIXELFORMAT_ASTC_4x4 = " + PIXELFORMAT_ASTC_4x4 + ";", "var PIXELFORMAT_ATC_RGB = " + PIXELFORMAT_ATC_RGB + ";", "var PIXELFORMAT_ATC_RGBA = " + PIXELFORMAT_ATC_RGBA + ";", "var PIXELFORMAT_R8_G8_B8_A8 = " + PIXELFORMAT_R8_G8_B8_A8 + ";", "var PIXELFORMAT_R5_G6_B5 = " + PIXELFORMAT_R5_G6_B5 + ";", "var PIXELFORMAT_R4_G4_B4_A4 = " + PIXELFORMAT_R4_G4_B4_A4 + ";", "", "/* worker */", '(' + BasisWorker.toString() + ')()\n\n'].join('\n');
+		var code = ["/* basis.js */", basisCode, "", "/* worker */", '(' + BasisWorker.toString() + ')()\n\n'].join('\n');
 		var blob = new Blob([code], {
 			type: 'application/javascript'
 		});
@@ -33138,6 +33645,370 @@
 		return ScriptRegistry;
 	}(EventHandler);
 
+	var I18nParser = function () {
+		function I18nParser() {}
+
+		var _proto = I18nParser.prototype;
+
+		_proto._validate = function _validate(data) {
+			if (!data.header) {
+				throw new Error('pc.I18n#addData: Missing "header" field');
+			}
+
+			if (!data.header.version) {
+				throw new Error('pc.I18n#addData: Missing "header.version" field');
+			}
+
+			if (data.header.version !== 1) {
+				throw new Error('pc.I18n#addData: Invalid "header.version" field');
+			}
+
+			if (!data.data) {
+				throw new Error('pc.I18n#addData: Missing "data" field');
+			} else if (!Array.isArray(data.data)) {
+				throw new Error('pc.I18n#addData: "data" field must be an array');
+			}
+
+			for (var i = 0, len = data.data.length; i < len; i++) {
+				var entry = data.data[i];
+
+				if (!entry.info) {
+					throw new Error('pc.I18n#addData: missing "data[' + i + '].info" field');
+				}
+
+				if (!entry.info.locale) {
+					throw new Error('pc.I18n#addData: missing "data[' + i + '].info.locale" field');
+				}
+
+				if (typeof entry.info.locale !== 'string') {
+					throw new Error('pc.I18n#addData: "data[' + i + '].info.locale" must be a string');
+				}
+
+				if (!entry.messages) {
+					throw new Error('pc.I18n#addData: missing "data[' + i + '].messages" field');
+				}
+			}
+		};
+
+		_proto.parse = function parse(data) {
+			return data.data;
+		};
+
+		return I18nParser;
+	}();
+
+	var I18n = function (_EventHandler) {
+		_inheritsLoose(I18n, _EventHandler);
+
+		function I18n(app) {
+			var _this;
+
+			_this = _EventHandler.call(this) || this;
+
+			_this.destroy = function () {
+				this._translations = null;
+				this._availableLangs = null;
+				this._assets = null;
+				this._parser = null;
+				this.off();
+			};
+
+			_this.locale = DEFAULT_LOCALE;
+			_this._translations = {};
+			_this._availableLangs = {};
+			_this._app = app;
+			_this._assets = [];
+			_this._parser = new I18nParser();
+			return _this;
+		}
+
+		I18n.findAvailableLocale = function findAvailableLocale$1(desiredLocale, availableLocales) {
+			return findAvailableLocale(desiredLocale, availableLocales);
+		};
+
+		var _proto = I18n.prototype;
+
+		_proto.getText = function getText(key, locale) {
+			var result = key;
+			var lang;
+
+			if (!locale) {
+				locale = this._locale;
+				lang = this._lang;
+			}
+
+			var translations = this._translations[locale];
+
+			if (!translations) {
+				if (!lang) {
+					lang = getLang(locale);
+				}
+
+				locale = this._findFallbackLocale(locale, lang);
+				translations = this._translations[locale];
+			}
+
+			if (translations && translations.hasOwnProperty(key)) {
+				result = translations[key];
+
+				if (Array.isArray(result)) {
+					result = result[0];
+				}
+
+				if (result === null || result === undefined) {
+					result = key;
+				}
+			}
+
+			return result;
+		};
+
+		_proto.getPluralText = function getPluralText(key, n, locale) {
+			var result = key;
+			var pluralFn;
+			var lang;
+
+			if (!locale) {
+				locale = this._locale;
+				lang = this._lang;
+				pluralFn = this._pluralFn;
+			} else {
+				lang = getLang(locale);
+				pluralFn = getPluralFn(lang);
+			}
+
+			var translations = this._translations[locale];
+
+			if (!translations) {
+				locale = this._findFallbackLocale(locale, lang);
+				lang = getLang(locale);
+				pluralFn = getPluralFn(lang);
+				translations = this._translations[locale];
+			}
+
+			if (translations && translations[key] && pluralFn) {
+				var index = pluralFn(n);
+				result = translations[key][index];
+
+				if (result === null || result === undefined) {
+					result = key;
+				}
+			}
+
+			return result;
+		};
+
+		_proto.addData = function addData(data) {
+			var parsed;
+
+			try {
+				parsed = this._parser.parse(data);
+			} catch (err) {
+				console.error(err);
+				return;
+			}
+
+			for (var i = 0, len = parsed.length; i < len; i++) {
+				var entry = parsed[i];
+				var locale = entry.info.locale;
+				var messages = entry.messages;
+
+				if (!this._translations[locale]) {
+					this._translations[locale] = {};
+					var lang = getLang(locale);
+
+					if (!this._availableLangs[lang]) {
+						this._availableLangs[lang] = locale;
+					}
+				}
+
+				Object.assign(this._translations[locale], messages);
+				this.fire('data:add', locale, messages);
+			}
+		};
+
+		_proto.removeData = function removeData(data) {
+			var parsed;
+			var key;
+
+			try {
+				parsed = this._parser.parse(data);
+			} catch (err) {
+				console.error(err);
+				return;
+			}
+
+			for (var i = 0, len = parsed.length; i < len; i++) {
+				var entry = parsed[i];
+				var locale = entry.info.locale;
+				var translations = this._translations[locale];
+				if (!translations) continue;
+				var messages = entry.messages;
+
+				for (key in messages) {
+					delete translations[key];
+				}
+
+				var hasAny = false;
+
+				for (key in translations) {
+					hasAny = true;
+					break;
+				}
+
+				if (!hasAny) {
+					delete this._translations[locale];
+					delete this._availableLangs[getLang(locale)];
+				}
+
+				this.fire('data:remove', locale, messages);
+			}
+		};
+
+		_proto._findFallbackLocale = function _findFallbackLocale(locale, lang) {
+			var result = DEFAULT_LOCALE_FALLBACKS[locale];
+
+			if (result && this._translations[result]) {
+				return result;
+			}
+
+			result = DEFAULT_LOCALE_FALLBACKS[lang];
+
+			if (result && this._translations[result]) {
+				return result;
+			}
+
+			result = this._availableLangs[lang];
+
+			if (result && this._translations[result]) {
+				return result;
+			}
+
+			return DEFAULT_LOCALE;
+		};
+
+		_proto._onAssetAdd = function _onAssetAdd(asset) {
+			asset.on('load', this._onAssetLoad, this);
+			asset.on('change', this._onAssetChange, this);
+			asset.on('remove', this._onAssetRemove, this);
+			asset.on('unload', this._onAssetUnload, this);
+
+			if (asset.resource) {
+				this._onAssetLoad(asset);
+			}
+		};
+
+		_proto._onAssetLoad = function _onAssetLoad(asset) {
+			this.addData(asset.resource);
+		};
+
+		_proto._onAssetChange = function _onAssetChange(asset) {
+			if (asset.resource) {
+				this.addData(asset.resource);
+			}
+		};
+
+		_proto._onAssetRemove = function _onAssetRemove(asset) {
+			asset.off('load', this._onAssetLoad, this);
+			asset.off('change', this._onAssetChange, this);
+			asset.off('remove', this._onAssetRemove, this);
+			asset.off('unload', this._onAssetUnload, this);
+
+			if (asset.resource) {
+				this.removeData(asset.resource);
+			}
+
+			this._app.assets.once('add:' + asset.id, this._onAssetAdd, this);
+		};
+
+		_proto._onAssetUnload = function _onAssetUnload(asset) {
+			if (asset.resource) {
+				this.removeData(asset.resource);
+			}
+		};
+
+		_createClass(I18n, [{
+			key: "locale",
+			get: function get() {
+				return this._locale;
+			},
+			set: function set(value) {
+				if (this._locale === value) {
+					return;
+				}
+
+				var lang = getLang(value);
+
+				if (lang === 'in') {
+					lang = 'id';
+					value = replaceLang(value, lang);
+
+					if (this._locale === value) {
+						return;
+					}
+				}
+
+				var old = this._locale;
+				this._locale = value;
+				this._lang = lang;
+				this._pluralFn = getPluralFn(this._lang);
+				this.fire('set:locale', value, old);
+			}
+		}, {
+			key: "assets",
+			get: function get() {
+				return this._assets;
+			},
+			set: function set(value) {
+				var i;
+				var len;
+				var id;
+				var asset;
+				var index = {};
+
+				for (i = 0, len = value.length; i < len; i++) {
+					id = value[i] instanceof Asset ? value[i].id : value[i];
+					index[id] = true;
+				}
+
+				i = this._assets.length;
+
+				while (i--) {
+					id = this._assets[i];
+
+					if (!index[id]) {
+						this._app.assets.off('add:' + id, this._onAssetAdd, this);
+
+						asset = this._app.assets.get(id);
+
+						if (asset) {
+							this._onAssetRemove(asset);
+						}
+
+						this._assets.splice(i, 1);
+					}
+				}
+
+				for (id in index) {
+					id = parseInt(id, 10);
+					if (this._assets.indexOf(id) !== -1) continue;
+
+					this._assets.push(id);
+
+					asset = this._app.assets.get(id);
+
+					if (!asset) {
+						this._app.assets.once('add:' + id, this._onAssetAdd, this);
+					} else {
+						this._onAssetAdd(asset);
+					}
+				}
+			}
+		}]);
+
+		return I18n;
+	}(EventHandler);
+
 	var FILLMODE_NONE = 'NONE';
 	var FILLMODE_FILL_WINDOW = 'FILL_WINDOW';
 	var FILLMODE_KEEP_ASPECT = 'KEEP_ASPECT';
@@ -33381,6 +34252,8 @@
 		function VrManager(app) {
 			var _this;
 
+			_this = _EventHandler.call(this) || this;
+
 			var self = _assertThisInitialized(_this);
 
 			_this.isSupported = VrManager.isSupported;
@@ -33405,7 +34278,7 @@
 				}
 			});
 
-			return _assertThisInitialized(_this);
+			return _this;
 		}
 
 		var _proto = VrManager.prototype;
@@ -36396,15 +37269,12 @@
 
 	var DefaultAnimBinder = function () {
 		function DefaultAnimBinder(graph) {
-			this.propertyLocator = new AnimPropertyLocator();
+			this.graph = graph;
 			if (!graph) return;
 			var nodes = {};
 
 			var flatten = function flatten(node) {
-				nodes[node.name] = {
-					node: node,
-					count: 0
-				};
+				nodes[node.name] = node;
 
 				for (var i = 0; i < node.children.length; ++i) {
 					flatten(node.children[i]);
@@ -36412,6 +37282,7 @@
 			};
 
 			flatten(graph);
+			this.nodes = nodes;
 
 			var findMeshInstances = function findMeshInstances(node) {
 				var object = node;
@@ -36433,7 +37304,7 @@
 				return meshInstances;
 			};
 
-			this.nodes = nodes;
+			this.nodeCounts = {};
 			this.activeNodes = [];
 			this.handlers = {
 				'localPosition': function localPosition(node) {
@@ -36524,40 +37395,48 @@
 		var _proto = DefaultAnimBinder.prototype;
 
 		_proto.resolve = function resolve(path) {
-			var pathSections = this.propertyLocator.decode(path);
-			var node = this.nodes[pathSections[0][0] || ""];
+			var propertyLocation = AnimBinder.decode(path);
+			var node = this.graph.root.findByPath(this.graph.path + "/" + (propertyLocation.entityPath[0] || ""));
+
+			if (!node) {
+				var entityPath = AnimBinder.splitPath(propertyLocation.entityPath[0], '/');
+				node = this.nodes[entityPath[entityPath.length - 1] || ""];
+			}
 
 			if (!node) {
 				return null;
 			}
 
-			var handler = this.handlers[pathSections[2][0]];
+			var handler = this.handlers[propertyLocation.propertyPath[0]];
 
 			if (!handler) {
 				return null;
 			}
 
-			var target = handler(node.node);
+			var target = handler(node);
 
 			if (!target) {
 				return null;
 			}
 
-			if (node.count === 0) {
-				this.activeNodes.push(node.node);
+			if (!this.nodeCounts[node.path]) {
+				this.activeNodes.push(node);
+				this.nodeCounts[node.path] = 1;
+			} else {
+				this.nodeCounts[node.path]++;
 			}
 
-			node.count++;
 			return target;
 		};
 
 		_proto.unresolve = function unresolve(path) {
-			var pathSections = this.propertyLocator.decode(path);
-			if (pathSections[1] !== 'graph') return;
-			var node = this.nodes[pathSections[0][0]];
-			node.count--;
+			var propertyLocation = AnimBinder.decode(path);
+			if (propertyLocation.component !== 'graph') return;
+			var entityPath = AnimBinder.splitPath(propertyLocation.entityPath[0], '/');
+			var node = this.nodes[entityPath[entityPath.length - 1] || ""];
+			this.nodeCounts[node.path]--;
 
-			if (node.count === 0) {
+			if (this.nodeCounts[node.path] === 0) {
 				var activeNodes = this.activeNodes;
 				var i = activeNodes.indexOf(node.node);
 				var len = activeNodes.length;
@@ -37462,6 +38341,74 @@
 
 	Component._buildAccessors(AnimationComponent.prototype, _schema);
 
+	var AnimNode = function () {
+		function AnimNode(state, parent, name, point, speed) {
+			if (speed === void 0) {
+				speed = 1;
+			}
+
+			this._state = state;
+			this._parent = parent;
+			this._name = name;
+			this._point = Array.isArray(point) ? new pc.Vec2(point) : point;
+			this._speed = speed;
+			this._weight = 1.0;
+			this._animTrack = null;
+		}
+
+		_createClass(AnimNode, [{
+			key: "parent",
+			get: function get() {
+				return this._parent;
+			}
+		}, {
+			key: "name",
+			get: function get() {
+				return this._name;
+			}
+		}, {
+			key: "path",
+			get: function get() {
+				return this._parent ? this._parent.path + '.' + this._name : this._name;
+			}
+		}, {
+			key: "point",
+			get: function get() {
+				return this._point;
+			}
+		}, {
+			key: "weight",
+			get: function get() {
+				return this._parent ? this._parent.weight * this._weight : this._weight;
+			},
+			set: function set(value) {
+				this._weight = value;
+			}
+		}, {
+			key: "normalizedWeight",
+			get: function get() {
+				var totalWeight = this._state.totalWeight;
+				if (totalWeight === 0.0) return 0.0;
+				return this.weight / totalWeight;
+			}
+		}, {
+			key: "speed",
+			get: function get() {
+				return this._speed;
+			}
+		}, {
+			key: "animTrack",
+			get: function get() {
+				return this._animTrack;
+			},
+			set: function set(value) {
+				this._animTrack = value;
+			}
+		}]);
+
+		return AnimNode;
+	}();
+
 	var ANIM_INTERRUPTION_NONE = 'NONE';
 	var ANIM_INTERRUPTION_PREV = 'PREV_STATE';
 	var ANIM_INTERRUPTION_NEXT = 'NEXT_STATE';
@@ -37484,6 +38431,1003 @@
 	var ANIM_STATE_START = 'START';
 	var ANIM_STATE_END = 'END';
 	var ANIM_STATE_ANY = 'ANY';
+
+	function between(num, a, b, inclusive) {
+		var min = Math.min(a, b),
+				max = Math.max(a, b);
+		return inclusive ? num >= min && num <= max : num > min && num < max;
+	}
+
+	function getAngleRad(a, b) {
+		return Math.atan2(a.x * b.y - a.y * b.x, a.x * b.x + a.y * b.y);
+	}
+
+	function clamp(num, min, max) {
+		return num <= min ? min : num >= max ? max : num;
+	}
+
+	var AnimBlendTree = function (_AnimNode) {
+		_inheritsLoose(AnimBlendTree, _AnimNode);
+
+		function AnimBlendTree(state, parent, name, point, type, parameters, children, findParameter) {
+			var _this;
+
+			_this = _AnimNode.call(this, state, parent, name, point) || this;
+			_this._type = type;
+			_this._parameters = parameters;
+			_this._parameterValues = null;
+			_this._children = [];
+			_this._findParameter = findParameter;
+
+			for (var i = 0; i < children.length; i++) {
+				var child = children[i];
+
+				if (child.children) {
+					_this._children.push(new AnimBlendTree(state, _assertThisInitialized(_this), child.name, child.point, child.type, child.parameter ? [child.parameter] : child.parameters, child.children, findParameter));
+				} else {
+					_this._children.push(new AnimNode(state, _assertThisInitialized(_this), child.name, child.point, child.speed));
+				}
+			}
+
+			return _this;
+		}
+
+		var _proto = AnimBlendTree.prototype;
+
+		_proto.getChild = function getChild(name) {
+			for (var i = 0; i < this._children.length; i++) {
+				if (this._children[i].name === name) return this._children[i];
+			}
+		};
+
+		_proto.calculateWeights = function calculateWeights() {
+			var i, j, p, pi, pj, pip, pipj, parameterValues, minj, result, weightSum;
+
+			switch (this._type) {
+				case ANIM_BLEND_1D:
+					{
+						var parameterValue = this._findParameter(this._parameters[0]).value;
+
+						if (this._parameterValues && this._parameterValues[0] === parameterValue) {
+							return;
+						}
+
+						this._parameterValues = [parameterValue];
+						this._children[0].weight = 0.0;
+
+						for (i = 0; i < this._children.length - 1; i++) {
+							var child1 = this._children[i];
+							var child2 = this._children[i + 1];
+
+							if (between(parameterValue, child1.point, child2.point, true)) {
+								var child2Distance = Math.abs(child1.point - child2.point);
+								var parameterDistance = Math.abs(child1.point - parameterValue);
+								var weight = (child2Distance - parameterDistance) / child2Distance;
+								child1.weight = weight;
+								child2.weight = 1.0 - weight;
+							} else {
+								child2.weight = 0.0;
+							}
+						}
+
+						break;
+					}
+
+				case ANIM_BLEND_2D_CARTESIAN:
+					{
+						parameterValues = this._parameters.map(function (param) {
+							return this._findParameter(param).value;
+						}.bind(this));
+
+						if (this._parameterValues && JSON.stringify(this._parameterValues) === JSON.stringify(parameterValues)) {
+							return;
+						}
+
+						this._parameterValues = parameterValues;
+						p = new pc.Vec2(this._parameterValues);
+						weightSum = 0.0;
+
+						for (i = 0; i < this._children.length; i++) {
+							pi = this._children[i].point.clone();
+							minj = Number.MAX_VALUE;
+
+							for (j = 0; j < this._children.length; j++) {
+								if (i === j) continue;
+								pj = this._children[j].point.clone();
+								pipj = pj.clone().sub(pi);
+								pip = p.clone().sub(pi);
+								result = clamp(1.0 - pip.clone().dot(pipj) / pipj.lengthSq(), 0.0, 1.0);
+								if (result < minj) minj = result;
+							}
+
+							this._children[i].weight = minj;
+							weightSum += minj;
+						}
+
+						for (i = 0; i < this._children.length; i++) {
+							this._children[i].weight = this._children[i]._weight / weightSum;
+						}
+
+						break;
+					}
+
+				case ANIM_BLEND_2D_DIRECTIONAL:
+					{
+						parameterValues = this._parameters.map(function (param) {
+							return this._findParameter(param).value;
+						}.bind(this));
+
+						if (this._parameterValues && JSON.stringify(this._parameterValues) === JSON.stringify(parameterValues)) {
+							return;
+						}
+
+						this._parameterValues = parameterValues;
+						p = new pc.Vec2(this._parameterValues);
+						weightSum = 0.0;
+
+						for (i = 0; i < this._children.length; i++) {
+							pi = this._children[i].point.clone();
+							minj = Number.MAX_VALUE;
+
+							for (j = 0; j < this._children.length; j++) {
+								if (i === j) continue;
+								pj = this._children[j].point.clone();
+								var pipAngle = getAngleRad(pi, p);
+								var pipjAngle = getAngleRad(pi, pj);
+								pipj = new pc.Vec2((pj.length() - pi.length()) / ((pj.length() + pi.length()) / 2), pipjAngle * 2.0);
+								pip = new pc.Vec2((p.length() - pi.length()) / ((pj.length() + pi.length()) / 2), pipAngle * 2.0);
+								result = clamp(1.0 - Math.abs(pip.clone().dot(pipj) / pipj.lengthSq()), 0.0, 1.0);
+								if (result < minj) minj = result;
+							}
+
+							this._children[i].weight = minj;
+							weightSum += minj;
+						}
+
+						for (i = 0; i < this._children.length; i++) {
+							this._children[i].weight = this._children[i]._weight / weightSum;
+						}
+
+						break;
+					}
+
+				case ANIM_BLEND_DIRECT:
+					{
+						parameterValues = this._parameters.map(function (param) {
+							return this._findParameter(param).value;
+						}.bind(this));
+
+						if (this._parameterValues === parameterValues) {
+							return;
+						}
+
+						this._parameterValues = parameterValues;
+						weightSum = 0.0;
+
+						for (i = 0; i < this._children.length; i++) {
+							weightSum += clamp(this._parameterValues[i], 0.0, Number.MAX_VALUE);
+						}
+
+						for (i = 0; i < this._children.length; i++) {
+							this._children[i].weight = clamp(this._parameterValues[i], 0.0, Number.MAX_VALUE) / weightSum;
+						}
+
+						break;
+					}
+			}
+		};
+
+		_proto.getNodeCount = function getNodeCount() {
+			var count = 0;
+
+			for (var i = 0; i < this._children.length; i++) {
+				var child = this._children[i];
+
+				if (child.constructor === AnimBlendTree) {
+					count += this._children[i].getNodeCount();
+				} else {
+					count++;
+				}
+			}
+
+			return count;
+		};
+
+		_createClass(AnimBlendTree, [{
+			key: "parent",
+			get: function get() {
+				return this._parent;
+			}
+		}, {
+			key: "name",
+			get: function get() {
+				return this._name;
+			}
+		}, {
+			key: "point",
+			get: function get() {
+				return this._point;
+			}
+		}, {
+			key: "weight",
+			get: function get() {
+				this.calculateWeights();
+				return this._parent ? this._parent.weight * this._weight : this._weight;
+			},
+			set: function set(value) {
+				this._weight = value;
+			}
+		}, {
+			key: "speed",
+			get: function get() {
+				return this._speed;
+			}
+		}]);
+
+		return AnimBlendTree;
+	}(AnimNode);
+
+	var AnimState = function () {
+		function AnimState(controller, name, speed, loop, blendTree) {
+			this._controller = controller;
+			this._name = name;
+			this._animations = {};
+			this._animationList = [];
+			this._speed = speed || 1.0;
+			this._loop = loop === undefined ? true : loop;
+
+			var findParameter = this._controller.findParameter.bind(this._controller);
+
+			if (blendTree) {
+				this._blendTree = new AnimBlendTree(this, null, name, 1.0, blendTree.type, blendTree.parameter ? [blendTree.parameter] : blendTree.parameters, blendTree.children, findParameter);
+			} else {
+				this._blendTree = new AnimNode(this, null, name, 1.0, speed);
+			}
+		}
+
+		var _proto = AnimState.prototype;
+
+		_proto._getNodeFromPath = function _getNodeFromPath(path) {
+			var currNode = this._blendTree;
+
+			for (var i = 1; i < path.length; i++) {
+				currNode = currNode.getChild(path[i]);
+			}
+
+			return currNode;
+		};
+
+		_proto.addAnimation = function addAnimation(path, animTrack) {
+			var indexOfAnimation = this._animationList.findIndex(function (animation) {
+				return animation.path === path;
+			});
+
+			if (indexOfAnimation >= 0) {
+				this._animationList[indexOfAnimation].animTrack = animTrack;
+			} else {
+				var node = this._getNodeFromPath(path);
+
+				node.animTrack = animTrack;
+
+				this._animationList.push(node);
+			}
+		};
+
+		_createClass(AnimState, [{
+			key: "name",
+			get: function get() {
+				return this._name;
+			}
+		}, {
+			key: "animations",
+			get: function get() {
+				return this._animationList;
+			},
+			set: function set(value) {
+				this._animationList = value;
+			}
+		}, {
+			key: "speed",
+			get: function get() {
+				return this._speed;
+			}
+		}, {
+			key: "loop",
+			get: function get() {
+				return this._loop;
+			}
+		}, {
+			key: "nodeCount",
+			get: function get() {
+				if (!this._blendTree || !(this._blendTree.constructor === AnimBlendTree)) return 1;
+				return this._blendTree.getNodeCount();
+			}
+		}, {
+			key: "playable",
+			get: function get() {
+				return this.name === ANIM_STATE_START || this.name === ANIM_STATE_END || this.name === ANIM_STATE_ANY || this.animations.length === this.nodeCount;
+			}
+		}, {
+			key: "looping",
+			get: function get() {
+				if (this.animations.length > 0) {
+					var trackClipName = this.name + '.' + this.animations[0].animTrack.name;
+
+					var trackClip = this._controller.animEvaluator.findClip(trackClipName);
+
+					if (trackClip) {
+						return trackClip.loop;
+					}
+				}
+
+				return false;
+			}
+		}, {
+			key: "totalWeight",
+			get: function get() {
+				var sum = 0;
+				var i;
+
+				for (i = 0; i < this.animations.length; i++) {
+					sum += this.animations[i].weight;
+				}
+
+				return sum;
+			}
+		}, {
+			key: "timelineDuration",
+			get: function get() {
+				var duration = 0;
+				var i;
+
+				for (i = 0; i < this.animations.length; i++) {
+					var animation = this.animations[i];
+
+					if (animation.animTrack.duration > duration) {
+						duration = animation.animTrack.duration;
+					}
+				}
+
+				return duration;
+			}
+		}]);
+
+		return AnimState;
+	}();
+
+	var AnimTransition = function () {
+		function AnimTransition(controller, from, to, time, priority, conditions, exitTime, transitionOffset, interruptionSource) {
+			if (interruptionSource === void 0) {
+				interruptionSource = ANIM_INTERRUPTION_NONE;
+			}
+
+			this._controller = controller;
+			this._from = from;
+			this._to = to;
+			this._time = time;
+			this._priority = priority;
+			this._conditions = conditions || [];
+			this._exitTime = exitTime || null;
+			this._transitionOffset = transitionOffset || null;
+			this._interruptionSource = interruptionSource;
+		}
+
+		_createClass(AnimTransition, [{
+			key: "from",
+			get: function get() {
+				return this._from;
+			}
+		}, {
+			key: "to",
+			get: function get() {
+				return this._to;
+			}
+		}, {
+			key: "time",
+			get: function get() {
+				return this._time;
+			}
+		}, {
+			key: "priority",
+			get: function get() {
+				return this._priority;
+			}
+		}, {
+			key: "conditions",
+			get: function get() {
+				return this._conditions;
+			}
+		}, {
+			key: "exitTime",
+			get: function get() {
+				return this._exitTime;
+			}
+		}, {
+			key: "transitionOffset",
+			get: function get() {
+				return this._transitionOffset;
+			}
+		}, {
+			key: "interruptionSource",
+			get: function get() {
+				return this._interruptionSource;
+			}
+		}, {
+			key: "hasExitTime",
+			get: function get() {
+				return !!this.exitTime;
+			}
+		}, {
+			key: "hasConditionsMet",
+			get: function get() {
+				var conditionsMet = true;
+				var i;
+
+				for (i = 0; i < this.conditions.length; i++) {
+					var condition = this.conditions[i];
+
+					var parameter = this._controller.findParameter(condition.parameterName);
+
+					switch (condition.predicate) {
+						case ANIM_GREATER_THAN:
+							conditionsMet = conditionsMet && parameter.value > condition.value;
+							break;
+
+						case ANIM_LESS_THAN:
+							conditionsMet = conditionsMet && parameter.value < condition.value;
+							break;
+
+						case ANIM_GREATER_THAN_EQUAL_TO:
+							conditionsMet = conditionsMet && parameter.value >= condition.value;
+							break;
+
+						case ANIM_LESS_THAN_EQUAL_TO:
+							conditionsMet = conditionsMet && parameter.value <= condition.value;
+							break;
+
+						case ANIM_EQUAL_TO:
+							conditionsMet = conditionsMet && parameter.value === condition.value;
+							break;
+
+						case ANIM_NOT_EQUAL_TO:
+							conditionsMet = conditionsMet && parameter.value !== condition.value;
+							break;
+					}
+
+					if (!conditionsMet) return conditionsMet;
+				}
+
+				return conditionsMet;
+			}
+		}]);
+
+		return AnimTransition;
+	}();
+
+	var AnimController = function () {
+		function AnimController(animEvaluator, states, transitions, parameters, activate) {
+			this._animEvaluator = animEvaluator;
+			this._states = {};
+			this._stateNames = [];
+			var i;
+
+			for (i = 0; i < states.length; i++) {
+				this._states[states[i].name] = new AnimState(this, states[i].name, states[i].speed, states[i].loop, states[i].blendTree);
+
+				this._stateNames.push(states[i].name);
+			}
+
+			this._transitions = transitions.map(function (transition) {
+				return new AnimTransition(this, transition.from, transition.to, transition.time, transition.priority, transition.conditions, transition.exitTime, transition.transitionOffset, transition.interruptionSource);
+			}.bind(this));
+			this._findTransitionsFromStateCache = {};
+			this._findTransitionsBetweenStatesCache = {};
+			this._parameters = parameters;
+			this._previousStateName = null;
+			this._activeStateName = ANIM_STATE_START;
+			this._playing = false;
+			this._activate = activate;
+			this._currTransitionTime = 1.0;
+			this._totalTransitionTime = 1.0;
+			this._isTransitioning = false;
+			this._transitionInterruptionSource = ANIM_INTERRUPTION_NONE;
+			this._transitionPreviousStates = [];
+			this._timeInState = 0;
+			this._timeInStateBefore = 0;
+		}
+
+		var _proto = AnimController.prototype;
+
+		_proto._findState = function _findState(stateName) {
+			return this._states[stateName];
+		};
+
+		_proto._getActiveStateProgressForTime = function _getActiveStateProgressForTime(time) {
+			if (this.activeStateName === ANIM_STATE_START || this.activeStateName === ANIM_STATE_END || this.activeStateName === ANIM_STATE_ANY) return 1.0;
+
+			var activeClip = this._animEvaluator.findClip(this.activeStateAnimations[0].name);
+
+			if (activeClip) {
+				return time / activeClip.track.duration;
+			}
+
+			return null;
+		};
+
+		_proto._findTransitionsFromState = function _findTransitionsFromState(stateName) {
+			var transitions = this._findTransitionsFromStateCache[stateName];
+
+			if (!transitions) {
+				transitions = this._transitions.filter(function (transition) {
+					return transition.from === stateName;
+				});
+				transitions.sort(function (a, b) {
+					return a.priority < b.priority;
+				});
+				this._findTransitionsFromStateCache[stateName] = transitions;
+			}
+
+			return transitions;
+		};
+
+		_proto._findTransitionsBetweenStates = function _findTransitionsBetweenStates(sourceStateName, destinationStateName) {
+			var transitions = this._findTransitionsBetweenStatesCache[sourceStateName + '->' + destinationStateName];
+
+			if (!transitions) {
+				transitions = this._transitions.filter(function (transition) {
+					return transition.from === sourceStateName && transition.to === destinationStateName;
+				});
+				transitions.sort(function (a, b) {
+					return a.priority < b.priority;
+				});
+				this._findTransitionsBetweenStatesCache[sourceStateName + '->' + destinationStateName] = transitions;
+			}
+
+			return transitions;
+		};
+
+		_proto._findTransition = function _findTransition(from, to) {
+			var transitions = [];
+
+			if (from && to) {
+				transitions.concat(this._findTransitionsBetweenStates(from, to));
+			} else {
+				if (!this._isTransitioning) {
+					transitions = transitions.concat(this._findTransitionsFromState(this._activeStateName));
+					transitions = transitions.concat(this._findTransitionsFromState(ANIM_STATE_ANY));
+				} else {
+					switch (this._transitionInterruptionSource) {
+						case ANIM_INTERRUPTION_PREV:
+							transitions = transitions.concat(this._findTransitionsFromState(this._previousStateName));
+							transitions = transitions.concat(this._findTransitionsFromState(ANIM_STATE_ANY));
+							break;
+
+						case ANIM_INTERRUPTION_NEXT:
+							transitions = transitions.concat(this._findTransitionsFromState(this._activeStateName));
+							transitions = transitions.concat(this._findTransitionsFromState(ANIM_STATE_ANY));
+							break;
+
+						case ANIM_INTERRUPTION_PREV_NEXT:
+							transitions = transitions.concat(this._findTransitionsFromState(this._previousStateName));
+							transitions = transitions.concat(this._findTransitionsFromState(this._activeStateName));
+							transitions = transitions.concat(this._findTransitionsFromState(ANIM_STATE_ANY));
+							break;
+
+						case ANIM_INTERRUPTION_NEXT_PREV:
+							transitions = transitions.concat(this._findTransitionsFromState(this._activeStateName));
+							transitions = transitions.concat(this._findTransitionsFromState(this._previousStateName));
+							transitions = transitions.concat(this._findTransitionsFromState(ANIM_STATE_ANY));
+							break;
+					}
+				}
+			}
+
+			transitions = transitions.filter(function (transition) {
+				if (transition.to === this.activeStateName) {
+					return false;
+				}
+
+				if (transition.hasExitTime) {
+					var progressBefore = this._getActiveStateProgressForTime(this._timeInStateBefore);
+
+					var progress = this._getActiveStateProgressForTime(this._timeInState);
+
+					if (transition.exitTime < 1.0 && this.activeState.looping) {
+						progressBefore -= Math.floor(progressBefore);
+						progress -= Math.floor(progress);
+					}
+
+					if (!(transition.exitTime > progressBefore && transition.exitTime <= progress)) {
+						return null;
+					}
+				}
+
+				return transition.hasConditionsMet;
+			}.bind(this));
+
+			if (transitions.length > 0) {
+				return transitions[0];
+			}
+
+			return null;
+		};
+
+		_proto._updateStateFromTransition = function _updateStateFromTransition(transition) {
+			var i;
+			var j;
+			var state;
+			var animation;
+			var clip;
+			this.previousState = transition.from;
+			this.activeState = transition.to;
+
+			for (i = 0; i < transition.conditions.length; i++) {
+				var condition = transition.conditions[i];
+				var parameter = this.findParameter(condition.parameterName);
+
+				if (parameter.type === ANIM_PARAMETER_TRIGGER) {
+					parameter.value = false;
+				}
+			}
+
+			if (this.previousState) {
+				if (!this._isTransitioning) {
+					this._transitionPreviousStates = [];
+				}
+
+				this._transitionPreviousStates.push({
+					name: this._previousStateName,
+					weight: 1
+				});
+
+				var interpolatedTime = Math.min(this._currTransitionTime / this._totalTransitionTime, 1.0);
+
+				for (i = 0; i < this._transitionPreviousStates.length; i++) {
+					if (!this._isTransitioning) {
+						this._transitionPreviousStates[i].weight = 1.0;
+					} else if (i !== this._transitionPreviousStates.length - 1) {
+						this._transitionPreviousStates[i].weight *= 1.0 - interpolatedTime;
+					} else {
+						this._transitionPreviousStates[i].weight = interpolatedTime;
+					}
+
+					state = this._findState(this._transitionPreviousStates[i].name);
+
+					for (j = 0; j < state.animations.length; j++) {
+						animation = state.animations[j];
+						clip = this._animEvaluator.findClip(animation.name + '.previous.' + i);
+
+						if (!clip) {
+							clip = this._animEvaluator.findClip(animation.name);
+							clip.name = animation.name + '.previous.' + i;
+						}
+
+						if (i !== this._transitionPreviousStates.length - 1) {
+							clip.pause();
+						}
+					}
+				}
+			}
+
+			this._isTransitioning = true;
+			this._totalTransitionTime = transition.time;
+			this._currTransitionTime = 0;
+			this._transitionInterruptionSource = transition.interruptionSource;
+			var hasTransitionOffset = transition.transitionOffset && transition.transitionOffset > 0.0 && transition.transitionOffset < 1.0;
+			var activeState = this.activeState;
+
+			for (i = 0; i < activeState.animations.length; i++) {
+				clip = this._animEvaluator.findClip(activeState.animations[i].name);
+
+				if (!clip) {
+					var speed = Number.isFinite(activeState.animations[i].speed) ? activeState.animations[i].speed : activeState.speed;
+					clip = new AnimClip(activeState.animations[i].animTrack, 0, speed, true, activeState.loop);
+					clip.name = activeState.animations[i].name;
+
+					this._animEvaluator.addClip(clip);
+				} else {
+					clip.reset();
+				}
+
+				if (transition.time > 0) {
+					clip.blendWeight = 0.0;
+				} else {
+					clip.blendWeight = activeState.animations[i].normalizedWeight;
+				}
+
+				clip.play();
+
+				if (hasTransitionOffset) {
+					clip.time = activeState.timelineDuration * transition.transitionOffset;
+				} else {
+					var startTime = activeState.speed >= 0 ? 0 : this.activeStateDuration;
+					clip.time = startTime;
+				}
+			}
+
+			var timeInState = 0;
+			var timeInStateBefore = 0;
+
+			if (hasTransitionOffset) {
+				var offsetTime = activeState.timelineDuration * transition.transitionOffset;
+				timeInState = offsetTime;
+				timeInStateBefore = offsetTime;
+			}
+
+			this._timeInState = timeInState;
+			this._timeInStateBefore = timeInStateBefore;
+		};
+
+		_proto._transitionToState = function _transitionToState(newStateName) {
+			if (newStateName === this._activeStateName) {
+				return;
+			}
+
+			if (!this._findState(newStateName)) {
+				return;
+			}
+
+			var transition = this._findTransition(this._activeStateName, newStateName);
+
+			if (!transition) {
+				this._animEvaluator.removeClips();
+
+				transition = new AnimTransition(this, null, newStateName, 0, 0);
+			}
+
+			this._updateStateFromTransition(transition);
+		};
+
+		_proto.assignAnimation = function assignAnimation(pathString, animTrack) {
+			var path = pathString.split('.');
+
+			var state = this._findState(path[0]);
+
+			if (!state) {
+				return;
+			}
+
+			state.addAnimation(path, animTrack);
+
+			if (!this._playing && this._activate && this.playable) {
+				this.play();
+			}
+		};
+
+		_proto.removeNodeAnimations = function removeNodeAnimations(nodeName) {
+			var state = this._findState(nodeName);
+
+			if (!state) {
+				return;
+			}
+
+			state.animations = [];
+		};
+
+		_proto.play = function play(stateName) {
+			if (stateName) {
+				this._transitionToState(stateName);
+			}
+
+			this._playing = true;
+		};
+
+		_proto.pause = function pause() {
+			this._playing = false;
+		};
+
+		_proto.reset = function reset() {
+			this._previousStateName = null;
+			this._activeStateName = ANIM_STATE_START;
+			this._playing = false;
+			this._currTransitionTime = 1.0;
+			this._totalTransitionTime = 1.0;
+			this._isTransitioning = false;
+			this._timeInState = 0;
+			this._timeInStateBefore = 0;
+
+			this._animEvaluator.removeClips();
+		};
+
+		_proto.update = function update(dt) {
+			if (!this._playing) {
+				return;
+			}
+
+			var i;
+			var j;
+			var state;
+			var animation;
+			var clip;
+			this._timeInStateBefore = this._timeInState;
+			this._timeInState += dt;
+
+			var transition = this._findTransition(this._activeStateName);
+
+			if (transition) this._updateStateFromTransition(transition);
+
+			if (this._isTransitioning) {
+				this._currTransitionTime += dt;
+
+				if (this._currTransitionTime <= this._totalTransitionTime) {
+					var interpolatedTime = this._currTransitionTime / this._totalTransitionTime;
+
+					for (i = 0; i < this._transitionPreviousStates.length; i++) {
+						state = this._findState(this._transitionPreviousStates[i].name);
+						var stateWeight = this._transitionPreviousStates[i].weight;
+
+						for (j = 0; j < state.animations.length; j++) {
+							animation = state.animations[j];
+							clip = this._animEvaluator.findClip(animation.name + '.previous.' + i);
+
+							if (clip) {
+								clip.blendWeight = (1.0 - interpolatedTime) * animation.normalizedWeight * stateWeight;
+							}
+						}
+					}
+
+					state = this.activeState;
+
+					for (i = 0; i < state.animations.length; i++) {
+						animation = state.animations[i];
+						this._animEvaluator.findClip(animation.name).blendWeight = interpolatedTime * animation.normalizedWeight;
+					}
+				} else {
+					this._isTransitioning = false;
+					var activeClips = this.activeStateAnimations.length;
+					var totalClips = this._animEvaluator.clips.length;
+
+					for (i = 0; i < totalClips - activeClips; i++) {
+						this._animEvaluator.removeClip(0);
+					}
+
+					this._transitionPreviousStates = [];
+					state = this.activeState;
+
+					for (i = 0; i < state.animations.length; i++) {
+						animation = state.animations[i];
+						clip = this._animEvaluator.findClip(animation.name);
+
+						if (clip) {
+							clip.blendWeight = animation.normalizedWeight;
+						}
+					}
+				}
+			} else {
+				if (this.activeState._blendTree.constructor === AnimBlendTree) {
+					state = this.activeState;
+
+					for (i = 0; i < state.animations.length; i++) {
+						animation = state.animations[i];
+						clip = this._animEvaluator.findClip(animation.name);
+
+						if (clip) {
+							clip.blendWeight = animation.normalizedWeight;
+						}
+					}
+				}
+			}
+
+			this._animEvaluator.update(dt);
+		};
+
+		_proto.findParameter = function findParameter(name) {
+			return this._parameters[name];
+		};
+
+		_createClass(AnimController, [{
+			key: "animEvaluator",
+			get: function get() {
+				return this._animEvaluator;
+			}
+		}, {
+			key: "activeState",
+			get: function get() {
+				return this._findState(this._activeStateName);
+			},
+			set: function set(stateName) {
+				this._activeStateName = stateName;
+			}
+		}, {
+			key: "activeStateName",
+			get: function get() {
+				return this._activeStateName;
+			}
+		}, {
+			key: "activeStateAnimations",
+			get: function get() {
+				return this.activeState.animations;
+			}
+		}, {
+			key: "previousState",
+			get: function get() {
+				return this._findState(this._previousStateName);
+			},
+			set: function set(stateName) {
+				this._previousStateName = stateName;
+			}
+		}, {
+			key: "previousStateName",
+			get: function get() {
+				return this._previousStateName;
+			}
+		}, {
+			key: "playable",
+			get: function get() {
+				var playable = true;
+				var i;
+
+				for (i = 0; i < this._stateNames.length; i++) {
+					if (!this._states[this._stateNames[i]].playable) {
+						playable = false;
+					}
+				}
+
+				return playable;
+			}
+		}, {
+			key: "playing",
+			get: function get() {
+				return this._playing;
+			},
+			set: function set(value) {
+				this._playing = value;
+			}
+		}, {
+			key: "activeStateProgress",
+			get: function get() {
+				return this._getActiveStateProgressForTime(this._timeInState);
+			}
+		}, {
+			key: "activeStateDuration",
+			get: function get() {
+				if (this.activeStateName === ANIM_STATE_START || this.activeStateName === ANIM_STATE_END) return 0.0;
+				var maxDuration = 0.0;
+
+				for (var i = 0; i < this.activeStateAnimations.length; i++) {
+					var activeClip = this._animEvaluator.findClip(this.activeStateAnimations[i].name);
+
+					maxDuration = Math.max(maxDuration, activeClip.track.duration);
+				}
+
+				return maxDuration;
+			}
+		}, {
+			key: "activeStateCurrentTime",
+			get: function get() {
+				return this._timeInState;
+			},
+			set: function set(time) {
+				this._timeInStateBefore = time;
+				this._timeInState = time;
+
+				for (var i = 0; i < this.activeStateAnimations.length; i++) {
+					var clip = this.animEvaluator.findClip(this.activeStateAnimations[i].name);
+
+					if (clip) {
+						clip.time = time;
+					}
+				}
+			}
+		}, {
+			key: "transitioning",
+			get: function get() {
+				return this._isTransitioning;
+			}
+		}, {
+			key: "transitionProgress",
+			get: function get() {
+				return this._currTransitionTime / this._totalTransitionTime;
+			}
+		}, {
+			key: "states",
+			get: function get() {
+				return this._stateNames;
+			}
+		}]);
+
+		return AnimController;
+	}();
 
 	var v2 = new Vec2();
 	var v3 = new Vec3();
@@ -37550,35 +39494,37 @@
 		var _proto = AnimComponentBinder.prototype;
 
 		_proto.resolve = function resolve(path) {
-			var pathSections = this.propertyLocator.decode(path);
-			var entityHierarchy = pathSections[0];
-			var component = pathSections[1];
-			var propertyHierarchy = pathSections[2];
+			var propertyLocation = AnimBinder.decode(path);
 
-			var entity = this._getEntityFromHierarchy(entityHierarchy);
+			var entity = this._getEntityFromHierarchy(propertyLocation.entityPath);
 
 			if (!entity) return null;
 			var propertyComponent;
 
-			switch (component) {
+			switch (propertyLocation.component) {
 				case 'entity':
 					propertyComponent = entity;
 					break;
 
 				case 'graph':
-					if (!this.nodes || !this.nodes[entityHierarchy[0]]) {
-						return null;
+					if (entity.model && entity.model.model && entity.model.model.graph) {
+						propertyComponent = pc.app.root.findByPath(entity.model.model.graph.path + "/" + propertyLocation.entityPath[0]);
 					}
 
-					propertyComponent = this.nodes[entityHierarchy[0]].node;
+					if (!propertyComponent) {
+						var entityPath = AnimBinder.splitPath(propertyLocation.entityPath[0], '/');
+						propertyComponent = this.nodes[entityPath[entityPath.length - 1] || ""];
+					}
+
+					if (!propertyComponent) return null;
 					break;
 
 				default:
-					propertyComponent = entity.findComponent(component);
+					propertyComponent = entity.findComponent(propertyLocation.component);
 					if (!propertyComponent) return null;
 			}
 
-			return this._createAnimTargetForProperty(propertyComponent, propertyHierarchy);
+			return this._createAnimTargetForProperty(propertyComponent, propertyLocation.propertyPath);
 		};
 
 		_proto.update = function update(deltaTime) {
@@ -37837,1071 +39783,6 @@
 		}]);
 
 		return AnimComponentLayer;
-	}();
-
-	var AnimNode = function () {
-		function AnimNode(state, parent, name, point, speed) {
-			if (speed === void 0) {
-				speed = 1;
-			}
-
-			this._state = state;
-			this._parent = parent;
-			this._name = name;
-			this._point = Array.isArray(point) ? new pc.Vec2(point) : point;
-			this._speed = speed;
-			this._weight = 1.0;
-			this._animTrack = null;
-		}
-
-		_createClass(AnimNode, [{
-			key: "parent",
-			get: function get() {
-				return this._parent;
-			}
-		}, {
-			key: "name",
-			get: function get() {
-				return this._name;
-			}
-		}, {
-			key: "path",
-			get: function get() {
-				return this._parent ? this._parent.path + '.' + this._name : this._name;
-			}
-		}, {
-			key: "point",
-			get: function get() {
-				return this._point;
-			}
-		}, {
-			key: "weight",
-			get: function get() {
-				return this._parent ? this._parent.weight * this._weight : this._weight;
-			},
-			set: function set(value) {
-				this._weight = value;
-			}
-		}, {
-			key: "normalizedWeight",
-			get: function get() {
-				var totalWeight = this._state.totalWeight;
-				if (totalWeight === 0.0) return 0.0;
-				return this.weight / totalWeight;
-			}
-		}, {
-			key: "speed",
-			get: function get() {
-				return this._speed;
-			}
-		}, {
-			key: "animTrack",
-			get: function get() {
-				return this._animTrack;
-			},
-			set: function set(value) {
-				this._animTrack = value;
-			}
-		}]);
-
-		return AnimNode;
-	}();
-
-	function between(num, a, b, inclusive) {
-		var min = Math.min(a, b),
-				max = Math.max(a, b);
-		return inclusive ? num >= min && num <= max : num > min && num < max;
-	}
-
-	function getAngleRad(a, b) {
-		return Math.atan2(a.x * b.y - a.y * b.x, a.x * b.x + a.y * b.y);
-	}
-
-	function clamp(num, min, max) {
-		return num <= min ? min : num >= max ? max : num;
-	}
-
-	var BlendTree = function (_AnimNode) {
-		_inheritsLoose(BlendTree, _AnimNode);
-
-		function BlendTree(state, parent, name, point, type, parameters, children, findParameter) {
-			var _this;
-
-			_this = _AnimNode.call(this, state, parent, name, point) || this;
-			_this._type = type;
-			_this._parameters = parameters;
-			_this._parameterValues = null;
-			_this._children = [];
-			_this._findParameter = findParameter;
-
-			for (var i = 0; i < children.length; i++) {
-				var child = children[i];
-
-				if (child.children) {
-					_this._children.push(new BlendTree(state, _assertThisInitialized(_this), child.name, child.point, child.type, child.parameter ? [child.parameter] : child.parameters, child.children, findParameter));
-				} else {
-					_this._children.push(new AnimNode(state, _assertThisInitialized(_this), child.name, child.point, child.speed));
-				}
-			}
-
-			return _this;
-		}
-
-		var _proto = BlendTree.prototype;
-
-		_proto.getChild = function getChild(name) {
-			for (var i = 0; i < this._children.length; i++) {
-				if (this._children[i].name === name) return this._children[i];
-			}
-		};
-
-		_proto.calculateWeights = function calculateWeights() {
-			var i, j, p, pi, pj, pip, pipj, parameterValues, minj, result, weightSum;
-
-			switch (this._type) {
-				case ANIM_BLEND_1D:
-					{
-						var parameterValue = this._findParameter(this._parameters[0]).value;
-
-						if (this._parameterValues && this._parameterValues[0] === parameterValue) {
-							return;
-						}
-
-						this._parameterValues = [parameterValue];
-						this._children[0].weight = 0.0;
-
-						for (i = 0; i < this._children.length - 1; i++) {
-							var child1 = this._children[i];
-							var child2 = this._children[i + 1];
-
-							if (between(parameterValue, child1.point, child2.point, true)) {
-								var child2Distance = Math.abs(child1.point - child2.point);
-								var parameterDistance = Math.abs(child1.point - parameterValue);
-								var weight = (child2Distance - parameterDistance) / child2Distance;
-								child1.weight = weight;
-								child2.weight = 1.0 - weight;
-							} else {
-								child2.weight = 0.0;
-							}
-						}
-
-						break;
-					}
-
-				case ANIM_BLEND_2D_CARTESIAN:
-					{
-						parameterValues = this._parameters.map(function (param) {
-							return this._findParameter(param).value;
-						}.bind(this));
-
-						if (this._parameterValues && this._parameterValues.equals(parameterValues)) {
-							return;
-						}
-
-						this._parameterValues = parameterValues;
-						p = new pc.Vec2(this._parameterValues);
-						weightSum = 0.0;
-
-						for (i = 0; i < this._children.length; i++) {
-							pi = this._children[i].point.clone();
-							minj = Number.MAX_VALUE;
-
-							for (j = 0; j < this._children.length; j++) {
-								if (i === j) continue;
-								pj = this._children[j].point.clone();
-								pipj = pj.clone().sub(pi);
-								pip = p.clone().sub(pi);
-								result = clamp(1.0 - pip.clone().dot(pipj) / pipj.lengthSq(), 0.0, 1.0);
-								if (result < minj) minj = result;
-							}
-
-							this._children[i].weight = minj;
-							weightSum += minj;
-						}
-
-						for (i = 0; i < this._children.length; i++) {
-							this._children[i].weight = this._children[i]._weight / weightSum;
-						}
-
-						break;
-					}
-
-				case ANIM_BLEND_2D_DIRECTIONAL:
-					{
-						parameterValues = this._parameters.map(function (param) {
-							return this._findParameter(param).value;
-						}.bind(this));
-
-						if (this._parameterValues && this._parameterValues.equals(parameterValues)) {
-							return;
-						}
-
-						this._parameterValues = parameterValues;
-						p = new pc.Vec2(this._parameterValues);
-						weightSum = 0.0;
-
-						for (i = 0; i < this._children.length; i++) {
-							pi = this._children[i].point.clone();
-							minj = Number.MAX_VALUE;
-
-							for (j = 0; j < this._children.length; j++) {
-								if (i === j) continue;
-								pj = this._children[j].point.clone();
-								var pipAngle = getAngleRad(pi, p);
-								var pipjAngle = getAngleRad(pi, pj);
-								pipj = new pc.Vec2((pj.length() - pi.length()) / ((pj.length() + pi.length()) / 2), pipjAngle * 2.0);
-								pip = new pc.Vec2((p.length() - pi.length()) / ((pj.length() + pi.length()) / 2), pipAngle * 2.0);
-								result = clamp(1.0 - Math.abs(pip.clone().dot(pipj) / pipj.lengthSq()), 0.0, 1.0);
-								if (result < minj) minj = result;
-							}
-
-							this._children[i].weight = minj;
-							weightSum += minj;
-						}
-
-						for (i = 0; i < this._children.length; i++) {
-							this._children[i].weight = this._children[i]._weight / weightSum;
-						}
-
-						break;
-					}
-
-				case ANIM_BLEND_DIRECT:
-					{
-						parameterValues = this._parameters.map(function (param) {
-							return this._findParameter(param).value;
-						}.bind(this));
-
-						if (this._parameterValues === parameterValues) {
-							return;
-						}
-
-						this._parameterValues = parameterValues;
-						weightSum = 0.0;
-
-						for (i = 0; i < this._children.length; i++) {
-							weightSum += clamp(this._parameterValues[i], 0.0, Number.MAX_VALUE);
-						}
-
-						for (i = 0; i < this._children.length; i++) {
-							this._children[i].weight = clamp(this._parameterValues[i], 0.0, Number.MAX_VALUE) / weightSum;
-						}
-
-						break;
-					}
-			}
-		};
-
-		_proto.getNodeCount = function getNodeCount() {
-			var count = 0;
-
-			for (var i = 0; i < this._children.length; i++) {
-				var child = this._children[i];
-
-				if (child.constructor === BlendTree) {
-					count += this._children[i].getNodeCount();
-				} else {
-					count++;
-				}
-			}
-
-			return count;
-		};
-
-		_createClass(BlendTree, [{
-			key: "parent",
-			get: function get() {
-				return this._parent;
-			}
-		}, {
-			key: "name",
-			get: function get() {
-				return this._name;
-			}
-		}, {
-			key: "point",
-			get: function get() {
-				return this._point;
-			}
-		}, {
-			key: "weight",
-			get: function get() {
-				this.calculateWeights();
-				return this._parent ? this._parent.weight * this._weight : this._weight;
-			},
-			set: function set(value) {
-				this._weight = value;
-			}
-		}, {
-			key: "speed",
-			get: function get() {
-				return this._speed;
-			}
-		}]);
-
-		return BlendTree;
-	}(AnimNode);
-
-	var AnimState = function () {
-		function AnimState(controller, name, speed, loop, blendTree) {
-			this._controller = controller;
-			this._name = name;
-			this._animations = {};
-			this._animationList = [];
-			this._speed = speed || 1.0;
-			this._loop = loop === undefined ? true : loop;
-
-			var findParameter = this._controller.findParameter.bind(this._controller);
-
-			if (blendTree) {
-				this._blendTree = new BlendTree(this, null, name, 1.0, blendTree.type, blendTree.parameter ? [blendTree.parameter] : blendTree.parameters, blendTree.children, findParameter);
-			} else {
-				this._blendTree = new AnimNode(this, null, name, 1.0, speed);
-			}
-		}
-
-		var _proto2 = AnimState.prototype;
-
-		_proto2._getNodeFromPath = function _getNodeFromPath(path) {
-			var currNode = this._blendTree;
-
-			for (var i = 1; i < path.length; i++) {
-				currNode = currNode.getChild(path[i]);
-			}
-
-			return currNode;
-		};
-
-		_proto2.addAnimation = function addAnimation(path, animTrack) {
-			var indexOfAnimation = this._animationList.findIndex(function (animation) {
-				return animation.path === path;
-			});
-
-			if (indexOfAnimation >= 0) {
-				this._animationList[indexOfAnimation].animTrack = animTrack;
-			} else {
-				var node = this._getNodeFromPath(path);
-
-				node.animTrack = animTrack;
-
-				this._animationList.push(node);
-			}
-		};
-
-		_createClass(AnimState, [{
-			key: "name",
-			get: function get() {
-				return this._name;
-			}
-		}, {
-			key: "animations",
-			get: function get() {
-				return this._animationList;
-			},
-			set: function set(value) {
-				this._animationList = value;
-			}
-		}, {
-			key: "speed",
-			get: function get() {
-				return this._speed;
-			}
-		}, {
-			key: "loop",
-			get: function get() {
-				return this._loop;
-			}
-		}, {
-			key: "nodeCount",
-			get: function get() {
-				if (!this._blendTree || !(this._blendTree.constructor === BlendTree)) return 1;
-				return this._blendTree.getNodeCount();
-			}
-		}, {
-			key: "playable",
-			get: function get() {
-				return this.name === ANIM_STATE_START || this.name === ANIM_STATE_END || this.name === ANIM_STATE_ANY || this.animations.length === this.nodeCount;
-			}
-		}, {
-			key: "looping",
-			get: function get() {
-				if (this.animations.length > 0) {
-					var trackClipName = this.name + '.' + this.animations[0].animTrack.name;
-
-					var trackClip = this._controller.animEvaluator.findClip(trackClipName);
-
-					if (trackClip) {
-						return trackClip.loop;
-					}
-				}
-
-				return false;
-			}
-		}, {
-			key: "totalWeight",
-			get: function get() {
-				var sum = 0;
-				var i;
-
-				for (i = 0; i < this.animations.length; i++) {
-					sum += this.animations[i].weight;
-				}
-
-				return sum;
-			}
-		}, {
-			key: "timelineDuration",
-			get: function get() {
-				var duration = 0;
-				var i;
-
-				for (i = 0; i < this.animations.length; i++) {
-					var animation = this.animations[i];
-
-					if (animation.animTrack.duration > duration) {
-						duration = animation.animTrack.duration;
-					}
-				}
-
-				return duration;
-			}
-		}]);
-
-		return AnimState;
-	}();
-
-	var AnimTransition = function () {
-		function AnimTransition(controller, from, to, time, priority, conditions, exitTime, transitionOffset, interruptionSource) {
-			if (interruptionSource === void 0) {
-				interruptionSource = ANIM_INTERRUPTION_NONE;
-			}
-
-			this._controller = controller;
-			this._from = from;
-			this._to = to;
-			this._time = time;
-			this._priority = priority;
-			this._conditions = conditions || [];
-			this._exitTime = exitTime || null;
-			this._transitionOffset = transitionOffset || null;
-			this._interruptionSource = interruptionSource;
-		}
-
-		_createClass(AnimTransition, [{
-			key: "from",
-			get: function get() {
-				return this._from;
-			}
-		}, {
-			key: "to",
-			get: function get() {
-				return this._to;
-			}
-		}, {
-			key: "time",
-			get: function get() {
-				return this._time;
-			}
-		}, {
-			key: "priority",
-			get: function get() {
-				return this._priority;
-			}
-		}, {
-			key: "conditions",
-			get: function get() {
-				return this._conditions;
-			}
-		}, {
-			key: "exitTime",
-			get: function get() {
-				return this._exitTime;
-			}
-		}, {
-			key: "transitionOffset",
-			get: function get() {
-				return this._transitionOffset;
-			}
-		}, {
-			key: "interruptionSource",
-			get: function get() {
-				return this._interruptionSource;
-			}
-		}, {
-			key: "hasExitTime",
-			get: function get() {
-				return !!this.exitTime;
-			}
-		}, {
-			key: "hasConditionsMet",
-			get: function get() {
-				var conditionsMet = true;
-				var i;
-
-				for (i = 0; i < this.conditions.length; i++) {
-					var condition = this.conditions[i];
-
-					var parameter = this._controller.findParameter(condition.parameterName);
-
-					switch (condition.predicate) {
-						case ANIM_GREATER_THAN:
-							conditionsMet = conditionsMet && parameter.value > condition.value;
-							break;
-
-						case ANIM_LESS_THAN:
-							conditionsMet = conditionsMet && parameter.value < condition.value;
-							break;
-
-						case ANIM_GREATER_THAN_EQUAL_TO:
-							conditionsMet = conditionsMet && parameter.value >= condition.value;
-							break;
-
-						case ANIM_LESS_THAN_EQUAL_TO:
-							conditionsMet = conditionsMet && parameter.value <= condition.value;
-							break;
-
-						case ANIM_EQUAL_TO:
-							conditionsMet = conditionsMet && parameter.value === condition.value;
-							break;
-
-						case ANIM_NOT_EQUAL_TO:
-							conditionsMet = conditionsMet && parameter.value !== condition.value;
-							break;
-					}
-
-					if (!conditionsMet) return conditionsMet;
-				}
-
-				return conditionsMet;
-			}
-		}]);
-
-		return AnimTransition;
-	}();
-
-	var AnimController = function () {
-		function AnimController(animEvaluator, states, transitions, parameters, activate) {
-			this._animEvaluator = animEvaluator;
-			this._states = {};
-			this._stateNames = [];
-			var i;
-
-			for (i = 0; i < states.length; i++) {
-				this._states[states[i].name] = new AnimState(this, states[i].name, states[i].speed, states[i].loop, states[i].blendTree);
-
-				this._stateNames.push(states[i].name);
-			}
-
-			this._transitions = transitions.map(function (transition) {
-				return new AnimTransition(this, transition.from, transition.to, transition.time, transition.priority, transition.conditions, transition.exitTime, transition.transitionOffset, transition.interruptionSource);
-			}.bind(this));
-			this._findTransitionsFromStateCache = {};
-			this._findTransitionsBetweenStatesCache = {};
-			this._parameters = parameters;
-			this._previousStateName = null;
-			this._activeStateName = ANIM_STATE_START;
-			this._playing = false;
-			this._activate = activate;
-			this._currTransitionTime = 1.0;
-			this._totalTransitionTime = 1.0;
-			this._isTransitioning = false;
-			this._transitionInterruptionSource = ANIM_INTERRUPTION_NONE;
-			this._transitionPreviousStates = [];
-			this._timeInState = 0;
-			this._timeInStateBefore = 0;
-		}
-
-		var _proto3 = AnimController.prototype;
-
-		_proto3._findState = function _findState(stateName) {
-			return this._states[stateName];
-		};
-
-		_proto3._getActiveStateProgressForTime = function _getActiveStateProgressForTime(time) {
-			if (this.activeStateName === ANIM_STATE_START || this.activeStateName === ANIM_STATE_END || this.activeStateName === ANIM_STATE_ANY) return 1.0;
-
-			var activeClip = this._animEvaluator.findClip(this.activeStateAnimations[0].name);
-
-			if (activeClip) {
-				return time / activeClip.track.duration;
-			}
-
-			return null;
-		};
-
-		_proto3._findTransitionsFromState = function _findTransitionsFromState(stateName) {
-			var transitions = this._findTransitionsFromStateCache[stateName];
-
-			if (!transitions) {
-				transitions = this._transitions.filter(function (transition) {
-					return transition.from === stateName;
-				});
-				transitions.sort(function (a, b) {
-					return a.priority < b.priority;
-				});
-				this._findTransitionsFromStateCache[stateName] = transitions;
-			}
-
-			return transitions;
-		};
-
-		_proto3._findTransitionsBetweenStates = function _findTransitionsBetweenStates(sourceStateName, destinationStateName) {
-			var transitions = this._findTransitionsBetweenStatesCache[sourceStateName + '->' + destinationStateName];
-
-			if (!transitions) {
-				transitions = this._transitions.filter(function (transition) {
-					return transition.from === sourceStateName && transition.to === destinationStateName;
-				});
-				transitions.sort(function (a, b) {
-					return a.priority < b.priority;
-				});
-				this._findTransitionsBetweenStatesCache[sourceStateName + '->' + destinationStateName] = transitions;
-			}
-
-			return transitions;
-		};
-
-		_proto3._findTransition = function _findTransition(from, to) {
-			var transitions = [];
-
-			if (from && to) {
-				transitions.concat(this._findTransitionsBetweenStates(from, to));
-			} else {
-				if (!this._isTransitioning) {
-					transitions = transitions.concat(this._findTransitionsFromState(this._activeStateName));
-					transitions = transitions.concat(this._findTransitionsFromState(ANIM_STATE_ANY));
-				} else {
-					switch (this._transitionInterruptionSource) {
-						case ANIM_INTERRUPTION_PREV:
-							transitions = transitions.concat(this._findTransitionsFromState(this._previousStateName));
-							transitions = transitions.concat(this._findTransitionsFromState(ANIM_STATE_ANY));
-							break;
-
-						case ANIM_INTERRUPTION_NEXT:
-							transitions = transitions.concat(this._findTransitionsFromState(this._activeStateName));
-							transitions = transitions.concat(this._findTransitionsFromState(ANIM_STATE_ANY));
-							break;
-
-						case ANIM_INTERRUPTION_PREV_NEXT:
-							transitions = transitions.concat(this._findTransitionsFromState(this._previousStateName));
-							transitions = transitions.concat(this._findTransitionsFromState(this._activeStateName));
-							transitions = transitions.concat(this._findTransitionsFromState(ANIM_STATE_ANY));
-							break;
-
-						case ANIM_INTERRUPTION_NEXT_PREV:
-							transitions = transitions.concat(this._findTransitionsFromState(this._activeStateName));
-							transitions = transitions.concat(this._findTransitionsFromState(this._previousStateName));
-							transitions = transitions.concat(this._findTransitionsFromState(ANIM_STATE_ANY));
-							break;
-					}
-				}
-			}
-
-			transitions = transitions.filter(function (transition) {
-				if (transition.to === this.activeStateName) {
-					return false;
-				}
-
-				if (transition.hasExitTime) {
-					var progressBefore = this._getActiveStateProgressForTime(this._timeInStateBefore);
-
-					var progress = this._getActiveStateProgressForTime(this._timeInState);
-
-					if (transition.exitTime < 1.0 && this.activeState.looping) {
-						progressBefore -= Math.floor(progressBefore);
-						progress -= Math.floor(progress);
-					}
-
-					if (!(transition.exitTime > progressBefore && transition.exitTime <= progress)) {
-						return null;
-					}
-				}
-
-				return transition.hasConditionsMet;
-			}.bind(this));
-
-			if (transitions.length > 0) {
-				return transitions[0];
-			}
-
-			return null;
-		};
-
-		_proto3._updateStateFromTransition = function _updateStateFromTransition(transition) {
-			var i;
-			var j;
-			var state;
-			var animation;
-			var clip;
-			this.previousState = transition.from;
-			this.activeState = transition.to;
-
-			for (i = 0; i < transition.conditions.length; i++) {
-				var condition = transition.conditions[i];
-				var parameter = this.findParameter(condition.parameterName);
-
-				if (parameter.type === ANIM_PARAMETER_TRIGGER) {
-					parameter.value = false;
-				}
-			}
-
-			if (this.previousState) {
-				if (!this._isTransitioning) {
-					this._transitionPreviousStates = [];
-				}
-
-				this._transitionPreviousStates.push({
-					name: this._previousStateName,
-					weight: 1
-				});
-
-				var interpolatedTime = Math.min(this._currTransitionTime / this._totalTransitionTime, 1.0);
-
-				for (i = 0; i < this._transitionPreviousStates.length; i++) {
-					if (!this._isTransitioning) {
-						this._transitionPreviousStates[i].weight = 1.0;
-					} else if (i !== this._transitionPreviousStates.length - 1) {
-						this._transitionPreviousStates[i].weight *= 1.0 - interpolatedTime;
-					} else {
-						this._transitionPreviousStates[i].weight = interpolatedTime;
-					}
-
-					state = this._findState(this._transitionPreviousStates[i].name);
-
-					for (j = 0; j < state.animations.length; j++) {
-						animation = state.animations[j];
-						clip = this._animEvaluator.findClip(animation.name + '.previous.' + i);
-
-						if (!clip) {
-							clip = this._animEvaluator.findClip(animation.name);
-							clip.name = animation.name + '.previous.' + i;
-						}
-
-						if (i !== this._transitionPreviousStates.length - 1) {
-							clip.pause();
-						}
-					}
-				}
-			}
-
-			this._isTransitioning = true;
-			this._totalTransitionTime = transition.time;
-			this._currTransitionTime = 0;
-			this._transitionInterruptionSource = transition.interruptionSource;
-			var hasTransitionOffset = transition.transitionOffset && transition.transitionOffset > 0.0 && transition.transitionOffset < 1.0;
-			var activeState = this.activeState;
-
-			for (i = 0; i < activeState.animations.length; i++) {
-				clip = this._animEvaluator.findClip(activeState.animations[i].name);
-
-				if (!clip) {
-					var speed = Number.isFinite(activeState.animations[i].speed) ? activeState.animations[i].speed : activeState.speed;
-					clip = new AnimClip(activeState.animations[i].animTrack, 0, speed, true, activeState.loop);
-					clip.name = activeState.animations[i].name;
-
-					this._animEvaluator.addClip(clip);
-				} else {
-					clip.reset();
-				}
-
-				if (transition.time > 0) {
-					clip.blendWeight = 0.0;
-				} else {
-					clip.blendWeight = activeState.animations[i].normalizedWeight;
-				}
-
-				clip.play();
-
-				if (hasTransitionOffset) {
-					clip.time = activeState.timelineDuration * transition.transitionOffset;
-				} else {
-					var startTime = activeState.speed >= 0 ? 0 : this.activeStateDuration;
-					clip.time = startTime;
-				}
-			}
-
-			var timeInState = 0;
-			var timeInStateBefore = 0;
-
-			if (hasTransitionOffset) {
-				var offsetTime = activeState.timelineDuration * transition.transitionOffset;
-				timeInState = offsetTime;
-				timeInStateBefore = offsetTime;
-			}
-
-			this._timeInState = timeInState;
-			this._timeInStateBefore = timeInStateBefore;
-		};
-
-		_proto3._transitionToState = function _transitionToState(newStateName) {
-			if (newStateName === this._activeStateName) {
-				return;
-			}
-
-			if (!this._findState(newStateName)) {
-				return;
-			}
-
-			var transition = this._findTransition(this._activeStateName, newStateName);
-
-			if (!transition) {
-				this._animEvaluator.removeClips();
-
-				transition = new AnimTransition(this, null, newStateName, 0, 0);
-			}
-
-			this._updateStateFromTransition(transition);
-		};
-
-		_proto3.assignAnimation = function assignAnimation(pathString, animTrack) {
-			var path = pathString.split('.');
-
-			var state = this._findState(path[0]);
-
-			if (!state) {
-				return;
-			}
-
-			state.addAnimation(path, animTrack);
-
-			if (!this._playing && this._activate && this.playable) {
-				this.play();
-			}
-		};
-
-		_proto3.removeNodeAnimations = function removeNodeAnimations(nodeName) {
-			var state = this._findState(nodeName);
-
-			if (!state) {
-				return;
-			}
-
-			state.animations = [];
-		};
-
-		_proto3.play = function play(stateName) {
-			if (stateName) {
-				this._transitionToState(stateName);
-			}
-
-			this._playing = true;
-		};
-
-		_proto3.pause = function pause() {
-			this._playing = false;
-		};
-
-		_proto3.reset = function reset() {
-			this._previousStateName = null;
-			this._activeStateName = ANIM_STATE_START;
-			this._playing = false;
-			this._currTransitionTime = 1.0;
-			this._totalTransitionTime = 1.0;
-			this._isTransitioning = false;
-			this._timeInState = 0;
-			this._timeInStateBefore = 0;
-
-			this._animEvaluator.removeClips();
-		};
-
-		_proto3.update = function update(dt) {
-			if (!this._playing) {
-				return;
-			}
-
-			var i;
-			var j;
-			var state;
-			var animation;
-			var clip;
-			this._timeInStateBefore = this._timeInState;
-			this._timeInState += dt;
-
-			var transition = this._findTransition(this._activeStateName);
-
-			if (transition) this._updateStateFromTransition(transition);
-
-			if (this._isTransitioning) {
-				this._currTransitionTime += dt;
-
-				if (this._currTransitionTime <= this._totalTransitionTime) {
-					var interpolatedTime = this._currTransitionTime / this._totalTransitionTime;
-
-					for (i = 0; i < this._transitionPreviousStates.length; i++) {
-						state = this._findState(this._transitionPreviousStates[i].name);
-						var stateWeight = this._transitionPreviousStates[i].weight;
-
-						for (j = 0; j < state.animations.length; j++) {
-							animation = state.animations[j];
-							clip = this._animEvaluator.findClip(animation.name + '.previous.' + i);
-
-							if (clip) {
-								clip.blendWeight = (1.0 - interpolatedTime) * animation.normalizedWeight * stateWeight;
-							}
-						}
-					}
-
-					state = this.activeState;
-
-					for (i = 0; i < state.animations.length; i++) {
-						animation = state.animations[i];
-						this._animEvaluator.findClip(animation.name).blendWeight = interpolatedTime * animation.normalizedWeight;
-					}
-				} else {
-					this._isTransitioning = false;
-					var activeClips = this.activeStateAnimations.length;
-					var totalClips = this._animEvaluator.clips.length;
-
-					for (i = 0; i < totalClips - activeClips; i++) {
-						this._animEvaluator.removeClip(0);
-					}
-
-					this._transitionPreviousStates = [];
-					state = this.activeState;
-
-					for (i = 0; i < state.animations.length; i++) {
-						animation = state.animations[i];
-						clip = this._animEvaluator.findClip(animation.name);
-
-						if (clip) {
-							clip.blendWeight = animation.normalizedWeight;
-						}
-					}
-				}
-			} else {
-				if (this.activeState._blendTree.constructor === BlendTree) {
-					state = this.activeState;
-
-					for (i = 0; i < state.animations.length; i++) {
-						animation = state.animations[i];
-						clip = this._animEvaluator.findClip(animation.name);
-
-						if (clip) {
-							clip.blendWeight = animation.normalizedWeight;
-						}
-					}
-				}
-			}
-
-			this._animEvaluator.update(dt);
-		};
-
-		_proto3.findParameter = function findParameter(name) {
-			return this._parameters[name];
-		};
-
-		_createClass(AnimController, [{
-			key: "animEvaluator",
-			get: function get() {
-				return this._animEvaluator;
-			}
-		}, {
-			key: "activeState",
-			get: function get() {
-				return this._findState(this._activeStateName);
-			},
-			set: function set(stateName) {
-				this._activeStateName = stateName;
-			}
-		}, {
-			key: "activeStateName",
-			get: function get() {
-				return this._activeStateName;
-			}
-		}, {
-			key: "activeStateAnimations",
-			get: function get() {
-				return this.activeState.animations;
-			}
-		}, {
-			key: "previousState",
-			get: function get() {
-				return this._findState(this._previousStateName);
-			},
-			set: function set(stateName) {
-				this._previousStateName = stateName;
-			}
-		}, {
-			key: "previousStateName",
-			get: function get() {
-				return this._previousStateName;
-			}
-		}, {
-			key: "playable",
-			get: function get() {
-				var playable = true;
-				var i;
-
-				for (i = 0; i < this._stateNames.length; i++) {
-					if (!this._states[this._stateNames[i]].playable) {
-						playable = false;
-					}
-				}
-
-				return playable;
-			}
-		}, {
-			key: "playing",
-			get: function get() {
-				return this._playing;
-			},
-			set: function set(value) {
-				this._playing = value;
-			}
-		}, {
-			key: "activeStateProgress",
-			get: function get() {
-				return this._getActiveStateProgressForTime(this._timeInState);
-			}
-		}, {
-			key: "activeStateDuration",
-			get: function get() {
-				if (this.activeStateName === ANIM_STATE_START || this.activeStateName === ANIM_STATE_END) return 0.0;
-				var maxDuration = 0.0;
-
-				for (var i = 0; i < this.activeStateAnimations.length; i++) {
-					var activeClip = this._animEvaluator.findClip(this.activeStateAnimations[i].name);
-
-					maxDuration = Math.max(maxDuration, activeClip.track.duration);
-				}
-
-				return maxDuration;
-			}
-		}, {
-			key: "activeStateCurrentTime",
-			get: function get() {
-				return this._timeInState;
-			},
-			set: function set(time) {
-				this._timeInStateBefore = time;
-				this._timeInState = time;
-
-				for (var i = 0; i < this.activeStateAnimations.length; i++) {
-					var clip = this.animEvaluator.findClip(this.activeStateAnimations[i].name);
-
-					if (clip) {
-						clip.time = time;
-					}
-				}
-			}
-		}, {
-			key: "transitioning",
-			get: function get() {
-				return this._isTransitioning;
-			}
-		}, {
-			key: "transitionProgress",
-			get: function get() {
-				return this._currTransitionTime / this._totalTransitionTime;
-			}
-		}, {
-			key: "states",
-			get: function get() {
-				return this._stateNames;
-			}
-		}]);
-
-		return AnimController;
 	}();
 
 	var AnimComponent = function (_Component) {
@@ -64075,7 +64956,14 @@
 			_this.createGrabPass();
 
 			VertexFormat.init(_assertThisInitialized(_this));
-			_this._areaLightLutFormat = _this.extTextureFloat ? PIXELFORMAT_RGBA32F : _this.extTextureHalfFloat && _this.textureHalfFloatUpdatable ? PIXELFORMAT_RGBA16F : PIXELFORMAT_R8_G8_B8_A8;
+			_this._areaLightLutFormat = PIXELFORMAT_R8_G8_B8_A8;
+
+			if (_this.extTextureHalfFloat && _this.textureHalfFloatUpdatable) {
+				_this._areaLightLutFormat = PIXELFORMAT_RGBA16F;
+			} else if (_this.extTextureFloat) {
+				_this._areaLightLutFormat = PIXELFORMAT_RGBA32F;
+			}
+
 			return _this;
 		}
 
@@ -66925,7 +67813,6 @@
 			this.app = app;
 			this.device = app.graphicsDevice;
 			var device = this.device;
-			this.library = device.getProgramLibrary();
 			this.pickColor = new Float32Array(4);
 			this.pickColor[3] = 1;
 			this.mapping = [];
@@ -70930,7 +71817,6 @@
 	exports.AnimCurve = AnimCurve;
 	exports.AnimData = AnimData;
 	exports.AnimEvaluator = AnimEvaluator;
-	exports.AnimPropertyLocator = AnimPropertyLocator;
 	exports.AnimSnapshot = AnimSnapshot;
 	exports.AnimStateGraph = AnimStateGraph;
 	exports.AnimStateGraphHandler = AnimStateGraphHandler;
@@ -71766,3 +72652,276 @@
 	Object.defineProperty(exports, '__esModule', { value: true });
 
 })));
+
+
+/***/ }),
+
+/***/ "./src/game/app.ts":
+/*!*************************!*\
+  !*** ./src/game/app.ts ***!
+  \*************************/
+/*! exports provided: App */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "App", function() { return App; });
+/* harmony import */ var playcanvas__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! playcanvas */ "./node_modules/playcanvas/build/playcanvas.js");
+/* harmony import */ var playcanvas__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(playcanvas__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var _assets_loader__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./assets-loader */ "./src/game/assets-loader.ts");
+
+
+var App = /** @class */ (function () {
+    function App() {
+        this.cubes = [];
+    }
+    Object.defineProperty(App.prototype, "App", {
+        get: function () {
+            return this.app;
+        },
+        enumerable: false,
+        configurable: true
+    });
+    ;
+    App.prototype.Awake = function () {
+        var _this = this;
+        this.initApp();
+        _assets_loader__WEBPACK_IMPORTED_MODULE_1__["AssetsLoader"].loadAssets(this.app, function () { return _this.assetsLoaded(); });
+    };
+    App.prototype.initApp = function () {
+        var _this = this;
+        this.canvas = this.createCanvas();
+        this.app = new playcanvas__WEBPACK_IMPORTED_MODULE_0__["Application"](this.canvas, {
+            mouse: new playcanvas__WEBPACK_IMPORTED_MODULE_0__["Mouse"](this.canvas),
+            touch: new playcanvas__WEBPACK_IMPORTED_MODULE_0__["TouchDevice"](this.canvas),
+            keyboard: new playcanvas__WEBPACK_IMPORTED_MODULE_0__["Keyboard"](window)
+        });
+        this.app.start();
+        this.app.setCanvasFillMode(playcanvas__WEBPACK_IMPORTED_MODULE_0__["FILLMODE_FILL_WINDOW"]);
+        this.app.setCanvasResolution(playcanvas__WEBPACK_IMPORTED_MODULE_0__["RESOLUTION_AUTO"]);
+        window.addEventListener("resize", function () {
+            _this.app.resizeCanvas(_this.canvas.width, _this.canvas.height);
+        });
+        console.log("-----> APP INITIALIZED");
+    };
+    App.prototype.assetsLoaded = function () {
+        console.log("ASSETS LOADED");
+        // create camera
+        var c = new playcanvas__WEBPACK_IMPORTED_MODULE_0__["Entity"]();
+        c.addComponent('camera', {
+            clearColor: new playcanvas__WEBPACK_IMPORTED_MODULE_0__["Color"](44 / 255, 62 / 255, 80 / 255),
+            farClip: 10000
+        });
+        this.app.root.addChild(c);
+        var l = new playcanvas__WEBPACK_IMPORTED_MODULE_0__["Entity"]();
+        l.addComponent("light", {
+            type: "spot",
+            range: 30
+        });
+        l.translate(0, 10, 0);
+        this.app.root.addChild(l);
+        var material = new playcanvas__WEBPACK_IMPORTED_MODULE_0__["StandardMaterial"]();
+        // create a grid of cubes
+        var SIZE = 4;
+        for (var x = 0; x <= SIZE; x++) {
+            for (var y = 0; y <= SIZE; y++) {
+                this.createCube(2 * x - SIZE, -1.5, 2 * y - SIZE, material);
+            }
+        }
+        // load a texture, create material and apply to box
+        var asset = this.app.assets.find("panel2");
+        material.diffuseMap = asset.resource;
+        material.update();
+        //TExto
+        this.addTexto(this.app);
+    };
+    App.prototype.createCube = function (x, y, z, material) {
+        var cube = new playcanvas__WEBPACK_IMPORTED_MODULE_0__["Entity"]();
+        cube.addComponent("model", {
+            type: "box",
+            material: material
+        });
+        cube.setLocalScale(1, 1, 1);
+        cube.translate(x, y, z);
+        this.app.root.addChild(cube);
+        this.cubes.push(cube);
+    };
+    ;
+    App.prototype.createCanvas = function () {
+        var canvas = document.createElement('canvas');
+        canvas.setAttribute('width', '500px');
+        canvas.setAttribute('height', '500px');
+        document.body.appendChild(canvas);
+        return canvas;
+    };
+    App.prototype.addTexto = function (app) {
+        var asset = this.app.assets.find("font");
+        var texto = new playcanvas__WEBPACK_IMPORTED_MODULE_0__["Entity"]("texto");
+        texto.addComponent("element", {
+            anchor: [0.5, 0.5, 0.5, 0.5],
+            autoWidth: true,
+            autoHeigth: true,
+            fontSize: 0.2,
+            color: new playcanvas__WEBPACK_IMPORTED_MODULE_0__["Color"](0.9, 0.9, 0.9),
+            Alignment: [0, 1],
+            pivot: [0.5, 0.5],
+            //shadowColor: new pc.Color(0, 0, 0),
+            //shadowOffset: new pc.Vec2(0.25, -0.25),
+            text: "AAAAAAAAA",
+            type: playcanvas__WEBPACK_IMPORTED_MODULE_0__["ELEMENTTYPE_TEXT"]
+        });
+        if (texto.element)
+            texto.element.fontAsset = asset.id;
+        texto.tags.add("texto");
+        texto.tags.add("scalable");
+        texto.setLocalPosition(0.4, 0.6, -2);
+        texto.setLocalEulerAngles(75, 0, 0);
+        app.root.addChild(texto);
+        console.log("texto creado");
+    };
+    return App;
+}());
+
+
+
+/***/ }),
+
+/***/ "./src/game/assets-loader.ts":
+/*!***********************************!*\
+  !*** ./src/game/assets-loader.ts ***!
+  \***********************************/
+/*! exports provided: AssetsLoader */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "AssetsLoader", function() { return AssetsLoader; });
+/* harmony import */ var playcanvas__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! playcanvas */ "./node_modules/playcanvas/build/playcanvas.js");
+/* harmony import */ var playcanvas__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(playcanvas__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var _helpers__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./helpers */ "./src/game/helpers.ts");
+
+
+var AssetDesc = /** @class */ (function () {
+    function AssetDesc() {
+    }
+    return AssetDesc;
+}());
+var assetsDesc = [
+    //Models
+    { id: "background", type: "cubemap", url: "./images/helipad.dds", tag: "init", options: { type: playcanvas__WEBPACK_IMPORTED_MODULE_0__["TEXTURETYPE_RGBM"] } },
+    { id: "font", type: "font", url: "./fonts/arial.json", tag: "init" },
+    { id: "panel", type: "texture", url: "./images/panel.png", tag: "init" },
+    { id: "panel2", type: "texture", url: "./images/panel2.png", tag: "init" }
+    /*
+        { id:"clouds", type:"texture", url:"./images/clouds.jpg", tag:"init"},
+        { id:"grass", type:"texture", url:"./images/Grass.png", tag:"init"},
+        { id:"flyCamera", type:"script", url:"./cameras/fly-camera.js", tag:"init"},*/
+];
+var AssetsLoader = /** @class */ (function () {
+    function AssetsLoader() {
+    }
+    AssetsLoader.loadAssets = function (app, allAssetsLoaded) {
+        console.log("loading Assets");
+        assetsDesc.forEach(function (data) {
+            var asset = new playcanvas__WEBPACK_IMPORTED_MODULE_0__["Asset"](data.id, data.type, {
+                url: Object(_helpers__WEBPACK_IMPORTED_MODULE_1__["getAssetPath"])(data.url)
+            }, data.options);
+            asset.tags.add(data.tag.split(' '));
+            asset.tags.add(data.id);
+            app.assets.add(asset);
+        });
+        //First load only the ones with 'init' Tag
+        var assets = app.assets.findByTag('init');
+        var assetsLoaded = 0;
+        var assestTotal = assets.length;
+        // Start loading all the assets
+        for (var i = 0; i < assets.length; i++) {
+            assets[i].ready(function () {
+                assetsLoaded += 1;
+                // Update the progress bar
+                //self.setLoadingBarProgress(assetsLoaded / assestTotal);        
+                if (assetsLoaded === assestTotal) {
+                    allAssetsLoaded();
+                }
+            });
+            app.assets.load(assets[i]);
+        }
+        if (!assets.length) {
+            allAssetsLoaded();
+        }
+    };
+    return AssetsLoader;
+}());
+
+
+
+/***/ }),
+
+/***/ "./src/game/helpers.ts":
+/*!*****************************!*\
+  !*** ./src/game/helpers.ts ***!
+  \*****************************/
+/*! exports provided: getAssetPath */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "getAssetPath", function() { return getAssetPath; });
+function getAssetPath(assetPath) {
+    // @ts-ignore: path variable injected at build time
+    return (undefined ? undefined : './static/') + assetPath;
+}
+
+
+
+/***/ }),
+
+/***/ "./src/game/index.ts":
+/*!***************************!*\
+  !*** ./src/game/index.ts ***!
+  \***************************/
+/*! exports provided: App */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var _app__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./app */ "./src/game/app.ts");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "App", function() { return _app__WEBPACK_IMPORTED_MODULE_0__["App"]; });
+
+
+
+
+/***/ }),
+
+/***/ "./src/main.ts":
+/*!*********************!*\
+  !*** ./src/main.ts ***!
+  \*********************/
+/*! no exports provided */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var _game__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @/game */ "./src/game/index.ts");
+/* harmony import */ var _game_helpers__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./game/helpers */ "./src/game/helpers.ts");
+
+
+window.pc = __webpack_require__(/*! playcanvas */ "./node_modules/playcanvas/build/playcanvas.js");
+/*
+var script = document.createElement('script');
+script.src = "./static/tween.js"; //Tween for playcanvas
+document.head.appendChild(script);
+*/
+eval("\npc.extend(pc, function () {\n\n    /**\n     * @name pc.TweenManager\n     * @description Handles updating tweens\n     * @param {pc.Application} app  The application\n     */\n    var TweenManager = function (app) {\n        this._app = app;\n        this._tweens = [];\n        this._add = []; // to be added\n    };\n\n    TweenManager.prototype = {\n        add: function (tween) {\n            this._add.push(tween);\n            return tween;\n        },\n\n        update: function (dt) {\n            var i = 0;\n            var n = this._tweens.length;\n            while (i < n) {\n                if (this._tweens[i].update(dt)) {\n                    i++;\n                } else {\n                    this._tweens.splice(i, 1);\n                    n--;\n                }\n            }\n\n            // add any tweens that were added mid-update\n            if (this._add.length) {\n                this._tweens = this._tweens.concat(this._add);\n                this._add.length = 0;\n            }\n        }\n    };\n\n    /**\n     * @name  pc.Tween\n     * @param {Object} target The target property that will be tweened\n     * @param {pc.TweenManager} manager The tween manager\n     * @param {pc.Entity} entity The pc.Entity whose property we are tweening\n     */\n    var Tween = function (target, manager, entity) {\n        pc.events.attach(this);\n\n        this.manager = manager;\n\n        if (entity) {\n            this.entity = null; // if present the tween will dirty the transforms after modify the target\n        }\n\n        this.time = 0;\n\n        this.complete = false;\n        this.playing = false;\n        this.stopped = true;\n        this.pending = false;\n\n        this.target = target;\n\n        this.duration = 0;\n        this._currentDelay = 0;\n        this.timeScale = 1;\n        this._reverse = false;\n\n        this._delay = 0;\n        this._yoyo = false;\n\n        this._count = 0;\n        this._numRepeats = 0;\n        this._repeatDelay = 0;\n\n        this._from = false; // indicates a \"from\" tween\n\n        // for rotation tween\n        this._slerp = false; // indicates a rotation tween\n        this._fromQuat = new pc.Quat();\n        this._toQuat = new pc.Quat();\n        this._quat = new pc.Quat();\n\n        this.easing = pc.Linear;\n\n        this._sv = {}; // start values\n        this._ev = {}; // end values\n    };\n\n    var _parseProperties = function (properties) {\n        var _properties;\n        if (properties instanceof pc.Vec2) {\n            _properties = {\n                x: properties.x,\n                y: properties.y\n            };\n        } else if (properties instanceof pc.Vec3) {\n            _properties = {\n                x: properties.x,\n                y: properties.y,\n                z: properties.z\n            };\n        } else if (properties instanceof pc.Vec4) {\n            _properties = {\n                x: properties.x,\n                y: properties.y,\n                z: properties.z,\n                w: properties.w\n            };\n        } else if (properties instanceof pc.Quat) {\n            _properties = {\n                x: properties.x,\n                y: properties.y,\n                z: properties.z,\n                w: properties.w\n            };\n        } else if (properties instanceof pc.Color) {\n            _properties = {\n                r: properties.r,\n                g: properties.g,\n                b: properties.b,\n            };\n            if (properties.a !== undefined) {\n                _properties.a = properties.a;\n            }\n        } else {\n            _properties = properties;\n        }\n        return _properties;\n    }\n    Tween.prototype = {\n        // properties - js obj of values to update in target\n        to: function (properties, duration, easing, delay, repeat, yoyo) {\n            this._properties = _parseProperties(properties);\n            this.duration = duration;\n\n            if (easing) this.easing = easing;\n            if (delay) {\n                this.delay(delay);\n            }\n            if (repeat) {\n                this.repeat(repeat);\n            }\n\n            if (yoyo) {\n                this.yoyo(yoyo);\n            }\n\n            return this;\n        },\n\n        from: function (properties, duration, easing, delay, repeat, yoyo) {\n            this._properties = _parseProperties(properties);\n            this.duration = duration;\n\n            if (easing) this.easing = easing;\n            if (delay) {\n                this.delay(delay);\n            }\n            if (repeat) {\n                this.repeat(repeat);\n            }\n\n            if (yoyo) {\n                this.yoyo(yoyo);\n            }\n\n            this._from = true;\n\n            return this;\n        },\n\n        rotate: function (properties, duration, easing, delay, repeat, yoyo) {\n            this._properties = _parseProperties(properties);\n\n            this.duration = duration;\n\n            if (easing) this.easing = easing;\n            if (delay) {\n                this.delay(delay);\n            }\n            if (repeat) {\n                this.repeat(repeat);\n            }\n\n            if (yoyo) {\n                this.yoyo(yoyo);\n            }\n\n            this._slerp = true;\n\n            return this;\n        },\n\n        start: function () {\n            var prop, _x, _y, _z;\n\n            this.playing = true;\n            this.complete = false;\n            this.stopped = false;\n            this._count = 0;\n            this.pending = (this._delay > 0);\n\n            if (this._reverse && !this.pending) {\n                this.time = this.duration;\n            } else {\n                this.time = 0;\n            }\n\n            if (this._from) {\n                for (prop in this._properties) {\n                    if (this._properties.hasOwnProperty(prop)) {\n                        this._sv[prop] = this._properties[prop];\n                        this._ev[prop] = this.target[prop];\n                    }\n                }\n\n                if (this._slerp) {\n                    this._toQuat.setFromEulerAngles(this.target.x, this.target.y, this.target.z);\n\n                    _x = this._properties.x !== undefined ? this._properties.x : this.target.x;\n                    _y = this._properties.y !== undefined ? this._properties.y : this.target.y;\n                    _z = this._properties.z !== undefined ? this._properties.z : this.target.z;\n                    this._fromQuat.setFromEulerAngles(_x, _y, _z);\n                }\n            } else {\n                for (prop in this._properties) {\n                    if (this._properties.hasOwnProperty(prop)) {\n                        this._sv[prop] = this.target[prop];\n                        this._ev[prop] = this._properties[prop];\n                    }\n                }\n\n                if (this._slerp) {\n                    this._fromQuat.setFromEulerAngles(this.target.x, this.target.y, this.target.z);\n\n                    _x = this._properties.x !== undefined ? this._properties.x : this.target.x;\n                    _y = this._properties.y !== undefined ? this._properties.y : this.target.y;\n                    _z = this._properties.z !== undefined ? this._properties.z : this.target.z;\n                    this._toQuat.setFromEulerAngles(_x, _y, _z);\n                }\n            }\n\n            // set delay\n            this._currentDelay = this._delay;\n\n            // add to manager when started\n            this.manager.add(this);\n\n            return this;\n        },\n\n        pause: function () {\n            this.playing = false;\n        },\n\n        resume: function () {\n            this.playing = true;\n        },\n\n        stop: function () {\n            this.playing = false;\n            this.stopped = true;\n        },\n\n        delay: function (delay) {\n            this._delay = delay;\n            this.pending = true;\n\n            return this;\n        },\n\n        repeat: function (num, delay) {\n            this._count = 0;\n            this._numRepeats = num;\n            if (delay) {\n                this._repeatDelay = delay;\n            } else {\n                this._repeatDelay = 0;\n            }\n\n            return this;\n        },\n\n        loop: function (loop) {\n            if (loop) {\n                this._count = 0;\n                this._numRepeats = Infinity;\n            } else {\n                this._numRepeats = 0;\n            }\n\n            return this;\n        },\n\n        yoyo: function (yoyo) {\n            this._yoyo = yoyo;\n            return this;\n        },\n\n        reverse: function () {\n            this._reverse = !this._reverse;\n\n            return this;\n        },\n\n        chain: function () {\n            var n = arguments.length;\n\n            while(n--) {\n                if (n > 0) {\n                    arguments[n-1]._chained = arguments[n];\n                } else {\n                    this._chained = arguments[n];\n                }\n            }\n\n            return this;\n        },\n\n        update: function (dt) {\n            if (this.stopped) return false;\n\n            if (!this.playing) return true;\n\n            if (!this._reverse || this.pending) {\n                this.time += dt*this.timeScale;\n            } else {\n                this.time -= dt*this.timeScale;\n            }\n\n            // delay start if required\n            if (this.pending) {\n                if (this.time > this._currentDelay) {\n                    if (this._reverse) {\n                        this.time = this.duration - (this.time - this._currentDelay);\n                    } else {\n                        this.time = this.time - this._currentDelay;\n                    }\n                    this.pending = false;\n                } else {\n                    return true;\n                }\n            }\n\n            var _extra = 0;\n            if ((!this._reverse && this.time > this.duration) || (this._reverse && this.time < 0)){\n                this._count++;\n                this.complete = true;\n                this.playing = false;\n                if (this._reverse) {\n                    _extra = this.duration - this.time;\n                    this.time = 0;\n                } else {\n                    _extra = this.time - this.duration;\n                    this.time = this.duration;\n                }\n            }\n\n            var elapsed = (this.duration === 0) ? 1 : (this.time / this.duration);\n\n            // run easing\n            var a = this.easing(elapsed);\n\n            // increment property\n            var s,e,d;\n            for (var prop in this._properties) {\n                if (this._properties.hasOwnProperty(prop)) {\n                    s = this._sv[prop];\n                    e = this._ev[prop];\n                    this.target[prop] = s + (e - s) * a;\n                }\n            }\n\n            if (this._slerp) {\n                this._quat.slerp(this._fromQuat, this._toQuat, a);\n            }\n\n            // if this is a entity property then we should dirty the transform\n            if (this.entity) {\n                this.entity._dirtifyLocal();\n\n                // apply element property changes\n                if (this.element && this.entity.element) {\n                    this.entity.element[this.element] = this.target;\n                }\n\n                if (this._slerp) {\n                    this.entity.setLocalRotation(this._quat);\n                }\n            }\n\n            this.fire(\"update\", dt);\n\n            if (this.complete) {\n                var repeat = this._repeat(_extra);\n                if (!repeat) {\n                    this.fire(\"complete\", _extra);\n                    if (this.entity)\n                        this.entity.off('destroy', this.stop, this);\n                    if (this._chained) this._chained.start();\n                } else {\n                    this.fire(\"loop\");\n                }\n\n                return repeat;\n            }\n\n            return true;\n        },\n\n        _repeat: function (extra) {\n            // test for repeat conditions\n            if (this._count < this._numRepeats) {\n                // do a repeat\n                if (this._reverse) {\n                    this.time = this.duration - extra;\n                } else {\n                    this.time = extra; // include overspill time\n                }\n                this.complete = false;\n                this.playing = true;\n\n                this._currentDelay = this._repeatDelay;\n                this.pending = true;\n\n                if (this._yoyo) {\n                    // swap start/end properties\n                    for (var prop in this._properties) {\n                        var tmp = this._sv[prop];\n                        this._sv[prop] = this._ev[prop];\n                        this._ev[prop] = tmp;\n                    }\n\n                    if (this._slerp) {\n                        this._quat.copy(this._fromQuat);\n                        this._fromQuat.copy(this._toQuat);\n                        this._toQuat.copy(this._quat);\n                    }\n                }\n\n                return true;\n            }\n            return false;\n        },\n\n    };\n\n\n    /**\n     * Easing methods\n     */\n\n    var Linear = function (k) {\n        return k;\n    };\n\n    var QuadraticIn = function (k) {\n        return k * k;\n    };\n\n    var QuadraticOut = function (k) {\n        return k * (2 - k);\n    };\n\n    var QuadraticInOut = function (k) {\n        if ((k *= 2) < 1) {\n            return 0.5 * k * k;\n        }\n        return -0.5 * (--k * (k - 2) - 1);\n    };\n\n    var CubicIn = function (k) {\n        return k * k * k;\n    };\n\n    var CubicOut = function (k) {\n        return --k * k * k + 1;\n    };\n\n    var CubicInOut = function (k) {\n        if ( ( k *= 2 ) < 1 ) return 0.5 * k * k * k;\n        return 0.5 * ( ( k -= 2 ) * k * k + 2 );\n    };\n\n    var QuarticIn = function (k) {\n            return k * k * k * k;\n    };\n\n    var QuarticOut = function (k) {\n        return 1 - ( --k * k * k * k );\n    };\n\n    var QuarticInOut = function (k) {\n        if ( ( k *= 2 ) < 1) return 0.5 * k * k * k * k;\n        return - 0.5 * ( ( k -= 2 ) * k * k * k - 2 );\n    };\n\n    var QuinticIn = function (k) {\n            return k * k * k * k * k;\n    };\n\n    var QuinticOut = function (k) {\n            return --k * k * k * k * k + 1;\n    };\n\n    var QuinticInOut = function (k) {\n        if ( ( k *= 2 ) < 1 ) return 0.5 * k * k * k * k * k;\n        return 0.5 * ( ( k -= 2 ) * k * k * k * k + 2 );\n    };\n\n    var SineIn = function (k) {\n        if (k === 0) return 0;\n        if (k === 1) return 1;\n        return 1 - Math.cos( k * Math.PI / 2 );\n    };\n\n    var SineOut = function (k) {\n        if (k === 0) return 0;\n        if (k === 1) return 1;\n        return Math.sin( k * Math.PI / 2 );\n    };\n\n    var SineInOut = function (k) {\n        if (k === 0) return 0;\n        if (k === 1) return 1;\n        return 0.5 * ( 1 - Math.cos( Math.PI * k ) );\n    };\n\n    var ExponentialIn = function (k) {\n        return k === 0 ? 0 : Math.pow( 1024, k - 1 );\n    };\n\n    var ExponentialOut = function (k) {\n        return k === 1 ? 1 : 1 - Math.pow( 2, - 10 * k );\n    };\n\n    var ExponentialInOut = function (k) {\n        if ( k === 0 ) return 0;\n        if ( k === 1 ) return 1;\n        if ( ( k *= 2 ) < 1 ) return 0.5 * Math.pow( 1024, k - 1 );\n        return 0.5 * ( - Math.pow( 2, - 10 * ( k - 1 ) ) + 2 );\n    };\n\n    var CircularIn = function (k) {\n        return 1 - Math.sqrt( 1 - k * k );\n    };\n\n    var CircularOut = function (k) {\n        return Math.sqrt( 1 - ( --k * k ) );\n    };\n\n    var CircularInOut = function (k) {\n        if ( ( k *= 2 ) < 1) return - 0.5 * ( Math.sqrt( 1 - k * k) - 1);\n        return 0.5 * ( Math.sqrt( 1 - ( k -= 2) * k) + 1);\n    };\n\n    var ElasticIn = function (k) {\n        var s, a = 0.1, p = 0.4;\n        if ( k === 0 ) return 0;\n        if ( k === 1 ) return 1;\n        if ( !a || a < 1 ) { a = 1; s = p / 4; }\n        else s = p * Math.asin( 1 / a ) / ( 2 * Math.PI );\n        return - ( a * Math.pow( 2, 10 * ( k -= 1 ) ) * Math.sin( ( k - s ) * ( 2 * Math.PI ) / p ) );\n    };\n\n    var ElasticOut = function (k) {\n        var s, a = 0.1, p = 0.4;\n        if ( k === 0 ) return 0;\n        if ( k === 1 ) return 1;\n        if ( !a || a < 1 ) { a = 1; s = p / 4; }\n        else s = p * Math.asin( 1 / a ) / ( 2 * Math.PI );\n        return ( a * Math.pow( 2, - 10 * k) * Math.sin( ( k - s ) * ( 2 * Math.PI ) / p ) + 1 );\n    };\n\n    var ElasticInOut = function (k) {\n        var s, a = 0.1, p = 0.4;\n        if ( k === 0 ) return 0;\n        if ( k === 1 ) return 1;\n        if ( !a || a < 1 ) { a = 1; s = p / 4; }\n        else s = p * Math.asin( 1 / a ) / ( 2 * Math.PI );\n        if ( ( k *= 2 ) < 1 ) return - 0.5 * ( a * Math.pow( 2, 10 * ( k -= 1 ) ) * Math.sin( ( k - s ) * ( 2 * Math.PI ) / p ) );\n        return a * Math.pow( 2, -10 * ( k -= 1 ) ) * Math.sin( ( k - s ) * ( 2 * Math.PI ) / p ) * 0.5 + 1;\n    };\n\n    var BackIn = function (k) {\n            var s = 1.70158;\n            return k * k * ( ( s + 1 ) * k - s );\n    };\n\n    var BackOut = function (k) {\n        var s = 1.70158;\n        return --k * k * ( ( s + 1 ) * k + s ) + 1;\n    };\n\n    var BackInOut = function (k) {\n        var s = 1.70158 * 1.525;\n        if ( ( k *= 2 ) < 1 ) return 0.5 * ( k * k * ( ( s + 1 ) * k - s ) );\n        return 0.5 * ( ( k -= 2 ) * k * ( ( s + 1 ) * k + s ) + 2 );\n    };\n\n    var BounceIn = function (k) {\n        return 1 - BounceOut( 1 - k );\n    };\n\n    var BounceOut = function (k) {\n        if ( k < ( 1 / 2.75 ) ) {\n            return 7.5625 * k * k;\n        } else if ( k < ( 2 / 2.75 ) ) {\n            return 7.5625 * ( k -= ( 1.5 / 2.75 ) ) * k + 0.75;\n        } else if ( k < ( 2.5 / 2.75 ) ) {\n            return 7.5625 * ( k -= ( 2.25 / 2.75 ) ) * k + 0.9375;\n        } else {\n            return 7.5625 * ( k -= ( 2.625 / 2.75 ) ) * k + 0.984375;\n        }\n    };\n\n    var BounceInOut = function (k) {\n        if ( k < 0.5 ) return BounceIn( k * 2 ) * 0.5;\n        return BounceOut( k * 2 - 1 ) * 0.5 + 0.5;\n    };\n\n    return {\n        TweenManager: TweenManager,\n        Tween: Tween,\n        Linear: Linear,\n        QuadraticIn: QuadraticIn,\n        QuadraticOut: QuadraticOut,\n        QuadraticInOut: QuadraticInOut,\n        CubicIn: CubicIn,\n        CubicOut: CubicOut,\n        CubicInOut: CubicInOut,\n        QuarticIn: QuarticIn,\n        QuarticOut: QuarticOut,\n        QuarticInOut: QuarticInOut,\n        QuinticIn: QuinticIn,\n        QuinticOut: QuinticOut,\n        QuinticInOut: QuinticInOut,\n        SineIn: SineIn,\n        SineOut: SineOut,\n        SineInOut: SineInOut,\n        ExponentialIn: ExponentialIn,\n        ExponentialOut: ExponentialOut,\n        ExponentialInOut: ExponentialInOut,\n        CircularIn: CircularIn,\n        CircularOut: CircularOut,\n        CircularInOut: CircularInOut,\n        BackIn: BackIn,\n        BackOut: BackOut,\n        BackInOut: BackInOut,\n        BounceIn: BounceIn,\n        BounceOut: BounceOut,\n        BounceInOut: BounceInOut,\n        ElasticIn: ElasticIn,\n        ElasticOut: ElasticOut,\n        ElasticInOut: ElasticInOut\n    };\n}());\n\n// Expose prototype methods and create a default tween manager on the application\n(function () {\n    // Add pc.Application#addTweenManager method\n    pc.Application.prototype.addTweenManager = function () {\n        this._tweenManager = new pc.TweenManager(this);\n\n        this.on(\"update\", function (dt) {\n            this._tweenManager.update(dt);\n        });\n    };\n\n    // Add pc.Application#tween method\n    pc.Application.prototype.tween = function (target) {\n        return new pc.Tween(target, this._tweenManager);\n    };\n\n    // Add pc.Entity#tween method\n    pc.Entity.prototype.tween = function (target, options) {\n        var tween = this._app.tween(target);\n        tween.entity = this;\n\n        this.once('destroy', tween.stop, tween);\n\n        if (options && options.element) {\n            // specifiy a element property to be updated\n            tween.element = options.element;\n        }\n        return tween;\n    };\n\n    // Create a default tween manager on the application\n    var application = pc.Application.getApplication();\n    if (application) {\n        application.addTweenManager();\n    }\n})();\n");
+if (wasmSupported()) {
+    loadWasmModuleAsync('Ammo', Object(_game_helpers__WEBPACK_IMPORTED_MODULE_1__["getAssetPath"])('./ammo/ammo.wasm.js'), Object(_game_helpers__WEBPACK_IMPORTED_MODULE_1__["getAssetPath"])('./ammo/ammo.wasm.wasm'), function () { return new _game__WEBPACK_IMPORTED_MODULE_0__["App"]().Awake(); });
+}
+else {
+    loadWasmModuleAsync('Ammo', Object(_game_helpers__WEBPACK_IMPORTED_MODULE_1__["getAssetPath"])('./ammo/ammo.js'), '', function () { return new _game__WEBPACK_IMPORTED_MODULE_0__["App"]().Awake(); });
+}
+
+
+/***/ })
+
+/******/ });
+//# sourceMappingURL=app.ec9abe8a88afe8c5338e.js.map

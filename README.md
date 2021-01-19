@@ -1,2 +1,0 @@
-# vrtestjp
-playcanvas example

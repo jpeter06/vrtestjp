@@ -1,7 +1,8 @@
-/* eslint-disable no-unused-vars  */
-
+/* eslint-disable no-unused-vars */
+console.log("wasm-loader loadded");
 // check for wasm module support
 function wasmSupported() {
+    console.log("wasmSupported");
     try {
         if (typeof WebAssembly === "object" && typeof WebAssembly.instantiate === "function") {
             const module = new WebAssembly.Module(Uint8Array.of(0x0, 0x61, 0x73, 0x6d, 0x01, 0x00, 0x00, 0x00));
