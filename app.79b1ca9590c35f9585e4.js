@@ -72780,7 +72780,7 @@ var App = /** @class */ (function () {
             pivot: [0.5, 0.5],
             //shadowColor: new pc.Color(0, 0, 0),
             //shadowOffset: new pc.Vec2(0.25, -0.25),
-            text: "AAAAAAAAA",
+            text: "AYAYAYAYA",
             type: playcanvas__WEBPACK_IMPORTED_MODULE_0__["ELEMENTTYPE_TEXT"]
         });
         if (texto.element)
