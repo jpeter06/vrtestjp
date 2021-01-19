@@ -63,7 +63,7 @@
 /******/
 /******/ 	var hotApplyOnUpdate = true;
 /******/ 	// eslint-disable-next-line no-unused-vars
-/******/ 	var hotCurrentHash = "2e4eac69fc2d1748f607";
+/******/ 	var hotCurrentHash = "96b7ec118f605ff899d9";
 /******/ 	var hotRequestTimeout = 10000;
 /******/ 	var hotCurrentModuleData = {};
 /******/ 	var hotCurrentChildModule;
@@ -859,6 +859,5586 @@
 /************************************************************************/
 /******/ ({
 
+/***/ "./node_modules/backo2/index.js":
+/*!**************************************!*\
+  !*** ./node_modules/backo2/index.js ***!
+  \**************************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+
+/**
+ * Expose `Backoff`.
+ */
+
+module.exports = Backoff;
+
+/**
+ * Initialize backoff timer with `opts`.
+ *
+ * - `min` initial timeout in milliseconds [100]
+ * - `max` max timeout [10000]
+ * - `jitter` [0]
+ * - `factor` [2]
+ *
+ * @param {Object} opts
+ * @api public
+ */
+
+function Backoff(opts) {
+  opts = opts || {};
+  this.ms = opts.min || 100;
+  this.max = opts.max || 10000;
+  this.factor = opts.factor || 2;
+  this.jitter = opts.jitter > 0 && opts.jitter <= 1 ? opts.jitter : 0;
+  this.attempts = 0;
+}
+
+/**
+ * Return the backoff duration.
+ *
+ * @return {Number}
+ * @api public
+ */
+
+Backoff.prototype.duration = function(){
+  var ms = this.ms * Math.pow(this.factor, this.attempts++);
+  if (this.jitter) {
+    var rand =  Math.random();
+    var deviation = Math.floor(rand * this.jitter * ms);
+    ms = (Math.floor(rand * 10) & 1) == 0  ? ms - deviation : ms + deviation;
+  }
+  return Math.min(ms, this.max) | 0;
+};
+
+/**
+ * Reset the number of attempts.
+ *
+ * @api public
+ */
+
+Backoff.prototype.reset = function(){
+  this.attempts = 0;
+};
+
+/**
+ * Set the minimum duration
+ *
+ * @api public
+ */
+
+Backoff.prototype.setMin = function(min){
+  this.ms = min;
+};
+
+/**
+ * Set the maximum duration
+ *
+ * @api public
+ */
+
+Backoff.prototype.setMax = function(max){
+  this.max = max;
+};
+
+/**
+ * Set the jitter
+ *
+ * @api public
+ */
+
+Backoff.prototype.setJitter = function(jitter){
+  this.jitter = jitter;
+};
+
+
+
+/***/ }),
+
+/***/ "./node_modules/base64-arraybuffer/lib/base64-arraybuffer.js":
+/*!*******************************************************************!*\
+  !*** ./node_modules/base64-arraybuffer/lib/base64-arraybuffer.js ***!
+  \*******************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+/*
+ * base64-arraybuffer
+ * https://github.com/niklasvh/base64-arraybuffer
+ *
+ * Copyright (c) 2012 Niklas von Hertzen
+ * Licensed under the MIT license.
+ */
+(function(chars){
+  "use strict";
+
+  exports.encode = function(arraybuffer) {
+    var bytes = new Uint8Array(arraybuffer),
+    i, len = bytes.length, base64 = "";
+
+    for (i = 0; i < len; i+=3) {
+      base64 += chars[bytes[i] >> 2];
+      base64 += chars[((bytes[i] & 3) << 4) | (bytes[i + 1] >> 4)];
+      base64 += chars[((bytes[i + 1] & 15) << 2) | (bytes[i + 2] >> 6)];
+      base64 += chars[bytes[i + 2] & 63];
+    }
+
+    if ((len % 3) === 2) {
+      base64 = base64.substring(0, base64.length - 1) + "=";
+    } else if (len % 3 === 1) {
+      base64 = base64.substring(0, base64.length - 2) + "==";
+    }
+
+    return base64;
+  };
+
+  exports.decode =  function(base64) {
+    var bufferLength = base64.length * 0.75,
+    len = base64.length, i, p = 0,
+    encoded1, encoded2, encoded3, encoded4;
+
+    if (base64[base64.length - 1] === "=") {
+      bufferLength--;
+      if (base64[base64.length - 2] === "=") {
+        bufferLength--;
+      }
+    }
+
+    var arraybuffer = new ArrayBuffer(bufferLength),
+    bytes = new Uint8Array(arraybuffer);
+
+    for (i = 0; i < len; i+=4) {
+      encoded1 = chars.indexOf(base64[i]);
+      encoded2 = chars.indexOf(base64[i+1]);
+      encoded3 = chars.indexOf(base64[i+2]);
+      encoded4 = chars.indexOf(base64[i+3]);
+
+      bytes[p++] = (encoded1 << 2) | (encoded2 >> 4);
+      bytes[p++] = ((encoded2 & 15) << 4) | (encoded3 >> 2);
+      bytes[p++] = ((encoded3 & 3) << 6) | (encoded4 & 63);
+    }
+
+    return arraybuffer;
+  };
+})("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/");
+
+
+/***/ }),
+
+/***/ "./node_modules/base64-js/index.js":
+/*!*****************************************!*\
+  !*** ./node_modules/base64-js/index.js ***!
+  \*****************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+exports.byteLength = byteLength
+exports.toByteArray = toByteArray
+exports.fromByteArray = fromByteArray
+
+var lookup = []
+var revLookup = []
+var Arr = typeof Uint8Array !== 'undefined' ? Uint8Array : Array
+
+var code = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
+for (var i = 0, len = code.length; i < len; ++i) {
+  lookup[i] = code[i]
+  revLookup[code.charCodeAt(i)] = i
+}
+
+// Support decoding URL-safe base64 strings, as Node.js does.
+// See: https://en.wikipedia.org/wiki/Base64#URL_applications
+revLookup['-'.charCodeAt(0)] = 62
+revLookup['_'.charCodeAt(0)] = 63
+
+function getLens (b64) {
+  var len = b64.length
+
+  if (len % 4 > 0) {
+    throw new Error('Invalid string. Length must be a multiple of 4')
+  }
+
+  // Trim off extra bytes after placeholder bytes are found
+  // See: https://github.com/beatgammit/base64-js/issues/42
+  var validLen = b64.indexOf('=')
+  if (validLen === -1) validLen = len
+
+  var placeHoldersLen = validLen === len
+    ? 0
+    : 4 - (validLen % 4)
+
+  return [validLen, placeHoldersLen]
+}
+
+// base64 is 4/3 + up to two characters of the original data
+function byteLength (b64) {
+  var lens = getLens(b64)
+  var validLen = lens[0]
+  var placeHoldersLen = lens[1]
+  return ((validLen + placeHoldersLen) * 3 / 4) - placeHoldersLen
+}
+
+function _byteLength (b64, validLen, placeHoldersLen) {
+  return ((validLen + placeHoldersLen) * 3 / 4) - placeHoldersLen
+}
+
+function toByteArray (b64) {
+  var tmp
+  var lens = getLens(b64)
+  var validLen = lens[0]
+  var placeHoldersLen = lens[1]
+
+  var arr = new Arr(_byteLength(b64, validLen, placeHoldersLen))
+
+  var curByte = 0
+
+  // if there are placeholders, only get up to the last complete 4 chars
+  var len = placeHoldersLen > 0
+    ? validLen - 4
+    : validLen
+
+  var i
+  for (i = 0; i < len; i += 4) {
+    tmp =
+      (revLookup[b64.charCodeAt(i)] << 18) |
+      (revLookup[b64.charCodeAt(i + 1)] << 12) |
+      (revLookup[b64.charCodeAt(i + 2)] << 6) |
+      revLookup[b64.charCodeAt(i + 3)]
+    arr[curByte++] = (tmp >> 16) & 0xFF
+    arr[curByte++] = (tmp >> 8) & 0xFF
+    arr[curByte++] = tmp & 0xFF
+  }
+
+  if (placeHoldersLen === 2) {
+    tmp =
+      (revLookup[b64.charCodeAt(i)] << 2) |
+      (revLookup[b64.charCodeAt(i + 1)] >> 4)
+    arr[curByte++] = tmp & 0xFF
+  }
+
+  if (placeHoldersLen === 1) {
+    tmp =
+      (revLookup[b64.charCodeAt(i)] << 10) |
+      (revLookup[b64.charCodeAt(i + 1)] << 4) |
+      (revLookup[b64.charCodeAt(i + 2)] >> 2)
+    arr[curByte++] = (tmp >> 8) & 0xFF
+    arr[curByte++] = tmp & 0xFF
+  }
+
+  return arr
+}
+
+function tripletToBase64 (num) {
+  return lookup[num >> 18 & 0x3F] +
+    lookup[num >> 12 & 0x3F] +
+    lookup[num >> 6 & 0x3F] +
+    lookup[num & 0x3F]
+}
+
+function encodeChunk (uint8, start, end) {
+  var tmp
+  var output = []
+  for (var i = start; i < end; i += 3) {
+    tmp =
+      ((uint8[i] << 16) & 0xFF0000) +
+      ((uint8[i + 1] << 8) & 0xFF00) +
+      (uint8[i + 2] & 0xFF)
+    output.push(tripletToBase64(tmp))
+  }
+  return output.join('')
+}
+
+function fromByteArray (uint8) {
+  var tmp
+  var len = uint8.length
+  var extraBytes = len % 3 // if we have 1 byte left, pad 2 bytes
+  var parts = []
+  var maxChunkLength = 16383 // must be multiple of 3
+
+  // go through the array every three bytes, we'll deal with trailing stuff later
+  for (var i = 0, len2 = len - extraBytes; i < len2; i += maxChunkLength) {
+    parts.push(encodeChunk(uint8, i, (i + maxChunkLength) > len2 ? len2 : (i + maxChunkLength)))
+  }
+
+  // pad the end with zeros, but make sure to not forget the extra bytes
+  if (extraBytes === 1) {
+    tmp = uint8[len - 1]
+    parts.push(
+      lookup[tmp >> 2] +
+      lookup[(tmp << 4) & 0x3F] +
+      '=='
+    )
+  } else if (extraBytes === 2) {
+    tmp = (uint8[len - 2] << 8) + uint8[len - 1]
+    parts.push(
+      lookup[tmp >> 10] +
+      lookup[(tmp >> 4) & 0x3F] +
+      lookup[(tmp << 2) & 0x3F] +
+      '='
+    )
+  }
+
+  return parts.join('')
+}
+
+
+/***/ }),
+
+/***/ "./node_modules/buffer/index.js":
+/*!**************************************!*\
+  !*** ./node_modules/buffer/index.js ***!
+  \**************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+/* WEBPACK VAR INJECTION */(function(global) {/*!
+ * The buffer module from node.js, for the browser.
+ *
+ * @author   Feross Aboukhadijeh <http://feross.org>
+ * @license  MIT
+ */
+/* eslint-disable no-proto */
+
+
+
+var base64 = __webpack_require__(/*! base64-js */ "./node_modules/base64-js/index.js")
+var ieee754 = __webpack_require__(/*! ieee754 */ "./node_modules/ieee754/index.js")
+var isArray = __webpack_require__(/*! isarray */ "./node_modules/isarray/index.js")
+
+exports.Buffer = Buffer
+exports.SlowBuffer = SlowBuffer
+exports.INSPECT_MAX_BYTES = 50
+
+/**
+ * If `Buffer.TYPED_ARRAY_SUPPORT`:
+ *   === true    Use Uint8Array implementation (fastest)
+ *   === false   Use Object implementation (most compatible, even IE6)
+ *
+ * Browsers that support typed arrays are IE 10+, Firefox 4+, Chrome 7+, Safari 5.1+,
+ * Opera 11.6+, iOS 4.2+.
+ *
+ * Due to various browser bugs, sometimes the Object implementation will be used even
+ * when the browser supports typed arrays.
+ *
+ * Note:
+ *
+ *   - Firefox 4-29 lacks support for adding new properties to `Uint8Array` instances,
+ *     See: https://bugzilla.mozilla.org/show_bug.cgi?id=695438.
+ *
+ *   - Chrome 9-10 is missing the `TypedArray.prototype.subarray` function.
+ *
+ *   - IE10 has a broken `TypedArray.prototype.subarray` function which returns arrays of
+ *     incorrect length in some situations.
+
+ * We detect these buggy browsers and set `Buffer.TYPED_ARRAY_SUPPORT` to `false` so they
+ * get the Object implementation, which is slower but behaves correctly.
+ */
+Buffer.TYPED_ARRAY_SUPPORT = global.TYPED_ARRAY_SUPPORT !== undefined
+  ? global.TYPED_ARRAY_SUPPORT
+  : typedArraySupport()
+
+/*
+ * Export kMaxLength after typed array support is determined.
+ */
+exports.kMaxLength = kMaxLength()
+
+function typedArraySupport () {
+  try {
+    var arr = new Uint8Array(1)
+    arr.__proto__ = {__proto__: Uint8Array.prototype, foo: function () { return 42 }}
+    return arr.foo() === 42 && // typed array instances can be augmented
+        typeof arr.subarray === 'function' && // chrome 9-10 lack `subarray`
+        arr.subarray(1, 1).byteLength === 0 // ie10 has broken `subarray`
+  } catch (e) {
+    return false
+  }
+}
+
+function kMaxLength () {
+  return Buffer.TYPED_ARRAY_SUPPORT
+    ? 0x7fffffff
+    : 0x3fffffff
+}
+
+function createBuffer (that, length) {
+  if (kMaxLength() < length) {
+    throw new RangeError('Invalid typed array length')
+  }
+  if (Buffer.TYPED_ARRAY_SUPPORT) {
+    // Return an augmented `Uint8Array` instance, for best performance
+    that = new Uint8Array(length)
+    that.__proto__ = Buffer.prototype
+  } else {
+    // Fallback: Return an object instance of the Buffer class
+    if (that === null) {
+      that = new Buffer(length)
+    }
+    that.length = length
+  }
+
+  return that
+}
+
+/**
+ * The Buffer constructor returns instances of `Uint8Array` that have their
+ * prototype changed to `Buffer.prototype`. Furthermore, `Buffer` is a subclass of
+ * `Uint8Array`, so the returned instances will have all the node `Buffer` methods
+ * and the `Uint8Array` methods. Square bracket notation works as expected -- it
+ * returns a single octet.
+ *
+ * The `Uint8Array` prototype remains unmodified.
+ */
+
+function Buffer (arg, encodingOrOffset, length) {
+  if (!Buffer.TYPED_ARRAY_SUPPORT && !(this instanceof Buffer)) {
+    return new Buffer(arg, encodingOrOffset, length)
+  }
+
+  // Common case.
+  if (typeof arg === 'number') {
+    if (typeof encodingOrOffset === 'string') {
+      throw new Error(
+        'If encoding is specified then the first argument must be a string'
+      )
+    }
+    return allocUnsafe(this, arg)
+  }
+  return from(this, arg, encodingOrOffset, length)
+}
+
+Buffer.poolSize = 8192 // not used by this implementation
+
+// TODO: Legacy, not needed anymore. Remove in next major version.
+Buffer._augment = function (arr) {
+  arr.__proto__ = Buffer.prototype
+  return arr
+}
+
+function from (that, value, encodingOrOffset, length) {
+  if (typeof value === 'number') {
+    throw new TypeError('"value" argument must not be a number')
+  }
+
+  if (typeof ArrayBuffer !== 'undefined' && value instanceof ArrayBuffer) {
+    return fromArrayBuffer(that, value, encodingOrOffset, length)
+  }
+
+  if (typeof value === 'string') {
+    return fromString(that, value, encodingOrOffset)
+  }
+
+  return fromObject(that, value)
+}
+
+/**
+ * Functionally equivalent to Buffer(arg, encoding) but throws a TypeError
+ * if value is a number.
+ * Buffer.from(str[, encoding])
+ * Buffer.from(array)
+ * Buffer.from(buffer)
+ * Buffer.from(arrayBuffer[, byteOffset[, length]])
+ **/
+Buffer.from = function (value, encodingOrOffset, length) {
+  return from(null, value, encodingOrOffset, length)
+}
+
+if (Buffer.TYPED_ARRAY_SUPPORT) {
+  Buffer.prototype.__proto__ = Uint8Array.prototype
+  Buffer.__proto__ = Uint8Array
+  if (typeof Symbol !== 'undefined' && Symbol.species &&
+      Buffer[Symbol.species] === Buffer) {
+    // Fix subarray() in ES2016. See: https://github.com/feross/buffer/pull/97
+    Object.defineProperty(Buffer, Symbol.species, {
+      value: null,
+      configurable: true
+    })
+  }
+}
+
+function assertSize (size) {
+  if (typeof size !== 'number') {
+    throw new TypeError('"size" argument must be a number')
+  } else if (size < 0) {
+    throw new RangeError('"size" argument must not be negative')
+  }
+}
+
+function alloc (that, size, fill, encoding) {
+  assertSize(size)
+  if (size <= 0) {
+    return createBuffer(that, size)
+  }
+  if (fill !== undefined) {
+    // Only pay attention to encoding if it's a string. This
+    // prevents accidentally sending in a number that would
+    // be interpretted as a start offset.
+    return typeof encoding === 'string'
+      ? createBuffer(that, size).fill(fill, encoding)
+      : createBuffer(that, size).fill(fill)
+  }
+  return createBuffer(that, size)
+}
+
+/**
+ * Creates a new filled Buffer instance.
+ * alloc(size[, fill[, encoding]])
+ **/
+Buffer.alloc = function (size, fill, encoding) {
+  return alloc(null, size, fill, encoding)
+}
+
+function allocUnsafe (that, size) {
+  assertSize(size)
+  that = createBuffer(that, size < 0 ? 0 : checked(size) | 0)
+  if (!Buffer.TYPED_ARRAY_SUPPORT) {
+    for (var i = 0; i < size; ++i) {
+      that[i] = 0
+    }
+  }
+  return that
+}
+
+/**
+ * Equivalent to Buffer(num), by default creates a non-zero-filled Buffer instance.
+ * */
+Buffer.allocUnsafe = function (size) {
+  return allocUnsafe(null, size)
+}
+/**
+ * Equivalent to SlowBuffer(num), by default creates a non-zero-filled Buffer instance.
+ */
+Buffer.allocUnsafeSlow = function (size) {
+  return allocUnsafe(null, size)
+}
+
+function fromString (that, string, encoding) {
+  if (typeof encoding !== 'string' || encoding === '') {
+    encoding = 'utf8'
+  }
+
+  if (!Buffer.isEncoding(encoding)) {
+    throw new TypeError('"encoding" must be a valid string encoding')
+  }
+
+  var length = byteLength(string, encoding) | 0
+  that = createBuffer(that, length)
+
+  var actual = that.write(string, encoding)
+
+  if (actual !== length) {
+    // Writing a hex string, for example, that contains invalid characters will
+    // cause everything after the first invalid character to be ignored. (e.g.
+    // 'abxxcd' will be treated as 'ab')
+    that = that.slice(0, actual)
+  }
+
+  return that
+}
+
+function fromArrayLike (that, array) {
+  var length = array.length < 0 ? 0 : checked(array.length) | 0
+  that = createBuffer(that, length)
+  for (var i = 0; i < length; i += 1) {
+    that[i] = array[i] & 255
+  }
+  return that
+}
+
+function fromArrayBuffer (that, array, byteOffset, length) {
+  array.byteLength // this throws if `array` is not a valid ArrayBuffer
+
+  if (byteOffset < 0 || array.byteLength < byteOffset) {
+    throw new RangeError('\'offset\' is out of bounds')
+  }
+
+  if (array.byteLength < byteOffset + (length || 0)) {
+    throw new RangeError('\'length\' is out of bounds')
+  }
+
+  if (byteOffset === undefined && length === undefined) {
+    array = new Uint8Array(array)
+  } else if (length === undefined) {
+    array = new Uint8Array(array, byteOffset)
+  } else {
+    array = new Uint8Array(array, byteOffset, length)
+  }
+
+  if (Buffer.TYPED_ARRAY_SUPPORT) {
+    // Return an augmented `Uint8Array` instance, for best performance
+    that = array
+    that.__proto__ = Buffer.prototype
+  } else {
+    // Fallback: Return an object instance of the Buffer class
+    that = fromArrayLike(that, array)
+  }
+  return that
+}
+
+function fromObject (that, obj) {
+  if (Buffer.isBuffer(obj)) {
+    var len = checked(obj.length) | 0
+    that = createBuffer(that, len)
+
+    if (that.length === 0) {
+      return that
+    }
+
+    obj.copy(that, 0, 0, len)
+    return that
+  }
+
+  if (obj) {
+    if ((typeof ArrayBuffer !== 'undefined' &&
+        obj.buffer instanceof ArrayBuffer) || 'length' in obj) {
+      if (typeof obj.length !== 'number' || isnan(obj.length)) {
+        return createBuffer(that, 0)
+      }
+      return fromArrayLike(that, obj)
+    }
+
+    if (obj.type === 'Buffer' && isArray(obj.data)) {
+      return fromArrayLike(that, obj.data)
+    }
+  }
+
+  throw new TypeError('First argument must be a string, Buffer, ArrayBuffer, Array, or array-like object.')
+}
+
+function checked (length) {
+  // Note: cannot use `length < kMaxLength()` here because that fails when
+  // length is NaN (which is otherwise coerced to zero.)
+  if (length >= kMaxLength()) {
+    throw new RangeError('Attempt to allocate Buffer larger than maximum ' +
+                         'size: 0x' + kMaxLength().toString(16) + ' bytes')
+  }
+  return length | 0
+}
+
+function SlowBuffer (length) {
+  if (+length != length) { // eslint-disable-line eqeqeq
+    length = 0
+  }
+  return Buffer.alloc(+length)
+}
+
+Buffer.isBuffer = function isBuffer (b) {
+  return !!(b != null && b._isBuffer)
+}
+
+Buffer.compare = function compare (a, b) {
+  if (!Buffer.isBuffer(a) || !Buffer.isBuffer(b)) {
+    throw new TypeError('Arguments must be Buffers')
+  }
+
+  if (a === b) return 0
+
+  var x = a.length
+  var y = b.length
+
+  for (var i = 0, len = Math.min(x, y); i < len; ++i) {
+    if (a[i] !== b[i]) {
+      x = a[i]
+      y = b[i]
+      break
+    }
+  }
+
+  if (x < y) return -1
+  if (y < x) return 1
+  return 0
+}
+
+Buffer.isEncoding = function isEncoding (encoding) {
+  switch (String(encoding).toLowerCase()) {
+    case 'hex':
+    case 'utf8':
+    case 'utf-8':
+    case 'ascii':
+    case 'latin1':
+    case 'binary':
+    case 'base64':
+    case 'ucs2':
+    case 'ucs-2':
+    case 'utf16le':
+    case 'utf-16le':
+      return true
+    default:
+      return false
+  }
+}
+
+Buffer.concat = function concat (list, length) {
+  if (!isArray(list)) {
+    throw new TypeError('"list" argument must be an Array of Buffers')
+  }
+
+  if (list.length === 0) {
+    return Buffer.alloc(0)
+  }
+
+  var i
+  if (length === undefined) {
+    length = 0
+    for (i = 0; i < list.length; ++i) {
+      length += list[i].length
+    }
+  }
+
+  var buffer = Buffer.allocUnsafe(length)
+  var pos = 0
+  for (i = 0; i < list.length; ++i) {
+    var buf = list[i]
+    if (!Buffer.isBuffer(buf)) {
+      throw new TypeError('"list" argument must be an Array of Buffers')
+    }
+    buf.copy(buffer, pos)
+    pos += buf.length
+  }
+  return buffer
+}
+
+function byteLength (string, encoding) {
+  if (Buffer.isBuffer(string)) {
+    return string.length
+  }
+  if (typeof ArrayBuffer !== 'undefined' && typeof ArrayBuffer.isView === 'function' &&
+      (ArrayBuffer.isView(string) || string instanceof ArrayBuffer)) {
+    return string.byteLength
+  }
+  if (typeof string !== 'string') {
+    string = '' + string
+  }
+
+  var len = string.length
+  if (len === 0) return 0
+
+  // Use a for loop to avoid recursion
+  var loweredCase = false
+  for (;;) {
+    switch (encoding) {
+      case 'ascii':
+      case 'latin1':
+      case 'binary':
+        return len
+      case 'utf8':
+      case 'utf-8':
+      case undefined:
+        return utf8ToBytes(string).length
+      case 'ucs2':
+      case 'ucs-2':
+      case 'utf16le':
+      case 'utf-16le':
+        return len * 2
+      case 'hex':
+        return len >>> 1
+      case 'base64':
+        return base64ToBytes(string).length
+      default:
+        if (loweredCase) return utf8ToBytes(string).length // assume utf8
+        encoding = ('' + encoding).toLowerCase()
+        loweredCase = true
+    }
+  }
+}
+Buffer.byteLength = byteLength
+
+function slowToString (encoding, start, end) {
+  var loweredCase = false
+
+  // No need to verify that "this.length <= MAX_UINT32" since it's a read-only
+  // property of a typed array.
+
+  // This behaves neither like String nor Uint8Array in that we set start/end
+  // to their upper/lower bounds if the value passed is out of range.
+  // undefined is handled specially as per ECMA-262 6th Edition,
+  // Section 13.3.3.7 Runtime Semantics: KeyedBindingInitialization.
+  if (start === undefined || start < 0) {
+    start = 0
+  }
+  // Return early if start > this.length. Done here to prevent potential uint32
+  // coercion fail below.
+  if (start > this.length) {
+    return ''
+  }
+
+  if (end === undefined || end > this.length) {
+    end = this.length
+  }
+
+  if (end <= 0) {
+    return ''
+  }
+
+  // Force coersion to uint32. This will also coerce falsey/NaN values to 0.
+  end >>>= 0
+  start >>>= 0
+
+  if (end <= start) {
+    return ''
+  }
+
+  if (!encoding) encoding = 'utf8'
+
+  while (true) {
+    switch (encoding) {
+      case 'hex':
+        return hexSlice(this, start, end)
+
+      case 'utf8':
+      case 'utf-8':
+        return utf8Slice(this, start, end)
+
+      case 'ascii':
+        return asciiSlice(this, start, end)
+
+      case 'latin1':
+      case 'binary':
+        return latin1Slice(this, start, end)
+
+      case 'base64':
+        return base64Slice(this, start, end)
+
+      case 'ucs2':
+      case 'ucs-2':
+      case 'utf16le':
+      case 'utf-16le':
+        return utf16leSlice(this, start, end)
+
+      default:
+        if (loweredCase) throw new TypeError('Unknown encoding: ' + encoding)
+        encoding = (encoding + '').toLowerCase()
+        loweredCase = true
+    }
+  }
+}
+
+// The property is used by `Buffer.isBuffer` and `is-buffer` (in Safari 5-7) to detect
+// Buffer instances.
+Buffer.prototype._isBuffer = true
+
+function swap (b, n, m) {
+  var i = b[n]
+  b[n] = b[m]
+  b[m] = i
+}
+
+Buffer.prototype.swap16 = function swap16 () {
+  var len = this.length
+  if (len % 2 !== 0) {
+    throw new RangeError('Buffer size must be a multiple of 16-bits')
+  }
+  for (var i = 0; i < len; i += 2) {
+    swap(this, i, i + 1)
+  }
+  return this
+}
+
+Buffer.prototype.swap32 = function swap32 () {
+  var len = this.length
+  if (len % 4 !== 0) {
+    throw new RangeError('Buffer size must be a multiple of 32-bits')
+  }
+  for (var i = 0; i < len; i += 4) {
+    swap(this, i, i + 3)
+    swap(this, i + 1, i + 2)
+  }
+  return this
+}
+
+Buffer.prototype.swap64 = function swap64 () {
+  var len = this.length
+  if (len % 8 !== 0) {
+    throw new RangeError('Buffer size must be a multiple of 64-bits')
+  }
+  for (var i = 0; i < len; i += 8) {
+    swap(this, i, i + 7)
+    swap(this, i + 1, i + 6)
+    swap(this, i + 2, i + 5)
+    swap(this, i + 3, i + 4)
+  }
+  return this
+}
+
+Buffer.prototype.toString = function toString () {
+  var length = this.length | 0
+  if (length === 0) return ''
+  if (arguments.length === 0) return utf8Slice(this, 0, length)
+  return slowToString.apply(this, arguments)
+}
+
+Buffer.prototype.equals = function equals (b) {
+  if (!Buffer.isBuffer(b)) throw new TypeError('Argument must be a Buffer')
+  if (this === b) return true
+  return Buffer.compare(this, b) === 0
+}
+
+Buffer.prototype.inspect = function inspect () {
+  var str = ''
+  var max = exports.INSPECT_MAX_BYTES
+  if (this.length > 0) {
+    str = this.toString('hex', 0, max).match(/.{2}/g).join(' ')
+    if (this.length > max) str += ' ... '
+  }
+  return '<Buffer ' + str + '>'
+}
+
+Buffer.prototype.compare = function compare (target, start, end, thisStart, thisEnd) {
+  if (!Buffer.isBuffer(target)) {
+    throw new TypeError('Argument must be a Buffer')
+  }
+
+  if (start === undefined) {
+    start = 0
+  }
+  if (end === undefined) {
+    end = target ? target.length : 0
+  }
+  if (thisStart === undefined) {
+    thisStart = 0
+  }
+  if (thisEnd === undefined) {
+    thisEnd = this.length
+  }
+
+  if (start < 0 || end > target.length || thisStart < 0 || thisEnd > this.length) {
+    throw new RangeError('out of range index')
+  }
+
+  if (thisStart >= thisEnd && start >= end) {
+    return 0
+  }
+  if (thisStart >= thisEnd) {
+    return -1
+  }
+  if (start >= end) {
+    return 1
+  }
+
+  start >>>= 0
+  end >>>= 0
+  thisStart >>>= 0
+  thisEnd >>>= 0
+
+  if (this === target) return 0
+
+  var x = thisEnd - thisStart
+  var y = end - start
+  var len = Math.min(x, y)
+
+  var thisCopy = this.slice(thisStart, thisEnd)
+  var targetCopy = target.slice(start, end)
+
+  for (var i = 0; i < len; ++i) {
+    if (thisCopy[i] !== targetCopy[i]) {
+      x = thisCopy[i]
+      y = targetCopy[i]
+      break
+    }
+  }
+
+  if (x < y) return -1
+  if (y < x) return 1
+  return 0
+}
+
+// Finds either the first index of `val` in `buffer` at offset >= `byteOffset`,
+// OR the last index of `val` in `buffer` at offset <= `byteOffset`.
+//
+// Arguments:
+// - buffer - a Buffer to search
+// - val - a string, Buffer, or number
+// - byteOffset - an index into `buffer`; will be clamped to an int32
+// - encoding - an optional encoding, relevant is val is a string
+// - dir - true for indexOf, false for lastIndexOf
+function bidirectionalIndexOf (buffer, val, byteOffset, encoding, dir) {
+  // Empty buffer means no match
+  if (buffer.length === 0) return -1
+
+  // Normalize byteOffset
+  if (typeof byteOffset === 'string') {
+    encoding = byteOffset
+    byteOffset = 0
+  } else if (byteOffset > 0x7fffffff) {
+    byteOffset = 0x7fffffff
+  } else if (byteOffset < -0x80000000) {
+    byteOffset = -0x80000000
+  }
+  byteOffset = +byteOffset  // Coerce to Number.
+  if (isNaN(byteOffset)) {
+    // byteOffset: it it's undefined, null, NaN, "foo", etc, search whole buffer
+    byteOffset = dir ? 0 : (buffer.length - 1)
+  }
+
+  // Normalize byteOffset: negative offsets start from the end of the buffer
+  if (byteOffset < 0) byteOffset = buffer.length + byteOffset
+  if (byteOffset >= buffer.length) {
+    if (dir) return -1
+    else byteOffset = buffer.length - 1
+  } else if (byteOffset < 0) {
+    if (dir) byteOffset = 0
+    else return -1
+  }
+
+  // Normalize val
+  if (typeof val === 'string') {
+    val = Buffer.from(val, encoding)
+  }
+
+  // Finally, search either indexOf (if dir is true) or lastIndexOf
+  if (Buffer.isBuffer(val)) {
+    // Special case: looking for empty string/buffer always fails
+    if (val.length === 0) {
+      return -1
+    }
+    return arrayIndexOf(buffer, val, byteOffset, encoding, dir)
+  } else if (typeof val === 'number') {
+    val = val & 0xFF // Search for a byte value [0-255]
+    if (Buffer.TYPED_ARRAY_SUPPORT &&
+        typeof Uint8Array.prototype.indexOf === 'function') {
+      if (dir) {
+        return Uint8Array.prototype.indexOf.call(buffer, val, byteOffset)
+      } else {
+        return Uint8Array.prototype.lastIndexOf.call(buffer, val, byteOffset)
+      }
+    }
+    return arrayIndexOf(buffer, [ val ], byteOffset, encoding, dir)
+  }
+
+  throw new TypeError('val must be string, number or Buffer')
+}
+
+function arrayIndexOf (arr, val, byteOffset, encoding, dir) {
+  var indexSize = 1
+  var arrLength = arr.length
+  var valLength = val.length
+
+  if (encoding !== undefined) {
+    encoding = String(encoding).toLowerCase()
+    if (encoding === 'ucs2' || encoding === 'ucs-2' ||
+        encoding === 'utf16le' || encoding === 'utf-16le') {
+      if (arr.length < 2 || val.length < 2) {
+        return -1
+      }
+      indexSize = 2
+      arrLength /= 2
+      valLength /= 2
+      byteOffset /= 2
+    }
+  }
+
+  function read (buf, i) {
+    if (indexSize === 1) {
+      return buf[i]
+    } else {
+      return buf.readUInt16BE(i * indexSize)
+    }
+  }
+
+  var i
+  if (dir) {
+    var foundIndex = -1
+    for (i = byteOffset; i < arrLength; i++) {
+      if (read(arr, i) === read(val, foundIndex === -1 ? 0 : i - foundIndex)) {
+        if (foundIndex === -1) foundIndex = i
+        if (i - foundIndex + 1 === valLength) return foundIndex * indexSize
+      } else {
+        if (foundIndex !== -1) i -= i - foundIndex
+        foundIndex = -1
+      }
+    }
+  } else {
+    if (byteOffset + valLength > arrLength) byteOffset = arrLength - valLength
+    for (i = byteOffset; i >= 0; i--) {
+      var found = true
+      for (var j = 0; j < valLength; j++) {
+        if (read(arr, i + j) !== read(val, j)) {
+          found = false
+          break
+        }
+      }
+      if (found) return i
+    }
+  }
+
+  return -1
+}
+
+Buffer.prototype.includes = function includes (val, byteOffset, encoding) {
+  return this.indexOf(val, byteOffset, encoding) !== -1
+}
+
+Buffer.prototype.indexOf = function indexOf (val, byteOffset, encoding) {
+  return bidirectionalIndexOf(this, val, byteOffset, encoding, true)
+}
+
+Buffer.prototype.lastIndexOf = function lastIndexOf (val, byteOffset, encoding) {
+  return bidirectionalIndexOf(this, val, byteOffset, encoding, false)
+}
+
+function hexWrite (buf, string, offset, length) {
+  offset = Number(offset) || 0
+  var remaining = buf.length - offset
+  if (!length) {
+    length = remaining
+  } else {
+    length = Number(length)
+    if (length > remaining) {
+      length = remaining
+    }
+  }
+
+  // must be an even number of digits
+  var strLen = string.length
+  if (strLen % 2 !== 0) throw new TypeError('Invalid hex string')
+
+  if (length > strLen / 2) {
+    length = strLen / 2
+  }
+  for (var i = 0; i < length; ++i) {
+    var parsed = parseInt(string.substr(i * 2, 2), 16)
+    if (isNaN(parsed)) return i
+    buf[offset + i] = parsed
+  }
+  return i
+}
+
+function utf8Write (buf, string, offset, length) {
+  return blitBuffer(utf8ToBytes(string, buf.length - offset), buf, offset, length)
+}
+
+function asciiWrite (buf, string, offset, length) {
+  return blitBuffer(asciiToBytes(string), buf, offset, length)
+}
+
+function latin1Write (buf, string, offset, length) {
+  return asciiWrite(buf, string, offset, length)
+}
+
+function base64Write (buf, string, offset, length) {
+  return blitBuffer(base64ToBytes(string), buf, offset, length)
+}
+
+function ucs2Write (buf, string, offset, length) {
+  return blitBuffer(utf16leToBytes(string, buf.length - offset), buf, offset, length)
+}
+
+Buffer.prototype.write = function write (string, offset, length, encoding) {
+  // Buffer#write(string)
+  if (offset === undefined) {
+    encoding = 'utf8'
+    length = this.length
+    offset = 0
+  // Buffer#write(string, encoding)
+  } else if (length === undefined && typeof offset === 'string') {
+    encoding = offset
+    length = this.length
+    offset = 0
+  // Buffer#write(string, offset[, length][, encoding])
+  } else if (isFinite(offset)) {
+    offset = offset | 0
+    if (isFinite(length)) {
+      length = length | 0
+      if (encoding === undefined) encoding = 'utf8'
+    } else {
+      encoding = length
+      length = undefined
+    }
+  // legacy write(string, encoding, offset, length) - remove in v0.13
+  } else {
+    throw new Error(
+      'Buffer.write(string, encoding, offset[, length]) is no longer supported'
+    )
+  }
+
+  var remaining = this.length - offset
+  if (length === undefined || length > remaining) length = remaining
+
+  if ((string.length > 0 && (length < 0 || offset < 0)) || offset > this.length) {
+    throw new RangeError('Attempt to write outside buffer bounds')
+  }
+
+  if (!encoding) encoding = 'utf8'
+
+  var loweredCase = false
+  for (;;) {
+    switch (encoding) {
+      case 'hex':
+        return hexWrite(this, string, offset, length)
+
+      case 'utf8':
+      case 'utf-8':
+        return utf8Write(this, string, offset, length)
+
+      case 'ascii':
+        return asciiWrite(this, string, offset, length)
+
+      case 'latin1':
+      case 'binary':
+        return latin1Write(this, string, offset, length)
+
+      case 'base64':
+        // Warning: maxLength not taken into account in base64Write
+        return base64Write(this, string, offset, length)
+
+      case 'ucs2':
+      case 'ucs-2':
+      case 'utf16le':
+      case 'utf-16le':
+        return ucs2Write(this, string, offset, length)
+
+      default:
+        if (loweredCase) throw new TypeError('Unknown encoding: ' + encoding)
+        encoding = ('' + encoding).toLowerCase()
+        loweredCase = true
+    }
+  }
+}
+
+Buffer.prototype.toJSON = function toJSON () {
+  return {
+    type: 'Buffer',
+    data: Array.prototype.slice.call(this._arr || this, 0)
+  }
+}
+
+function base64Slice (buf, start, end) {
+  if (start === 0 && end === buf.length) {
+    return base64.fromByteArray(buf)
+  } else {
+    return base64.fromByteArray(buf.slice(start, end))
+  }
+}
+
+function utf8Slice (buf, start, end) {
+  end = Math.min(buf.length, end)
+  var res = []
+
+  var i = start
+  while (i < end) {
+    var firstByte = buf[i]
+    var codePoint = null
+    var bytesPerSequence = (firstByte > 0xEF) ? 4
+      : (firstByte > 0xDF) ? 3
+      : (firstByte > 0xBF) ? 2
+      : 1
+
+    if (i + bytesPerSequence <= end) {
+      var secondByte, thirdByte, fourthByte, tempCodePoint
+
+      switch (bytesPerSequence) {
+        case 1:
+          if (firstByte < 0x80) {
+            codePoint = firstByte
+          }
+          break
+        case 2:
+          secondByte = buf[i + 1]
+          if ((secondByte & 0xC0) === 0x80) {
+            tempCodePoint = (firstByte & 0x1F) << 0x6 | (secondByte & 0x3F)
+            if (tempCodePoint > 0x7F) {
+              codePoint = tempCodePoint
+            }
+          }
+          break
+        case 3:
+          secondByte = buf[i + 1]
+          thirdByte = buf[i + 2]
+          if ((secondByte & 0xC0) === 0x80 && (thirdByte & 0xC0) === 0x80) {
+            tempCodePoint = (firstByte & 0xF) << 0xC | (secondByte & 0x3F) << 0x6 | (thirdByte & 0x3F)
+            if (tempCodePoint > 0x7FF && (tempCodePoint < 0xD800 || tempCodePoint > 0xDFFF)) {
+              codePoint = tempCodePoint
+            }
+          }
+          break
+        case 4:
+          secondByte = buf[i + 1]
+          thirdByte = buf[i + 2]
+          fourthByte = buf[i + 3]
+          if ((secondByte & 0xC0) === 0x80 && (thirdByte & 0xC0) === 0x80 && (fourthByte & 0xC0) === 0x80) {
+            tempCodePoint = (firstByte & 0xF) << 0x12 | (secondByte & 0x3F) << 0xC | (thirdByte & 0x3F) << 0x6 | (fourthByte & 0x3F)
+            if (tempCodePoint > 0xFFFF && tempCodePoint < 0x110000) {
+              codePoint = tempCodePoint
+            }
+          }
+      }
+    }
+
+    if (codePoint === null) {
+      // we did not generate a valid codePoint so insert a
+      // replacement char (U+FFFD) and advance only 1 byte
+      codePoint = 0xFFFD
+      bytesPerSequence = 1
+    } else if (codePoint > 0xFFFF) {
+      // encode to utf16 (surrogate pair dance)
+      codePoint -= 0x10000
+      res.push(codePoint >>> 10 & 0x3FF | 0xD800)
+      codePoint = 0xDC00 | codePoint & 0x3FF
+    }
+
+    res.push(codePoint)
+    i += bytesPerSequence
+  }
+
+  return decodeCodePointsArray(res)
+}
+
+// Based on http://stackoverflow.com/a/22747272/680742, the browser with
+// the lowest limit is Chrome, with 0x10000 args.
+// We go 1 magnitude less, for safety
+var MAX_ARGUMENTS_LENGTH = 0x1000
+
+function decodeCodePointsArray (codePoints) {
+  var len = codePoints.length
+  if (len <= MAX_ARGUMENTS_LENGTH) {
+    return String.fromCharCode.apply(String, codePoints) // avoid extra slice()
+  }
+
+  // Decode in chunks to avoid "call stack size exceeded".
+  var res = ''
+  var i = 0
+  while (i < len) {
+    res += String.fromCharCode.apply(
+      String,
+      codePoints.slice(i, i += MAX_ARGUMENTS_LENGTH)
+    )
+  }
+  return res
+}
+
+function asciiSlice (buf, start, end) {
+  var ret = ''
+  end = Math.min(buf.length, end)
+
+  for (var i = start; i < end; ++i) {
+    ret += String.fromCharCode(buf[i] & 0x7F)
+  }
+  return ret
+}
+
+function latin1Slice (buf, start, end) {
+  var ret = ''
+  end = Math.min(buf.length, end)
+
+  for (var i = start; i < end; ++i) {
+    ret += String.fromCharCode(buf[i])
+  }
+  return ret
+}
+
+function hexSlice (buf, start, end) {
+  var len = buf.length
+
+  if (!start || start < 0) start = 0
+  if (!end || end < 0 || end > len) end = len
+
+  var out = ''
+  for (var i = start; i < end; ++i) {
+    out += toHex(buf[i])
+  }
+  return out
+}
+
+function utf16leSlice (buf, start, end) {
+  var bytes = buf.slice(start, end)
+  var res = ''
+  for (var i = 0; i < bytes.length; i += 2) {
+    res += String.fromCharCode(bytes[i] + bytes[i + 1] * 256)
+  }
+  return res
+}
+
+Buffer.prototype.slice = function slice (start, end) {
+  var len = this.length
+  start = ~~start
+  end = end === undefined ? len : ~~end
+
+  if (start < 0) {
+    start += len
+    if (start < 0) start = 0
+  } else if (start > len) {
+    start = len
+  }
+
+  if (end < 0) {
+    end += len
+    if (end < 0) end = 0
+  } else if (end > len) {
+    end = len
+  }
+
+  if (end < start) end = start
+
+  var newBuf
+  if (Buffer.TYPED_ARRAY_SUPPORT) {
+    newBuf = this.subarray(start, end)
+    newBuf.__proto__ = Buffer.prototype
+  } else {
+    var sliceLen = end - start
+    newBuf = new Buffer(sliceLen, undefined)
+    for (var i = 0; i < sliceLen; ++i) {
+      newBuf[i] = this[i + start]
+    }
+  }
+
+  return newBuf
+}
+
+/*
+ * Need to make sure that buffer isn't trying to write out of bounds.
+ */
+function checkOffset (offset, ext, length) {
+  if ((offset % 1) !== 0 || offset < 0) throw new RangeError('offset is not uint')
+  if (offset + ext > length) throw new RangeError('Trying to access beyond buffer length')
+}
+
+Buffer.prototype.readUIntLE = function readUIntLE (offset, byteLength, noAssert) {
+  offset = offset | 0
+  byteLength = byteLength | 0
+  if (!noAssert) checkOffset(offset, byteLength, this.length)
+
+  var val = this[offset]
+  var mul = 1
+  var i = 0
+  while (++i < byteLength && (mul *= 0x100)) {
+    val += this[offset + i] * mul
+  }
+
+  return val
+}
+
+Buffer.prototype.readUIntBE = function readUIntBE (offset, byteLength, noAssert) {
+  offset = offset | 0
+  byteLength = byteLength | 0
+  if (!noAssert) {
+    checkOffset(offset, byteLength, this.length)
+  }
+
+  var val = this[offset + --byteLength]
+  var mul = 1
+  while (byteLength > 0 && (mul *= 0x100)) {
+    val += this[offset + --byteLength] * mul
+  }
+
+  return val
+}
+
+Buffer.prototype.readUInt8 = function readUInt8 (offset, noAssert) {
+  if (!noAssert) checkOffset(offset, 1, this.length)
+  return this[offset]
+}
+
+Buffer.prototype.readUInt16LE = function readUInt16LE (offset, noAssert) {
+  if (!noAssert) checkOffset(offset, 2, this.length)
+  return this[offset] | (this[offset + 1] << 8)
+}
+
+Buffer.prototype.readUInt16BE = function readUInt16BE (offset, noAssert) {
+  if (!noAssert) checkOffset(offset, 2, this.length)
+  return (this[offset] << 8) | this[offset + 1]
+}
+
+Buffer.prototype.readUInt32LE = function readUInt32LE (offset, noAssert) {
+  if (!noAssert) checkOffset(offset, 4, this.length)
+
+  return ((this[offset]) |
+      (this[offset + 1] << 8) |
+      (this[offset + 2] << 16)) +
+      (this[offset + 3] * 0x1000000)
+}
+
+Buffer.prototype.readUInt32BE = function readUInt32BE (offset, noAssert) {
+  if (!noAssert) checkOffset(offset, 4, this.length)
+
+  return (this[offset] * 0x1000000) +
+    ((this[offset + 1] << 16) |
+    (this[offset + 2] << 8) |
+    this[offset + 3])
+}
+
+Buffer.prototype.readIntLE = function readIntLE (offset, byteLength, noAssert) {
+  offset = offset | 0
+  byteLength = byteLength | 0
+  if (!noAssert) checkOffset(offset, byteLength, this.length)
+
+  var val = this[offset]
+  var mul = 1
+  var i = 0
+  while (++i < byteLength && (mul *= 0x100)) {
+    val += this[offset + i] * mul
+  }
+  mul *= 0x80
+
+  if (val >= mul) val -= Math.pow(2, 8 * byteLength)
+
+  return val
+}
+
+Buffer.prototype.readIntBE = function readIntBE (offset, byteLength, noAssert) {
+  offset = offset | 0
+  byteLength = byteLength | 0
+  if (!noAssert) checkOffset(offset, byteLength, this.length)
+
+  var i = byteLength
+  var mul = 1
+  var val = this[offset + --i]
+  while (i > 0 && (mul *= 0x100)) {
+    val += this[offset + --i] * mul
+  }
+  mul *= 0x80
+
+  if (val >= mul) val -= Math.pow(2, 8 * byteLength)
+
+  return val
+}
+
+Buffer.prototype.readInt8 = function readInt8 (offset, noAssert) {
+  if (!noAssert) checkOffset(offset, 1, this.length)
+  if (!(this[offset] & 0x80)) return (this[offset])
+  return ((0xff - this[offset] + 1) * -1)
+}
+
+Buffer.prototype.readInt16LE = function readInt16LE (offset, noAssert) {
+  if (!noAssert) checkOffset(offset, 2, this.length)
+  var val = this[offset] | (this[offset + 1] << 8)
+  return (val & 0x8000) ? val | 0xFFFF0000 : val
+}
+
+Buffer.prototype.readInt16BE = function readInt16BE (offset, noAssert) {
+  if (!noAssert) checkOffset(offset, 2, this.length)
+  var val = this[offset + 1] | (this[offset] << 8)
+  return (val & 0x8000) ? val | 0xFFFF0000 : val
+}
+
+Buffer.prototype.readInt32LE = function readInt32LE (offset, noAssert) {
+  if (!noAssert) checkOffset(offset, 4, this.length)
+
+  return (this[offset]) |
+    (this[offset + 1] << 8) |
+    (this[offset + 2] << 16) |
+    (this[offset + 3] << 24)
+}
+
+Buffer.prototype.readInt32BE = function readInt32BE (offset, noAssert) {
+  if (!noAssert) checkOffset(offset, 4, this.length)
+
+  return (this[offset] << 24) |
+    (this[offset + 1] << 16) |
+    (this[offset + 2] << 8) |
+    (this[offset + 3])
+}
+
+Buffer.prototype.readFloatLE = function readFloatLE (offset, noAssert) {
+  if (!noAssert) checkOffset(offset, 4, this.length)
+  return ieee754.read(this, offset, true, 23, 4)
+}
+
+Buffer.prototype.readFloatBE = function readFloatBE (offset, noAssert) {
+  if (!noAssert) checkOffset(offset, 4, this.length)
+  return ieee754.read(this, offset, false, 23, 4)
+}
+
+Buffer.prototype.readDoubleLE = function readDoubleLE (offset, noAssert) {
+  if (!noAssert) checkOffset(offset, 8, this.length)
+  return ieee754.read(this, offset, true, 52, 8)
+}
+
+Buffer.prototype.readDoubleBE = function readDoubleBE (offset, noAssert) {
+  if (!noAssert) checkOffset(offset, 8, this.length)
+  return ieee754.read(this, offset, false, 52, 8)
+}
+
+function checkInt (buf, value, offset, ext, max, min) {
+  if (!Buffer.isBuffer(buf)) throw new TypeError('"buffer" argument must be a Buffer instance')
+  if (value > max || value < min) throw new RangeError('"value" argument is out of bounds')
+  if (offset + ext > buf.length) throw new RangeError('Index out of range')
+}
+
+Buffer.prototype.writeUIntLE = function writeUIntLE (value, offset, byteLength, noAssert) {
+  value = +value
+  offset = offset | 0
+  byteLength = byteLength | 0
+  if (!noAssert) {
+    var maxBytes = Math.pow(2, 8 * byteLength) - 1
+    checkInt(this, value, offset, byteLength, maxBytes, 0)
+  }
+
+  var mul = 1
+  var i = 0
+  this[offset] = value & 0xFF
+  while (++i < byteLength && (mul *= 0x100)) {
+    this[offset + i] = (value / mul) & 0xFF
+  }
+
+  return offset + byteLength
+}
+
+Buffer.prototype.writeUIntBE = function writeUIntBE (value, offset, byteLength, noAssert) {
+  value = +value
+  offset = offset | 0
+  byteLength = byteLength | 0
+  if (!noAssert) {
+    var maxBytes = Math.pow(2, 8 * byteLength) - 1
+    checkInt(this, value, offset, byteLength, maxBytes, 0)
+  }
+
+  var i = byteLength - 1
+  var mul = 1
+  this[offset + i] = value & 0xFF
+  while (--i >= 0 && (mul *= 0x100)) {
+    this[offset + i] = (value / mul) & 0xFF
+  }
+
+  return offset + byteLength
+}
+
+Buffer.prototype.writeUInt8 = function writeUInt8 (value, offset, noAssert) {
+  value = +value
+  offset = offset | 0
+  if (!noAssert) checkInt(this, value, offset, 1, 0xff, 0)
+  if (!Buffer.TYPED_ARRAY_SUPPORT) value = Math.floor(value)
+  this[offset] = (value & 0xff)
+  return offset + 1
+}
+
+function objectWriteUInt16 (buf, value, offset, littleEndian) {
+  if (value < 0) value = 0xffff + value + 1
+  for (var i = 0, j = Math.min(buf.length - offset, 2); i < j; ++i) {
+    buf[offset + i] = (value & (0xff << (8 * (littleEndian ? i : 1 - i)))) >>>
+      (littleEndian ? i : 1 - i) * 8
+  }
+}
+
+Buffer.prototype.writeUInt16LE = function writeUInt16LE (value, offset, noAssert) {
+  value = +value
+  offset = offset | 0
+  if (!noAssert) checkInt(this, value, offset, 2, 0xffff, 0)
+  if (Buffer.TYPED_ARRAY_SUPPORT) {
+    this[offset] = (value & 0xff)
+    this[offset + 1] = (value >>> 8)
+  } else {
+    objectWriteUInt16(this, value, offset, true)
+  }
+  return offset + 2
+}
+
+Buffer.prototype.writeUInt16BE = function writeUInt16BE (value, offset, noAssert) {
+  value = +value
+  offset = offset | 0
+  if (!noAssert) checkInt(this, value, offset, 2, 0xffff, 0)
+  if (Buffer.TYPED_ARRAY_SUPPORT) {
+    this[offset] = (value >>> 8)
+    this[offset + 1] = (value & 0xff)
+  } else {
+    objectWriteUInt16(this, value, offset, false)
+  }
+  return offset + 2
+}
+
+function objectWriteUInt32 (buf, value, offset, littleEndian) {
+  if (value < 0) value = 0xffffffff + value + 1
+  for (var i = 0, j = Math.min(buf.length - offset, 4); i < j; ++i) {
+    buf[offset + i] = (value >>> (littleEndian ? i : 3 - i) * 8) & 0xff
+  }
+}
+
+Buffer.prototype.writeUInt32LE = function writeUInt32LE (value, offset, noAssert) {
+  value = +value
+  offset = offset | 0
+  if (!noAssert) checkInt(this, value, offset, 4, 0xffffffff, 0)
+  if (Buffer.TYPED_ARRAY_SUPPORT) {
+    this[offset + 3] = (value >>> 24)
+    this[offset + 2] = (value >>> 16)
+    this[offset + 1] = (value >>> 8)
+    this[offset] = (value & 0xff)
+  } else {
+    objectWriteUInt32(this, value, offset, true)
+  }
+  return offset + 4
+}
+
+Buffer.prototype.writeUInt32BE = function writeUInt32BE (value, offset, noAssert) {
+  value = +value
+  offset = offset | 0
+  if (!noAssert) checkInt(this, value, offset, 4, 0xffffffff, 0)
+  if (Buffer.TYPED_ARRAY_SUPPORT) {
+    this[offset] = (value >>> 24)
+    this[offset + 1] = (value >>> 16)
+    this[offset + 2] = (value >>> 8)
+    this[offset + 3] = (value & 0xff)
+  } else {
+    objectWriteUInt32(this, value, offset, false)
+  }
+  return offset + 4
+}
+
+Buffer.prototype.writeIntLE = function writeIntLE (value, offset, byteLength, noAssert) {
+  value = +value
+  offset = offset | 0
+  if (!noAssert) {
+    var limit = Math.pow(2, 8 * byteLength - 1)
+
+    checkInt(this, value, offset, byteLength, limit - 1, -limit)
+  }
+
+  var i = 0
+  var mul = 1
+  var sub = 0
+  this[offset] = value & 0xFF
+  while (++i < byteLength && (mul *= 0x100)) {
+    if (value < 0 && sub === 0 && this[offset + i - 1] !== 0) {
+      sub = 1
+    }
+    this[offset + i] = ((value / mul) >> 0) - sub & 0xFF
+  }
+
+  return offset + byteLength
+}
+
+Buffer.prototype.writeIntBE = function writeIntBE (value, offset, byteLength, noAssert) {
+  value = +value
+  offset = offset | 0
+  if (!noAssert) {
+    var limit = Math.pow(2, 8 * byteLength - 1)
+
+    checkInt(this, value, offset, byteLength, limit - 1, -limit)
+  }
+
+  var i = byteLength - 1
+  var mul = 1
+  var sub = 0
+  this[offset + i] = value & 0xFF
+  while (--i >= 0 && (mul *= 0x100)) {
+    if (value < 0 && sub === 0 && this[offset + i + 1] !== 0) {
+      sub = 1
+    }
+    this[offset + i] = ((value / mul) >> 0) - sub & 0xFF
+  }
+
+  return offset + byteLength
+}
+
+Buffer.prototype.writeInt8 = function writeInt8 (value, offset, noAssert) {
+  value = +value
+  offset = offset | 0
+  if (!noAssert) checkInt(this, value, offset, 1, 0x7f, -0x80)
+  if (!Buffer.TYPED_ARRAY_SUPPORT) value = Math.floor(value)
+  if (value < 0) value = 0xff + value + 1
+  this[offset] = (value & 0xff)
+  return offset + 1
+}
+
+Buffer.prototype.writeInt16LE = function writeInt16LE (value, offset, noAssert) {
+  value = +value
+  offset = offset | 0
+  if (!noAssert) checkInt(this, value, offset, 2, 0x7fff, -0x8000)
+  if (Buffer.TYPED_ARRAY_SUPPORT) {
+    this[offset] = (value & 0xff)
+    this[offset + 1] = (value >>> 8)
+  } else {
+    objectWriteUInt16(this, value, offset, true)
+  }
+  return offset + 2
+}
+
+Buffer.prototype.writeInt16BE = function writeInt16BE (value, offset, noAssert) {
+  value = +value
+  offset = offset | 0
+  if (!noAssert) checkInt(this, value, offset, 2, 0x7fff, -0x8000)
+  if (Buffer.TYPED_ARRAY_SUPPORT) {
+    this[offset] = (value >>> 8)
+    this[offset + 1] = (value & 0xff)
+  } else {
+    objectWriteUInt16(this, value, offset, false)
+  }
+  return offset + 2
+}
+
+Buffer.prototype.writeInt32LE = function writeInt32LE (value, offset, noAssert) {
+  value = +value
+  offset = offset | 0
+  if (!noAssert) checkInt(this, value, offset, 4, 0x7fffffff, -0x80000000)
+  if (Buffer.TYPED_ARRAY_SUPPORT) {
+    this[offset] = (value & 0xff)
+    this[offset + 1] = (value >>> 8)
+    this[offset + 2] = (value >>> 16)
+    this[offset + 3] = (value >>> 24)
+  } else {
+    objectWriteUInt32(this, value, offset, true)
+  }
+  return offset + 4
+}
+
+Buffer.prototype.writeInt32BE = function writeInt32BE (value, offset, noAssert) {
+  value = +value
+  offset = offset | 0
+  if (!noAssert) checkInt(this, value, offset, 4, 0x7fffffff, -0x80000000)
+  if (value < 0) value = 0xffffffff + value + 1
+  if (Buffer.TYPED_ARRAY_SUPPORT) {
+    this[offset] = (value >>> 24)
+    this[offset + 1] = (value >>> 16)
+    this[offset + 2] = (value >>> 8)
+    this[offset + 3] = (value & 0xff)
+  } else {
+    objectWriteUInt32(this, value, offset, false)
+  }
+  return offset + 4
+}
+
+function checkIEEE754 (buf, value, offset, ext, max, min) {
+  if (offset + ext > buf.length) throw new RangeError('Index out of range')
+  if (offset < 0) throw new RangeError('Index out of range')
+}
+
+function writeFloat (buf, value, offset, littleEndian, noAssert) {
+  if (!noAssert) {
+    checkIEEE754(buf, value, offset, 4, 3.4028234663852886e+38, -3.4028234663852886e+38)
+  }
+  ieee754.write(buf, value, offset, littleEndian, 23, 4)
+  return offset + 4
+}
+
+Buffer.prototype.writeFloatLE = function writeFloatLE (value, offset, noAssert) {
+  return writeFloat(this, value, offset, true, noAssert)
+}
+
+Buffer.prototype.writeFloatBE = function writeFloatBE (value, offset, noAssert) {
+  return writeFloat(this, value, offset, false, noAssert)
+}
+
+function writeDouble (buf, value, offset, littleEndian, noAssert) {
+  if (!noAssert) {
+    checkIEEE754(buf, value, offset, 8, 1.7976931348623157E+308, -1.7976931348623157E+308)
+  }
+  ieee754.write(buf, value, offset, littleEndian, 52, 8)
+  return offset + 8
+}
+
+Buffer.prototype.writeDoubleLE = function writeDoubleLE (value, offset, noAssert) {
+  return writeDouble(this, value, offset, true, noAssert)
+}
+
+Buffer.prototype.writeDoubleBE = function writeDoubleBE (value, offset, noAssert) {
+  return writeDouble(this, value, offset, false, noAssert)
+}
+
+// copy(targetBuffer, targetStart=0, sourceStart=0, sourceEnd=buffer.length)
+Buffer.prototype.copy = function copy (target, targetStart, start, end) {
+  if (!start) start = 0
+  if (!end && end !== 0) end = this.length
+  if (targetStart >= target.length) targetStart = target.length
+  if (!targetStart) targetStart = 0
+  if (end > 0 && end < start) end = start
+
+  // Copy 0 bytes; we're done
+  if (end === start) return 0
+  if (target.length === 0 || this.length === 0) return 0
+
+  // Fatal error conditions
+  if (targetStart < 0) {
+    throw new RangeError('targetStart out of bounds')
+  }
+  if (start < 0 || start >= this.length) throw new RangeError('sourceStart out of bounds')
+  if (end < 0) throw new RangeError('sourceEnd out of bounds')
+
+  // Are we oob?
+  if (end > this.length) end = this.length
+  if (target.length - targetStart < end - start) {
+    end = target.length - targetStart + start
+  }
+
+  var len = end - start
+  var i
+
+  if (this === target && start < targetStart && targetStart < end) {
+    // descending copy from end
+    for (i = len - 1; i >= 0; --i) {
+      target[i + targetStart] = this[i + start]
+    }
+  } else if (len < 1000 || !Buffer.TYPED_ARRAY_SUPPORT) {
+    // ascending copy from start
+    for (i = 0; i < len; ++i) {
+      target[i + targetStart] = this[i + start]
+    }
+  } else {
+    Uint8Array.prototype.set.call(
+      target,
+      this.subarray(start, start + len),
+      targetStart
+    )
+  }
+
+  return len
+}
+
+// Usage:
+//    buffer.fill(number[, offset[, end]])
+//    buffer.fill(buffer[, offset[, end]])
+//    buffer.fill(string[, offset[, end]][, encoding])
+Buffer.prototype.fill = function fill (val, start, end, encoding) {
+  // Handle string cases:
+  if (typeof val === 'string') {
+    if (typeof start === 'string') {
+      encoding = start
+      start = 0
+      end = this.length
+    } else if (typeof end === 'string') {
+      encoding = end
+      end = this.length
+    }
+    if (val.length === 1) {
+      var code = val.charCodeAt(0)
+      if (code < 256) {
+        val = code
+      }
+    }
+    if (encoding !== undefined && typeof encoding !== 'string') {
+      throw new TypeError('encoding must be a string')
+    }
+    if (typeof encoding === 'string' && !Buffer.isEncoding(encoding)) {
+      throw new TypeError('Unknown encoding: ' + encoding)
+    }
+  } else if (typeof val === 'number') {
+    val = val & 255
+  }
+
+  // Invalid ranges are not set to a default, so can range check early.
+  if (start < 0 || this.length < start || this.length < end) {
+    throw new RangeError('Out of range index')
+  }
+
+  if (end <= start) {
+    return this
+  }
+
+  start = start >>> 0
+  end = end === undefined ? this.length : end >>> 0
+
+  if (!val) val = 0
+
+  var i
+  if (typeof val === 'number') {
+    for (i = start; i < end; ++i) {
+      this[i] = val
+    }
+  } else {
+    var bytes = Buffer.isBuffer(val)
+      ? val
+      : utf8ToBytes(new Buffer(val, encoding).toString())
+    var len = bytes.length
+    for (i = 0; i < end - start; ++i) {
+      this[i + start] = bytes[i % len]
+    }
+  }
+
+  return this
+}
+
+// HELPER FUNCTIONS
+// ================
+
+var INVALID_BASE64_RE = /[^+\/0-9A-Za-z-_]/g
+
+function base64clean (str) {
+  // Node strips out invalid characters like \n and \t from the string, base64-js does not
+  str = stringtrim(str).replace(INVALID_BASE64_RE, '')
+  // Node converts strings with length < 2 to ''
+  if (str.length < 2) return ''
+  // Node allows for non-padded base64 strings (missing trailing ===), base64-js does not
+  while (str.length % 4 !== 0) {
+    str = str + '='
+  }
+  return str
+}
+
+function stringtrim (str) {
+  if (str.trim) return str.trim()
+  return str.replace(/^\s+|\s+$/g, '')
+}
+
+function toHex (n) {
+  if (n < 16) return '0' + n.toString(16)
+  return n.toString(16)
+}
+
+function utf8ToBytes (string, units) {
+  units = units || Infinity
+  var codePoint
+  var length = string.length
+  var leadSurrogate = null
+  var bytes = []
+
+  for (var i = 0; i < length; ++i) {
+    codePoint = string.charCodeAt(i)
+
+    // is surrogate component
+    if (codePoint > 0xD7FF && codePoint < 0xE000) {
+      // last char was a lead
+      if (!leadSurrogate) {
+        // no lead yet
+        if (codePoint > 0xDBFF) {
+          // unexpected trail
+          if ((units -= 3) > -1) bytes.push(0xEF, 0xBF, 0xBD)
+          continue
+        } else if (i + 1 === length) {
+          // unpaired lead
+          if ((units -= 3) > -1) bytes.push(0xEF, 0xBF, 0xBD)
+          continue
+        }
+
+        // valid lead
+        leadSurrogate = codePoint
+
+        continue
+      }
+
+      // 2 leads in a row
+      if (codePoint < 0xDC00) {
+        if ((units -= 3) > -1) bytes.push(0xEF, 0xBF, 0xBD)
+        leadSurrogate = codePoint
+        continue
+      }
+
+      // valid surrogate pair
+      codePoint = (leadSurrogate - 0xD800 << 10 | codePoint - 0xDC00) + 0x10000
+    } else if (leadSurrogate) {
+      // valid bmp char, but last char was a lead
+      if ((units -= 3) > -1) bytes.push(0xEF, 0xBF, 0xBD)
+    }
+
+    leadSurrogate = null
+
+    // encode utf8
+    if (codePoint < 0x80) {
+      if ((units -= 1) < 0) break
+      bytes.push(codePoint)
+    } else if (codePoint < 0x800) {
+      if ((units -= 2) < 0) break
+      bytes.push(
+        codePoint >> 0x6 | 0xC0,
+        codePoint & 0x3F | 0x80
+      )
+    } else if (codePoint < 0x10000) {
+      if ((units -= 3) < 0) break
+      bytes.push(
+        codePoint >> 0xC | 0xE0,
+        codePoint >> 0x6 & 0x3F | 0x80,
+        codePoint & 0x3F | 0x80
+      )
+    } else if (codePoint < 0x110000) {
+      if ((units -= 4) < 0) break
+      bytes.push(
+        codePoint >> 0x12 | 0xF0,
+        codePoint >> 0xC & 0x3F | 0x80,
+        codePoint >> 0x6 & 0x3F | 0x80,
+        codePoint & 0x3F | 0x80
+      )
+    } else {
+      throw new Error('Invalid code point')
+    }
+  }
+
+  return bytes
+}
+
+function asciiToBytes (str) {
+  var byteArray = []
+  for (var i = 0; i < str.length; ++i) {
+    // Node's code seems to be doing this and not & 0x7F..
+    byteArray.push(str.charCodeAt(i) & 0xFF)
+  }
+  return byteArray
+}
+
+function utf16leToBytes (str, units) {
+  var c, hi, lo
+  var byteArray = []
+  for (var i = 0; i < str.length; ++i) {
+    if ((units -= 2) < 0) break
+
+    c = str.charCodeAt(i)
+    hi = c >> 8
+    lo = c % 256
+    byteArray.push(lo)
+    byteArray.push(hi)
+  }
+
+  return byteArray
+}
+
+function base64ToBytes (str) {
+  return base64.toByteArray(base64clean(str))
+}
+
+function blitBuffer (src, dst, offset, length) {
+  for (var i = 0; i < length; ++i) {
+    if ((i + offset >= dst.length) || (i >= src.length)) break
+    dst[i + offset] = src[i]
+  }
+  return i
+}
+
+function isnan (val) {
+  return val !== val // eslint-disable-line no-self-compare
+}
+
+/* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(/*! ./../webpack/buildin/global.js */ "./node_modules/webpack/buildin/global.js")))
+
+/***/ }),
+
+/***/ "./node_modules/component-emitter/index.js":
+/*!*************************************************!*\
+  !*** ./node_modules/component-emitter/index.js ***!
+  \*************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+
+/**
+ * Expose `Emitter`.
+ */
+
+if (true) {
+  module.exports = Emitter;
+}
+
+/**
+ * Initialize a new `Emitter`.
+ *
+ * @api public
+ */
+
+function Emitter(obj) {
+  if (obj) return mixin(obj);
+};
+
+/**
+ * Mixin the emitter properties.
+ *
+ * @param {Object} obj
+ * @return {Object}
+ * @api private
+ */
+
+function mixin(obj) {
+  for (var key in Emitter.prototype) {
+    obj[key] = Emitter.prototype[key];
+  }
+  return obj;
+}
+
+/**
+ * Listen on the given `event` with `fn`.
+ *
+ * @param {String} event
+ * @param {Function} fn
+ * @return {Emitter}
+ * @api public
+ */
+
+Emitter.prototype.on =
+Emitter.prototype.addEventListener = function(event, fn){
+  this._callbacks = this._callbacks || {};
+  (this._callbacks['$' + event] = this._callbacks['$' + event] || [])
+    .push(fn);
+  return this;
+};
+
+/**
+ * Adds an `event` listener that will be invoked a single
+ * time then automatically removed.
+ *
+ * @param {String} event
+ * @param {Function} fn
+ * @return {Emitter}
+ * @api public
+ */
+
+Emitter.prototype.once = function(event, fn){
+  function on() {
+    this.off(event, on);
+    fn.apply(this, arguments);
+  }
+
+  on.fn = fn;
+  this.on(event, on);
+  return this;
+};
+
+/**
+ * Remove the given callback for `event` or all
+ * registered callbacks.
+ *
+ * @param {String} event
+ * @param {Function} fn
+ * @return {Emitter}
+ * @api public
+ */
+
+Emitter.prototype.off =
+Emitter.prototype.removeListener =
+Emitter.prototype.removeAllListeners =
+Emitter.prototype.removeEventListener = function(event, fn){
+  this._callbacks = this._callbacks || {};
+
+  // all
+  if (0 == arguments.length) {
+    this._callbacks = {};
+    return this;
+  }
+
+  // specific event
+  var callbacks = this._callbacks['$' + event];
+  if (!callbacks) return this;
+
+  // remove all handlers
+  if (1 == arguments.length) {
+    delete this._callbacks['$' + event];
+    return this;
+  }
+
+  // remove specific handler
+  var cb;
+  for (var i = 0; i < callbacks.length; i++) {
+    cb = callbacks[i];
+    if (cb === fn || cb.fn === fn) {
+      callbacks.splice(i, 1);
+      break;
+    }
+  }
+
+  // Remove event specific arrays for event types that no
+  // one is subscribed for to avoid memory leak.
+  if (callbacks.length === 0) {
+    delete this._callbacks['$' + event];
+  }
+
+  return this;
+};
+
+/**
+ * Emit `event` with the given args.
+ *
+ * @param {String} event
+ * @param {Mixed} ...
+ * @return {Emitter}
+ */
+
+Emitter.prototype.emit = function(event){
+  this._callbacks = this._callbacks || {};
+
+  var args = new Array(arguments.length - 1)
+    , callbacks = this._callbacks['$' + event];
+
+  for (var i = 1; i < arguments.length; i++) {
+    args[i - 1] = arguments[i];
+  }
+
+  if (callbacks) {
+    callbacks = callbacks.slice(0);
+    for (var i = 0, len = callbacks.length; i < len; ++i) {
+      callbacks[i].apply(this, args);
+    }
+  }
+
+  return this;
+};
+
+/**
+ * Return array of callbacks for `event`.
+ *
+ * @param {String} event
+ * @return {Array}
+ * @api public
+ */
+
+Emitter.prototype.listeners = function(event){
+  this._callbacks = this._callbacks || {};
+  return this._callbacks['$' + event] || [];
+};
+
+/**
+ * Check if this emitter has `event` handlers.
+ *
+ * @param {String} event
+ * @return {Boolean}
+ * @api public
+ */
+
+Emitter.prototype.hasListeners = function(event){
+  return !! this.listeners(event).length;
+};
+
+
+/***/ }),
+
+/***/ "./node_modules/engine.io-client/lib/globalThis.browser.js":
+/*!*****************************************************************!*\
+  !*** ./node_modules/engine.io-client/lib/globalThis.browser.js ***!
+  \*****************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+module.exports = (() => {
+  if (typeof self !== "undefined") {
+    return self;
+  } else if (typeof window !== "undefined") {
+    return window;
+  } else {
+    return Function("return this")();
+  }
+})();
+
+
+/***/ }),
+
+/***/ "./node_modules/engine.io-client/lib/index.js":
+/*!****************************************************!*\
+  !*** ./node_modules/engine.io-client/lib/index.js ***!
+  \****************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+const Socket = __webpack_require__(/*! ./socket */ "./node_modules/engine.io-client/lib/socket.js");
+
+module.exports = (uri, opts) => new Socket(uri, opts);
+
+/**
+ * Expose deps for legacy compatibility
+ * and standalone browser access.
+ */
+
+module.exports.Socket = Socket;
+module.exports.protocol = Socket.protocol; // this is an int
+module.exports.Transport = __webpack_require__(/*! ./transport */ "./node_modules/engine.io-client/lib/transport.js");
+module.exports.transports = __webpack_require__(/*! ./transports/index */ "./node_modules/engine.io-client/lib/transports/index.js");
+module.exports.parser = __webpack_require__(/*! engine.io-parser */ "./node_modules/engine.io-parser/lib/index.js");
+
+
+/***/ }),
+
+/***/ "./node_modules/engine.io-client/lib/socket.js":
+/*!*****************************************************!*\
+  !*** ./node_modules/engine.io-client/lib/socket.js ***!
+  \*****************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+const transports = __webpack_require__(/*! ./transports/index */ "./node_modules/engine.io-client/lib/transports/index.js");
+const Emitter = __webpack_require__(/*! component-emitter */ "./node_modules/component-emitter/index.js");
+const debug = __webpack_require__(/*! debug */ "./node_modules/engine.io-client/node_modules/debug/src/browser.js")("engine.io-client:socket");
+const parser = __webpack_require__(/*! engine.io-parser */ "./node_modules/engine.io-parser/lib/index.js");
+const parseuri = __webpack_require__(/*! parseuri */ "./node_modules/parseuri/index.js");
+const parseqs = __webpack_require__(/*! parseqs */ "./node_modules/parseqs/index.js");
+
+class Socket extends Emitter {
+  /**
+   * Socket constructor.
+   *
+   * @param {String|Object} uri or options
+   * @param {Object} options
+   * @api public
+   */
+  constructor(uri, opts = {}) {
+    super();
+
+    if (uri && "object" === typeof uri) {
+      opts = uri;
+      uri = null;
+    }
+
+    if (uri) {
+      uri = parseuri(uri);
+      opts.hostname = uri.host;
+      opts.secure = uri.protocol === "https" || uri.protocol === "wss";
+      opts.port = uri.port;
+      if (uri.query) opts.query = uri.query;
+    } else if (opts.host) {
+      opts.hostname = parseuri(opts.host).host;
+    }
+
+    this.secure =
+      null != opts.secure
+        ? opts.secure
+        : typeof location !== "undefined" && "https:" === location.protocol;
+
+    if (opts.hostname && !opts.port) {
+      // if no port is specified manually, use the protocol default
+      opts.port = this.secure ? "443" : "80";
+    }
+
+    this.hostname =
+      opts.hostname ||
+      (typeof location !== "undefined" ? location.hostname : "localhost");
+    this.port =
+      opts.port ||
+      (typeof location !== "undefined" && location.port
+        ? location.port
+        : this.secure
+        ? 443
+        : 80);
+
+    this.transports = opts.transports || ["polling", "websocket"];
+    this.readyState = "";
+    this.writeBuffer = [];
+    this.prevBufferLen = 0;
+
+    this.opts = Object.assign(
+      {
+        path: "/engine.io",
+        agent: false,
+        withCredentials: false,
+        upgrade: true,
+        jsonp: true,
+        timestampParam: "t",
+        rememberUpgrade: false,
+        rejectUnauthorized: true,
+        perMessageDeflate: {
+          threshold: 1024
+        },
+        transportOptions: {}
+      },
+      opts
+    );
+
+    this.opts.path = this.opts.path.replace(/\/$/, "") + "/";
+
+    if (typeof this.opts.query === "string") {
+      this.opts.query = parseqs.decode(this.opts.query);
+    }
+
+    // set on handshake
+    this.id = null;
+    this.upgrades = null;
+    this.pingInterval = null;
+    this.pingTimeout = null;
+
+    // set on heartbeat
+    this.pingTimeoutTimer = null;
+
+    this.open();
+  }
+
+  /**
+   * Creates transport of the given type.
+   *
+   * @param {String} transport name
+   * @return {Transport}
+   * @api private
+   */
+  createTransport(name) {
+    debug('creating transport "%s"', name);
+    const query = clone(this.opts.query);
+
+    // append engine.io protocol identifier
+    query.EIO = parser.protocol;
+
+    // transport name
+    query.transport = name;
+
+    // session id if we already have one
+    if (this.id) query.sid = this.id;
+
+    const opts = Object.assign(
+      {},
+      this.opts.transportOptions[name],
+      this.opts,
+      {
+        query,
+        socket: this,
+        hostname: this.hostname,
+        secure: this.secure,
+        port: this.port
+      }
+    );
+
+    debug("options: %j", opts);
+
+    return new transports[name](opts);
+  }
+
+  /**
+   * Initializes transport to use and starts probe.
+   *
+   * @api private
+   */
+  open() {
+    let transport;
+    if (
+      this.opts.rememberUpgrade &&
+      Socket.priorWebsocketSuccess &&
+      this.transports.indexOf("websocket") !== -1
+    ) {
+      transport = "websocket";
+    } else if (0 === this.transports.length) {
+      // Emit error on next tick so it can be listened to
+      const self = this;
+      setTimeout(function() {
+        self.emit("error", "No transports available");
+      }, 0);
+      return;
+    } else {
+      transport = this.transports[0];
+    }
+    this.readyState = "opening";
+
+    // Retry with the next transport if the transport is disabled (jsonp: false)
+    try {
+      transport = this.createTransport(transport);
+    } catch (e) {
+      debug("error while creating transport: %s", e);
+      this.transports.shift();
+      this.open();
+      return;
+    }
+
+    transport.open();
+    this.setTransport(transport);
+  }
+
+  /**
+   * Sets the current transport. Disables the existing one (if any).
+   *
+   * @api private
+   */
+  setTransport(transport) {
+    debug("setting transport %s", transport.name);
+    const self = this;
+
+    if (this.transport) {
+      debug("clearing existing transport %s", this.transport.name);
+      this.transport.removeAllListeners();
+    }
+
+    // set up transport
+    this.transport = transport;
+
+    // set up transport listeners
+    transport
+      .on("drain", function() {
+        self.onDrain();
+      })
+      .on("packet", function(packet) {
+        self.onPacket(packet);
+      })
+      .on("error", function(e) {
+        self.onError(e);
+      })
+      .on("close", function() {
+        self.onClose("transport close");
+      });
+  }
+
+  /**
+   * Probes a transport.
+   *
+   * @param {String} transport name
+   * @api private
+   */
+  probe(name) {
+    debug('probing transport "%s"', name);
+    let transport = this.createTransport(name, { probe: 1 });
+    let failed = false;
+    const self = this;
+
+    Socket.priorWebsocketSuccess = false;
+
+    function onTransportOpen() {
+      if (self.onlyBinaryUpgrades) {
+        const upgradeLosesBinary =
+          !this.supportsBinary && self.transport.supportsBinary;
+        failed = failed || upgradeLosesBinary;
+      }
+      if (failed) return;
+
+      debug('probe transport "%s" opened', name);
+      transport.send([{ type: "ping", data: "probe" }]);
+      transport.once("packet", function(msg) {
+        if (failed) return;
+        if ("pong" === msg.type && "probe" === msg.data) {
+          debug('probe transport "%s" pong', name);
+          self.upgrading = true;
+          self.emit("upgrading", transport);
+          if (!transport) return;
+          Socket.priorWebsocketSuccess = "websocket" === transport.name;
+
+          debug('pausing current transport "%s"', self.transport.name);
+          self.transport.pause(function() {
+            if (failed) return;
+            if ("closed" === self.readyState) return;
+            debug("changing transport and sending upgrade packet");
+
+            cleanup();
+
+            self.setTransport(transport);
+            transport.send([{ type: "upgrade" }]);
+            self.emit("upgrade", transport);
+            transport = null;
+            self.upgrading = false;
+            self.flush();
+          });
+        } else {
+          debug('probe transport "%s" failed', name);
+          const err = new Error("probe error");
+          err.transport = transport.name;
+          self.emit("upgradeError", err);
+        }
+      });
+    }
+
+    function freezeTransport() {
+      if (failed) return;
+
+      // Any callback called by transport should be ignored since now
+      failed = true;
+
+      cleanup();
+
+      transport.close();
+      transport = null;
+    }
+
+    // Handle any error that happens while probing
+    function onerror(err) {
+      const error = new Error("probe error: " + err);
+      error.transport = transport.name;
+
+      freezeTransport();
+
+      debug('probe transport "%s" failed because of error: %s', name, err);
+
+      self.emit("upgradeError", error);
+    }
+
+    function onTransportClose() {
+      onerror("transport closed");
+    }
+
+    // When the socket is closed while we're probing
+    function onclose() {
+      onerror("socket closed");
+    }
+
+    // When the socket is upgraded while we're probing
+    function onupgrade(to) {
+      if (transport && to.name !== transport.name) {
+        debug('"%s" works - aborting "%s"', to.name, transport.name);
+        freezeTransport();
+      }
+    }
+
+    // Remove all listeners on the transport and on self
+    function cleanup() {
+      transport.removeListener("open", onTransportOpen);
+      transport.removeListener("error", onerror);
+      transport.removeListener("close", onTransportClose);
+      self.removeListener("close", onclose);
+      self.removeListener("upgrading", onupgrade);
+    }
+
+    transport.once("open", onTransportOpen);
+    transport.once("error", onerror);
+    transport.once("close", onTransportClose);
+
+    this.once("close", onclose);
+    this.once("upgrading", onupgrade);
+
+    transport.open();
+  }
+
+  /**
+   * Called when connection is deemed open.
+   *
+   * @api public
+   */
+  onOpen() {
+    debug("socket open");
+    this.readyState = "open";
+    Socket.priorWebsocketSuccess = "websocket" === this.transport.name;
+    this.emit("open");
+    this.flush();
+
+    // we check for `readyState` in case an `open`
+    // listener already closed the socket
+    if (
+      "open" === this.readyState &&
+      this.opts.upgrade &&
+      this.transport.pause
+    ) {
+      debug("starting upgrade probes");
+      let i = 0;
+      const l = this.upgrades.length;
+      for (; i < l; i++) {
+        this.probe(this.upgrades[i]);
+      }
+    }
+  }
+
+  /**
+   * Handles a packet.
+   *
+   * @api private
+   */
+  onPacket(packet) {
+    if (
+      "opening" === this.readyState ||
+      "open" === this.readyState ||
+      "closing" === this.readyState
+    ) {
+      debug('socket receive: type "%s", data "%s"', packet.type, packet.data);
+
+      this.emit("packet", packet);
+
+      // Socket is live - any packet counts
+      this.emit("heartbeat");
+
+      switch (packet.type) {
+        case "open":
+          this.onHandshake(JSON.parse(packet.data));
+          break;
+
+        case "ping":
+          this.resetPingTimeout();
+          this.sendPacket("pong");
+          this.emit("pong");
+          break;
+
+        case "error":
+          const err = new Error("server error");
+          err.code = packet.data;
+          this.onError(err);
+          break;
+
+        case "message":
+          this.emit("data", packet.data);
+          this.emit("message", packet.data);
+          break;
+      }
+    } else {
+      debug('packet received with socket readyState "%s"', this.readyState);
+    }
+  }
+
+  /**
+   * Called upon handshake completion.
+   *
+   * @param {Object} handshake obj
+   * @api private
+   */
+  onHandshake(data) {
+    this.emit("handshake", data);
+    this.id = data.sid;
+    this.transport.query.sid = data.sid;
+    this.upgrades = this.filterUpgrades(data.upgrades);
+    this.pingInterval = data.pingInterval;
+    this.pingTimeout = data.pingTimeout;
+    this.onOpen();
+    // In case open handler closes socket
+    if ("closed" === this.readyState) return;
+    this.resetPingTimeout();
+  }
+
+  /**
+   * Sets and resets ping timeout timer based on server pings.
+   *
+   * @api private
+   */
+  resetPingTimeout() {
+    clearTimeout(this.pingTimeoutTimer);
+    this.pingTimeoutTimer = setTimeout(() => {
+      this.onClose("ping timeout");
+    }, this.pingInterval + this.pingTimeout);
+  }
+
+  /**
+   * Called on `drain` event
+   *
+   * @api private
+   */
+  onDrain() {
+    this.writeBuffer.splice(0, this.prevBufferLen);
+
+    // setting prevBufferLen = 0 is very important
+    // for example, when upgrading, upgrade packet is sent over,
+    // and a nonzero prevBufferLen could cause problems on `drain`
+    this.prevBufferLen = 0;
+
+    if (0 === this.writeBuffer.length) {
+      this.emit("drain");
+    } else {
+      this.flush();
+    }
+  }
+
+  /**
+   * Flush write buffers.
+   *
+   * @api private
+   */
+  flush() {
+    if (
+      "closed" !== this.readyState &&
+      this.transport.writable &&
+      !this.upgrading &&
+      this.writeBuffer.length
+    ) {
+      debug("flushing %d packets in socket", this.writeBuffer.length);
+      this.transport.send(this.writeBuffer);
+      // keep track of current length of writeBuffer
+      // splice writeBuffer and callbackBuffer on `drain`
+      this.prevBufferLen = this.writeBuffer.length;
+      this.emit("flush");
+    }
+  }
+
+  /**
+   * Sends a message.
+   *
+   * @param {String} message.
+   * @param {Function} callback function.
+   * @param {Object} options.
+   * @return {Socket} for chaining.
+   * @api public
+   */
+  write(msg, options, fn) {
+    this.sendPacket("message", msg, options, fn);
+    return this;
+  }
+
+  send(msg, options, fn) {
+    this.sendPacket("message", msg, options, fn);
+    return this;
+  }
+
+  /**
+   * Sends a packet.
+   *
+   * @param {String} packet type.
+   * @param {String} data.
+   * @param {Object} options.
+   * @param {Function} callback function.
+   * @api private
+   */
+  sendPacket(type, data, options, fn) {
+    if ("function" === typeof data) {
+      fn = data;
+      data = undefined;
+    }
+
+    if ("function" === typeof options) {
+      fn = options;
+      options = null;
+    }
+
+    if ("closing" === this.readyState || "closed" === this.readyState) {
+      return;
+    }
+
+    options = options || {};
+    options.compress = false !== options.compress;
+
+    const packet = {
+      type: type,
+      data: data,
+      options: options
+    };
+    this.emit("packetCreate", packet);
+    this.writeBuffer.push(packet);
+    if (fn) this.once("flush", fn);
+    this.flush();
+  }
+
+  /**
+   * Closes the connection.
+   *
+   * @api private
+   */
+  close() {
+    const self = this;
+
+    if ("opening" === this.readyState || "open" === this.readyState) {
+      this.readyState = "closing";
+
+      if (this.writeBuffer.length) {
+        this.once("drain", function() {
+          if (this.upgrading) {
+            waitForUpgrade();
+          } else {
+            close();
+          }
+        });
+      } else if (this.upgrading) {
+        waitForUpgrade();
+      } else {
+        close();
+      }
+    }
+
+    function close() {
+      self.onClose("forced close");
+      debug("socket closing - telling transport to close");
+      self.transport.close();
+    }
+
+    function cleanupAndClose() {
+      self.removeListener("upgrade", cleanupAndClose);
+      self.removeListener("upgradeError", cleanupAndClose);
+      close();
+    }
+
+    function waitForUpgrade() {
+      // wait for upgrade to finish since we can't send packets while pausing a transport
+      self.once("upgrade", cleanupAndClose);
+      self.once("upgradeError", cleanupAndClose);
+    }
+
+    return this;
+  }
+
+  /**
+   * Called upon transport error
+   *
+   * @api private
+   */
+  onError(err) {
+    debug("socket error %j", err);
+    Socket.priorWebsocketSuccess = false;
+    this.emit("error", err);
+    this.onClose("transport error", err);
+  }
+
+  /**
+   * Called upon transport close.
+   *
+   * @api private
+   */
+  onClose(reason, desc) {
+    if (
+      "opening" === this.readyState ||
+      "open" === this.readyState ||
+      "closing" === this.readyState
+    ) {
+      debug('socket close with reason: "%s"', reason);
+      const self = this;
+
+      // clear timers
+      clearTimeout(this.pingIntervalTimer);
+      clearTimeout(this.pingTimeoutTimer);
+
+      // stop event from firing again for transport
+      this.transport.removeAllListeners("close");
+
+      // ensure transport won't stay open
+      this.transport.close();
+
+      // ignore further transport communication
+      this.transport.removeAllListeners();
+
+      // set ready state
+      this.readyState = "closed";
+
+      // clear session id
+      this.id = null;
+
+      // emit close event
+      this.emit("close", reason, desc);
+
+      // clean buffers after, so users can still
+      // grab the buffers on `close` event
+      self.writeBuffer = [];
+      self.prevBufferLen = 0;
+    }
+  }
+
+  /**
+   * Filters upgrades, returning only those matching client transports.
+   *
+   * @param {Array} server upgrades
+   * @api private
+   *
+   */
+  filterUpgrades(upgrades) {
+    const filteredUpgrades = [];
+    let i = 0;
+    const j = upgrades.length;
+    for (; i < j; i++) {
+      if (~this.transports.indexOf(upgrades[i]))
+        filteredUpgrades.push(upgrades[i]);
+    }
+    return filteredUpgrades;
+  }
+}
+
+Socket.priorWebsocketSuccess = false;
+
+/**
+ * Protocol version.
+ *
+ * @api public
+ */
+
+Socket.protocol = parser.protocol; // this is an int
+
+function clone(obj) {
+  const o = {};
+  for (let i in obj) {
+    if (obj.hasOwnProperty(i)) {
+      o[i] = obj[i];
+    }
+  }
+  return o;
+}
+
+module.exports = Socket;
+
+
+/***/ }),
+
+/***/ "./node_modules/engine.io-client/lib/transport.js":
+/*!********************************************************!*\
+  !*** ./node_modules/engine.io-client/lib/transport.js ***!
+  \********************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+const parser = __webpack_require__(/*! engine.io-parser */ "./node_modules/engine.io-parser/lib/index.js");
+const Emitter = __webpack_require__(/*! component-emitter */ "./node_modules/component-emitter/index.js");
+
+class Transport extends Emitter {
+  /**
+   * Transport abstract constructor.
+   *
+   * @param {Object} options.
+   * @api private
+   */
+  constructor(opts) {
+    super();
+
+    this.opts = opts;
+    this.query = opts.query;
+    this.readyState = "";
+    this.socket = opts.socket;
+  }
+
+  /**
+   * Emits an error.
+   *
+   * @param {String} str
+   * @return {Transport} for chaining
+   * @api public
+   */
+  onError(msg, desc) {
+    const err = new Error(msg);
+    err.type = "TransportError";
+    err.description = desc;
+    this.emit("error", err);
+    return this;
+  }
+
+  /**
+   * Opens the transport.
+   *
+   * @api public
+   */
+  open() {
+    if ("closed" === this.readyState || "" === this.readyState) {
+      this.readyState = "opening";
+      this.doOpen();
+    }
+
+    return this;
+  }
+
+  /**
+   * Closes the transport.
+   *
+   * @api private
+   */
+  close() {
+    if ("opening" === this.readyState || "open" === this.readyState) {
+      this.doClose();
+      this.onClose();
+    }
+
+    return this;
+  }
+
+  /**
+   * Sends multiple packets.
+   *
+   * @param {Array} packets
+   * @api private
+   */
+  send(packets) {
+    if ("open" === this.readyState) {
+      this.write(packets);
+    } else {
+      throw new Error("Transport not open");
+    }
+  }
+
+  /**
+   * Called upon open
+   *
+   * @api private
+   */
+  onOpen() {
+    this.readyState = "open";
+    this.writable = true;
+    this.emit("open");
+  }
+
+  /**
+   * Called with data.
+   *
+   * @param {String} data
+   * @api private
+   */
+  onData(data) {
+    const packet = parser.decodePacket(data, this.socket.binaryType);
+    this.onPacket(packet);
+  }
+
+  /**
+   * Called with a decoded packet.
+   */
+  onPacket(packet) {
+    this.emit("packet", packet);
+  }
+
+  /**
+   * Called upon close.
+   *
+   * @api private
+   */
+  onClose() {
+    this.readyState = "closed";
+    this.emit("close");
+  }
+}
+
+module.exports = Transport;
+
+
+/***/ }),
+
+/***/ "./node_modules/engine.io-client/lib/transports/index.js":
+/*!***************************************************************!*\
+  !*** ./node_modules/engine.io-client/lib/transports/index.js ***!
+  \***************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+const XMLHttpRequest = __webpack_require__(/*! xmlhttprequest-ssl */ "./node_modules/engine.io-client/lib/xmlhttprequest.js");
+const XHR = __webpack_require__(/*! ./polling-xhr */ "./node_modules/engine.io-client/lib/transports/polling-xhr.js");
+const JSONP = __webpack_require__(/*! ./polling-jsonp */ "./node_modules/engine.io-client/lib/transports/polling-jsonp.js");
+const websocket = __webpack_require__(/*! ./websocket */ "./node_modules/engine.io-client/lib/transports/websocket.js");
+
+exports.polling = polling;
+exports.websocket = websocket;
+
+/**
+ * Polling transport polymorphic constructor.
+ * Decides on xhr vs jsonp based on feature detection.
+ *
+ * @api private
+ */
+
+function polling(opts) {
+  let xhr;
+  let xd = false;
+  let xs = false;
+  const jsonp = false !== opts.jsonp;
+
+  if (typeof location !== "undefined") {
+    const isSSL = "https:" === location.protocol;
+    let port = location.port;
+
+    // some user agents have empty `location.port`
+    if (!port) {
+      port = isSSL ? 443 : 80;
+    }
+
+    xd = opts.hostname !== location.hostname || port !== opts.port;
+    xs = opts.secure !== isSSL;
+  }
+
+  opts.xdomain = xd;
+  opts.xscheme = xs;
+  xhr = new XMLHttpRequest(opts);
+
+  if ("open" in xhr && !opts.forceJSONP) {
+    return new XHR(opts);
+  } else {
+    if (!jsonp) throw new Error("JSONP disabled");
+    return new JSONP(opts);
+  }
+}
+
+
+/***/ }),
+
+/***/ "./node_modules/engine.io-client/lib/transports/polling-jsonp.js":
+/*!***********************************************************************!*\
+  !*** ./node_modules/engine.io-client/lib/transports/polling-jsonp.js ***!
+  \***********************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+const Polling = __webpack_require__(/*! ./polling */ "./node_modules/engine.io-client/lib/transports/polling.js");
+const globalThis = __webpack_require__(/*! ../globalThis */ "./node_modules/engine.io-client/lib/globalThis.browser.js");
+
+const rNewline = /\n/g;
+const rEscapedNewline = /\\n/g;
+
+/**
+ * Global JSONP callbacks.
+ */
+
+let callbacks;
+
+/**
+ * Noop.
+ */
+
+function empty() {}
+
+class JSONPPolling extends Polling {
+  /**
+   * JSONP Polling constructor.
+   *
+   * @param {Object} opts.
+   * @api public
+   */
+  constructor(opts) {
+    super(opts);
+
+    this.query = this.query || {};
+
+    // define global callbacks array if not present
+    // we do this here (lazily) to avoid unneeded global pollution
+    if (!callbacks) {
+      // we need to consider multiple engines in the same page
+      callbacks = globalThis.___eio = globalThis.___eio || [];
+    }
+
+    // callback identifier
+    this.index = callbacks.length;
+
+    // add callback to jsonp global
+    const self = this;
+    callbacks.push(function(msg) {
+      self.onData(msg);
+    });
+
+    // append to query string
+    this.query.j = this.index;
+
+    // prevent spurious errors from being emitted when the window is unloaded
+    if (typeof addEventListener === "function") {
+      addEventListener(
+        "beforeunload",
+        function() {
+          if (self.script) self.script.onerror = empty;
+        },
+        false
+      );
+    }
+  }
+
+  /**
+   * JSONP only supports binary as base64 encoded strings
+   */
+  get supportsBinary() {
+    return false;
+  }
+
+  /**
+   * Closes the socket.
+   *
+   * @api private
+   */
+  doClose() {
+    if (this.script) {
+      this.script.parentNode.removeChild(this.script);
+      this.script = null;
+    }
+
+    if (this.form) {
+      this.form.parentNode.removeChild(this.form);
+      this.form = null;
+      this.iframe = null;
+    }
+
+    super.doClose();
+  }
+
+  /**
+   * Starts a poll cycle.
+   *
+   * @api private
+   */
+  doPoll() {
+    const self = this;
+    const script = document.createElement("script");
+
+    if (this.script) {
+      this.script.parentNode.removeChild(this.script);
+      this.script = null;
+    }
+
+    script.async = true;
+    script.src = this.uri();
+    script.onerror = function(e) {
+      self.onError("jsonp poll error", e);
+    };
+
+    const insertAt = document.getElementsByTagName("script")[0];
+    if (insertAt) {
+      insertAt.parentNode.insertBefore(script, insertAt);
+    } else {
+      (document.head || document.body).appendChild(script);
+    }
+    this.script = script;
+
+    const isUAgecko =
+      "undefined" !== typeof navigator && /gecko/i.test(navigator.userAgent);
+
+    if (isUAgecko) {
+      setTimeout(function() {
+        const iframe = document.createElement("iframe");
+        document.body.appendChild(iframe);
+        document.body.removeChild(iframe);
+      }, 100);
+    }
+  }
+
+  /**
+   * Writes with a hidden iframe.
+   *
+   * @param {String} data to send
+   * @param {Function} called upon flush.
+   * @api private
+   */
+  doWrite(data, fn) {
+    const self = this;
+    let iframe;
+
+    if (!this.form) {
+      const form = document.createElement("form");
+      const area = document.createElement("textarea");
+      const id = (this.iframeId = "eio_iframe_" + this.index);
+
+      form.className = "socketio";
+      form.style.position = "absolute";
+      form.style.top = "-1000px";
+      form.style.left = "-1000px";
+      form.target = id;
+      form.method = "POST";
+      form.setAttribute("accept-charset", "utf-8");
+      area.name = "d";
+      form.appendChild(area);
+      document.body.appendChild(form);
+
+      this.form = form;
+      this.area = area;
+    }
+
+    this.form.action = this.uri();
+
+    function complete() {
+      initIframe();
+      fn();
+    }
+
+    function initIframe() {
+      if (self.iframe) {
+        try {
+          self.form.removeChild(self.iframe);
+        } catch (e) {
+          self.onError("jsonp polling iframe removal error", e);
+        }
+      }
+
+      try {
+        // ie6 dynamic iframes with target="" support (thanks Chris Lambacher)
+        const html = '<iframe src="javascript:0" name="' + self.iframeId + '">';
+        iframe = document.createElement(html);
+      } catch (e) {
+        iframe = document.createElement("iframe");
+        iframe.name = self.iframeId;
+        iframe.src = "javascript:0";
+      }
+
+      iframe.id = self.iframeId;
+
+      self.form.appendChild(iframe);
+      self.iframe = iframe;
+    }
+
+    initIframe();
+
+    // escape \n to prevent it from being converted into \r\n by some UAs
+    // double escaping is required for escaped new lines because unescaping of new lines can be done safely on server-side
+    data = data.replace(rEscapedNewline, "\\\n");
+    this.area.value = data.replace(rNewline, "\\n");
+
+    try {
+      this.form.submit();
+    } catch (e) {}
+
+    if (this.iframe.attachEvent) {
+      this.iframe.onreadystatechange = function() {
+        if (self.iframe.readyState === "complete") {
+          complete();
+        }
+      };
+    } else {
+      this.iframe.onload = complete;
+    }
+  }
+}
+
+module.exports = JSONPPolling;
+
+
+/***/ }),
+
+/***/ "./node_modules/engine.io-client/lib/transports/polling-xhr.js":
+/*!*********************************************************************!*\
+  !*** ./node_modules/engine.io-client/lib/transports/polling-xhr.js ***!
+  \*********************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+/* global attachEvent */
+
+const XMLHttpRequest = __webpack_require__(/*! xmlhttprequest-ssl */ "./node_modules/engine.io-client/lib/xmlhttprequest.js");
+const Polling = __webpack_require__(/*! ./polling */ "./node_modules/engine.io-client/lib/transports/polling.js");
+const Emitter = __webpack_require__(/*! component-emitter */ "./node_modules/component-emitter/index.js");
+const { pick } = __webpack_require__(/*! ../util */ "./node_modules/engine.io-client/lib/util.js");
+const globalThis = __webpack_require__(/*! ../globalThis */ "./node_modules/engine.io-client/lib/globalThis.browser.js");
+
+const debug = __webpack_require__(/*! debug */ "./node_modules/engine.io-client/node_modules/debug/src/browser.js")("engine.io-client:polling-xhr");
+
+/**
+ * Empty function
+ */
+
+function empty() {}
+
+const hasXHR2 = (function() {
+  const xhr = new XMLHttpRequest({ xdomain: false });
+  return null != xhr.responseType;
+})();
+
+class XHR extends Polling {
+  /**
+   * XHR Polling constructor.
+   *
+   * @param {Object} opts
+   * @api public
+   */
+  constructor(opts) {
+    super(opts);
+
+    if (typeof location !== "undefined") {
+      const isSSL = "https:" === location.protocol;
+      let port = location.port;
+
+      // some user agents have empty `location.port`
+      if (!port) {
+        port = isSSL ? 443 : 80;
+      }
+
+      this.xd =
+        (typeof location !== "undefined" &&
+          opts.hostname !== location.hostname) ||
+        port !== opts.port;
+      this.xs = opts.secure !== isSSL;
+    }
+    /**
+     * XHR supports binary
+     */
+    const forceBase64 = opts && opts.forceBase64;
+    this.supportsBinary = hasXHR2 && !forceBase64;
+  }
+
+  /**
+   * Creates a request.
+   *
+   * @param {String} method
+   * @api private
+   */
+  request(opts = {}) {
+    Object.assign(opts, { xd: this.xd, xs: this.xs }, this.opts);
+    return new Request(this.uri(), opts);
+  }
+
+  /**
+   * Sends data.
+   *
+   * @param {String} data to send.
+   * @param {Function} called upon flush.
+   * @api private
+   */
+  doWrite(data, fn) {
+    const req = this.request({
+      method: "POST",
+      data: data
+    });
+    const self = this;
+    req.on("success", fn);
+    req.on("error", function(err) {
+      self.onError("xhr post error", err);
+    });
+  }
+
+  /**
+   * Starts a poll cycle.
+   *
+   * @api private
+   */
+  doPoll() {
+    debug("xhr poll");
+    const req = this.request();
+    const self = this;
+    req.on("data", function(data) {
+      self.onData(data);
+    });
+    req.on("error", function(err) {
+      self.onError("xhr poll error", err);
+    });
+    this.pollXhr = req;
+  }
+}
+
+class Request extends Emitter {
+  /**
+   * Request constructor
+   *
+   * @param {Object} options
+   * @api public
+   */
+  constructor(uri, opts) {
+    super();
+    this.opts = opts;
+
+    this.method = opts.method || "GET";
+    this.uri = uri;
+    this.async = false !== opts.async;
+    this.data = undefined !== opts.data ? opts.data : null;
+
+    this.create();
+  }
+
+  /**
+   * Creates the XHR object and sends the request.
+   *
+   * @api private
+   */
+  create() {
+    const opts = pick(
+      this.opts,
+      "agent",
+      "enablesXDR",
+      "pfx",
+      "key",
+      "passphrase",
+      "cert",
+      "ca",
+      "ciphers",
+      "rejectUnauthorized"
+    );
+    opts.xdomain = !!this.opts.xd;
+    opts.xscheme = !!this.opts.xs;
+
+    const xhr = (this.xhr = new XMLHttpRequest(opts));
+    const self = this;
+
+    try {
+      debug("xhr open %s: %s", this.method, this.uri);
+      xhr.open(this.method, this.uri, this.async);
+      try {
+        if (this.opts.extraHeaders) {
+          xhr.setDisableHeaderCheck && xhr.setDisableHeaderCheck(true);
+          for (let i in this.opts.extraHeaders) {
+            if (this.opts.extraHeaders.hasOwnProperty(i)) {
+              xhr.setRequestHeader(i, this.opts.extraHeaders[i]);
+            }
+          }
+        }
+      } catch (e) {}
+
+      if ("POST" === this.method) {
+        try {
+          xhr.setRequestHeader("Content-type", "text/plain;charset=UTF-8");
+        } catch (e) {}
+      }
+
+      try {
+        xhr.setRequestHeader("Accept", "*/*");
+      } catch (e) {}
+
+      // ie6 check
+      if ("withCredentials" in xhr) {
+        xhr.withCredentials = this.opts.withCredentials;
+      }
+
+      if (this.opts.requestTimeout) {
+        xhr.timeout = this.opts.requestTimeout;
+      }
+
+      if (this.hasXDR()) {
+        xhr.onload = function() {
+          self.onLoad();
+        };
+        xhr.onerror = function() {
+          self.onError(xhr.responseText);
+        };
+      } else {
+        xhr.onreadystatechange = function() {
+          if (4 !== xhr.readyState) return;
+          if (200 === xhr.status || 1223 === xhr.status) {
+            self.onLoad();
+          } else {
+            // make sure the `error` event handler that's user-set
+            // does not throw in the same tick and gets caught here
+            setTimeout(function() {
+              self.onError(typeof xhr.status === "number" ? xhr.status : 0);
+            }, 0);
+          }
+        };
+      }
+
+      debug("xhr data %s", this.data);
+      xhr.send(this.data);
+    } catch (e) {
+      // Need to defer since .create() is called directly from the constructor
+      // and thus the 'error' event can only be only bound *after* this exception
+      // occurs.  Therefore, also, we cannot throw here at all.
+      setTimeout(function() {
+        self.onError(e);
+      }, 0);
+      return;
+    }
+
+    if (typeof document !== "undefined") {
+      this.index = Request.requestsCount++;
+      Request.requests[this.index] = this;
+    }
+  }
+
+  /**
+   * Called upon successful response.
+   *
+   * @api private
+   */
+  onSuccess() {
+    this.emit("success");
+    this.cleanup();
+  }
+
+  /**
+   * Called if we have data.
+   *
+   * @api private
+   */
+  onData(data) {
+    this.emit("data", data);
+    this.onSuccess();
+  }
+
+  /**
+   * Called upon error.
+   *
+   * @api private
+   */
+  onError(err) {
+    this.emit("error", err);
+    this.cleanup(true);
+  }
+
+  /**
+   * Cleans up house.
+   *
+   * @api private
+   */
+  cleanup(fromError) {
+    if ("undefined" === typeof this.xhr || null === this.xhr) {
+      return;
+    }
+    // xmlhttprequest
+    if (this.hasXDR()) {
+      this.xhr.onload = this.xhr.onerror = empty;
+    } else {
+      this.xhr.onreadystatechange = empty;
+    }
+
+    if (fromError) {
+      try {
+        this.xhr.abort();
+      } catch (e) {}
+    }
+
+    if (typeof document !== "undefined") {
+      delete Request.requests[this.index];
+    }
+
+    this.xhr = null;
+  }
+
+  /**
+   * Called upon load.
+   *
+   * @api private
+   */
+  onLoad() {
+    const data = this.xhr.responseText;
+    if (data !== null) {
+      this.onData(data);
+    }
+  }
+
+  /**
+   * Check if it has XDomainRequest.
+   *
+   * @api private
+   */
+  hasXDR() {
+    return typeof XDomainRequest !== "undefined" && !this.xs && this.enablesXDR;
+  }
+
+  /**
+   * Aborts the request.
+   *
+   * @api public
+   */
+  abort() {
+    this.cleanup();
+  }
+}
+
+/**
+ * Aborts pending requests when unloading the window. This is needed to prevent
+ * memory leaks (e.g. when using IE) and to ensure that no spurious error is
+ * emitted.
+ */
+
+Request.requestsCount = 0;
+Request.requests = {};
+
+if (typeof document !== "undefined") {
+  if (typeof attachEvent === "function") {
+    attachEvent("onunload", unloadHandler);
+  } else if (typeof addEventListener === "function") {
+    const terminationEvent = "onpagehide" in globalThis ? "pagehide" : "unload";
+    addEventListener(terminationEvent, unloadHandler, false);
+  }
+}
+
+function unloadHandler() {
+  for (let i in Request.requests) {
+    if (Request.requests.hasOwnProperty(i)) {
+      Request.requests[i].abort();
+    }
+  }
+}
+
+module.exports = XHR;
+module.exports.Request = Request;
+
+
+/***/ }),
+
+/***/ "./node_modules/engine.io-client/lib/transports/polling.js":
+/*!*****************************************************************!*\
+  !*** ./node_modules/engine.io-client/lib/transports/polling.js ***!
+  \*****************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+const Transport = __webpack_require__(/*! ../transport */ "./node_modules/engine.io-client/lib/transport.js");
+const parseqs = __webpack_require__(/*! parseqs */ "./node_modules/parseqs/index.js");
+const parser = __webpack_require__(/*! engine.io-parser */ "./node_modules/engine.io-parser/lib/index.js");
+const yeast = __webpack_require__(/*! yeast */ "./node_modules/yeast/index.js");
+
+const debug = __webpack_require__(/*! debug */ "./node_modules/engine.io-client/node_modules/debug/src/browser.js")("engine.io-client:polling");
+
+class Polling extends Transport {
+  /**
+   * Transport name.
+   */
+  get name() {
+    return "polling";
+  }
+
+  /**
+   * Opens the socket (triggers polling). We write a PING message to determine
+   * when the transport is open.
+   *
+   * @api private
+   */
+  doOpen() {
+    this.poll();
+  }
+
+  /**
+   * Pauses polling.
+   *
+   * @param {Function} callback upon buffers are flushed and transport is paused
+   * @api private
+   */
+  pause(onPause) {
+    const self = this;
+
+    this.readyState = "pausing";
+
+    function pause() {
+      debug("paused");
+      self.readyState = "paused";
+      onPause();
+    }
+
+    if (this.polling || !this.writable) {
+      let total = 0;
+
+      if (this.polling) {
+        debug("we are currently polling - waiting to pause");
+        total++;
+        this.once("pollComplete", function() {
+          debug("pre-pause polling complete");
+          --total || pause();
+        });
+      }
+
+      if (!this.writable) {
+        debug("we are currently writing - waiting to pause");
+        total++;
+        this.once("drain", function() {
+          debug("pre-pause writing complete");
+          --total || pause();
+        });
+      }
+    } else {
+      pause();
+    }
+  }
+
+  /**
+   * Starts polling cycle.
+   *
+   * @api public
+   */
+  poll() {
+    debug("polling");
+    this.polling = true;
+    this.doPoll();
+    this.emit("poll");
+  }
+
+  /**
+   * Overloads onData to detect payloads.
+   *
+   * @api private
+   */
+  onData(data) {
+    const self = this;
+    debug("polling got data %s", data);
+    const callback = function(packet, index, total) {
+      // if its the first message we consider the transport open
+      if ("opening" === self.readyState && packet.type === "open") {
+        self.onOpen();
+      }
+
+      // if its a close packet, we close the ongoing requests
+      if ("close" === packet.type) {
+        self.onClose();
+        return false;
+      }
+
+      // otherwise bypass onData and handle the message
+      self.onPacket(packet);
+    };
+
+    // decode payload
+    parser.decodePayload(data, this.socket.binaryType).forEach(callback);
+
+    // if an event did not trigger closing
+    if ("closed" !== this.readyState) {
+      // if we got data we're not polling
+      this.polling = false;
+      this.emit("pollComplete");
+
+      if ("open" === this.readyState) {
+        this.poll();
+      } else {
+        debug('ignoring poll - transport state "%s"', this.readyState);
+      }
+    }
+  }
+
+  /**
+   * For polling, send a close packet.
+   *
+   * @api private
+   */
+  doClose() {
+    const self = this;
+
+    function close() {
+      debug("writing close packet");
+      self.write([{ type: "close" }]);
+    }
+
+    if ("open" === this.readyState) {
+      debug("transport open - closing");
+      close();
+    } else {
+      // in case we're trying to close while
+      // handshaking is in progress (GH-164)
+      debug("transport not open - deferring close");
+      this.once("open", close);
+    }
+  }
+
+  /**
+   * Writes a packets payload.
+   *
+   * @param {Array} data packets
+   * @param {Function} drain callback
+   * @api private
+   */
+  write(packets) {
+    this.writable = false;
+
+    parser.encodePayload(packets, data => {
+      this.doWrite(data, () => {
+        this.writable = true;
+        this.emit("drain");
+      });
+    });
+  }
+
+  /**
+   * Generates uri for connection.
+   *
+   * @api private
+   */
+  uri() {
+    let query = this.query || {};
+    const schema = this.opts.secure ? "https" : "http";
+    let port = "";
+
+    // cache busting is forced
+    if (false !== this.opts.timestampRequests) {
+      query[this.opts.timestampParam] = yeast();
+    }
+
+    if (!this.supportsBinary && !query.sid) {
+      query.b64 = 1;
+    }
+
+    query = parseqs.encode(query);
+
+    // avoid port if default for schema
+    if (
+      this.opts.port &&
+      (("https" === schema && Number(this.opts.port) !== 443) ||
+        ("http" === schema && Number(this.opts.port) !== 80))
+    ) {
+      port = ":" + this.opts.port;
+    }
+
+    // prepend ? to query
+    if (query.length) {
+      query = "?" + query;
+    }
+
+    const ipv6 = this.opts.hostname.indexOf(":") !== -1;
+    return (
+      schema +
+      "://" +
+      (ipv6 ? "[" + this.opts.hostname + "]" : this.opts.hostname) +
+      port +
+      this.opts.path +
+      query
+    );
+  }
+}
+
+module.exports = Polling;
+
+
+/***/ }),
+
+/***/ "./node_modules/engine.io-client/lib/transports/websocket-constructor.browser.js":
+/*!***************************************************************************************!*\
+  !*** ./node_modules/engine.io-client/lib/transports/websocket-constructor.browser.js ***!
+  \***************************************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+const globalThis = __webpack_require__(/*! ../globalThis */ "./node_modules/engine.io-client/lib/globalThis.browser.js");
+
+module.exports = {
+  WebSocket: globalThis.WebSocket || globalThis.MozWebSocket,
+  usingBrowserWebSocket: true,
+  defaultBinaryType: "arraybuffer"
+};
+
+
+/***/ }),
+
+/***/ "./node_modules/engine.io-client/lib/transports/websocket.js":
+/*!*******************************************************************!*\
+  !*** ./node_modules/engine.io-client/lib/transports/websocket.js ***!
+  \*******************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+/* WEBPACK VAR INJECTION */(function(Buffer) {const Transport = __webpack_require__(/*! ../transport */ "./node_modules/engine.io-client/lib/transport.js");
+const parser = __webpack_require__(/*! engine.io-parser */ "./node_modules/engine.io-parser/lib/index.js");
+const parseqs = __webpack_require__(/*! parseqs */ "./node_modules/parseqs/index.js");
+const yeast = __webpack_require__(/*! yeast */ "./node_modules/yeast/index.js");
+const { pick } = __webpack_require__(/*! ../util */ "./node_modules/engine.io-client/lib/util.js");
+const {
+  WebSocket,
+  usingBrowserWebSocket,
+  defaultBinaryType
+} = __webpack_require__(/*! ./websocket-constructor */ "./node_modules/engine.io-client/lib/transports/websocket-constructor.browser.js");
+
+const debug = __webpack_require__(/*! debug */ "./node_modules/engine.io-client/node_modules/debug/src/browser.js")("engine.io-client:websocket");
+
+// detect ReactNative environment
+const isReactNative =
+  typeof navigator !== "undefined" &&
+  typeof navigator.product === "string" &&
+  navigator.product.toLowerCase() === "reactnative";
+
+class WS extends Transport {
+  /**
+   * WebSocket transport constructor.
+   *
+   * @api {Object} connection options
+   * @api public
+   */
+  constructor(opts) {
+    super(opts);
+
+    this.supportsBinary = !opts.forceBase64;
+  }
+
+  /**
+   * Transport name.
+   *
+   * @api public
+   */
+  get name() {
+    return "websocket";
+  }
+
+  /**
+   * Opens socket.
+   *
+   * @api private
+   */
+  doOpen() {
+    if (!this.check()) {
+      // let probe timeout
+      return;
+    }
+
+    const uri = this.uri();
+    const protocols = this.opts.protocols;
+
+    // React Native only supports the 'headers' option, and will print a warning if anything else is passed
+    const opts = isReactNative
+      ? {}
+      : pick(
+          this.opts,
+          "agent",
+          "perMessageDeflate",
+          "pfx",
+          "key",
+          "passphrase",
+          "cert",
+          "ca",
+          "ciphers",
+          "rejectUnauthorized",
+          "localAddress"
+        );
+
+    if (this.opts.extraHeaders) {
+      opts.headers = this.opts.extraHeaders;
+    }
+
+    try {
+      this.ws =
+        usingBrowserWebSocket && !isReactNative
+          ? protocols
+            ? new WebSocket(uri, protocols)
+            : new WebSocket(uri)
+          : new WebSocket(uri, protocols, opts);
+    } catch (err) {
+      return this.emit("error", err);
+    }
+
+    this.ws.binaryType = this.socket.binaryType || defaultBinaryType;
+
+    this.addEventListeners();
+  }
+
+  /**
+   * Adds event listeners to the socket
+   *
+   * @api private
+   */
+  addEventListeners() {
+    const self = this;
+
+    this.ws.onopen = function() {
+      self.onOpen();
+    };
+    this.ws.onclose = function() {
+      self.onClose();
+    };
+    this.ws.onmessage = function(ev) {
+      self.onData(ev.data);
+    };
+    this.ws.onerror = function(e) {
+      self.onError("websocket error", e);
+    };
+  }
+
+  /**
+   * Writes data to socket.
+   *
+   * @param {Array} array of packets.
+   * @api private
+   */
+  write(packets) {
+    const self = this;
+    this.writable = false;
+
+    // encodePacket efficient as it uses WS framing
+    // no need for encodePayload
+    let total = packets.length;
+    let i = 0;
+    const l = total;
+    for (; i < l; i++) {
+      (function(packet) {
+        parser.encodePacket(packet, self.supportsBinary, function(data) {
+          // always create a new object (GH-437)
+          const opts = {};
+          if (!usingBrowserWebSocket) {
+            if (packet.options) {
+              opts.compress = packet.options.compress;
+            }
+
+            if (self.opts.perMessageDeflate) {
+              const len =
+                "string" === typeof data
+                  ? Buffer.byteLength(data)
+                  : data.length;
+              if (len < self.opts.perMessageDeflate.threshold) {
+                opts.compress = false;
+              }
+            }
+          }
+
+          // Sometimes the websocket has already been closed but the browser didn't
+          // have a chance of informing us about it yet, in that case send will
+          // throw an error
+          try {
+            if (usingBrowserWebSocket) {
+              // TypeError is thrown when passing the second argument on Safari
+              self.ws.send(data);
+            } else {
+              self.ws.send(data, opts);
+            }
+          } catch (e) {
+            debug("websocket closed before onclose event");
+          }
+
+          --total || done();
+        });
+      })(packets[i]);
+    }
+
+    function done() {
+      self.emit("flush");
+
+      // fake drain
+      // defer to next tick to allow Socket to clear writeBuffer
+      setTimeout(function() {
+        self.writable = true;
+        self.emit("drain");
+      }, 0);
+    }
+  }
+
+  /**
+   * Called upon close
+   *
+   * @api private
+   */
+  onClose() {
+    Transport.prototype.onClose.call(this);
+  }
+
+  /**
+   * Closes socket.
+   *
+   * @api private
+   */
+  doClose() {
+    if (typeof this.ws !== "undefined") {
+      this.ws.close();
+    }
+  }
+
+  /**
+   * Generates uri for connection.
+   *
+   * @api private
+   */
+  uri() {
+    let query = this.query || {};
+    const schema = this.opts.secure ? "wss" : "ws";
+    let port = "";
+
+    // avoid port if default for schema
+    if (
+      this.opts.port &&
+      (("wss" === schema && Number(this.opts.port) !== 443) ||
+        ("ws" === schema && Number(this.opts.port) !== 80))
+    ) {
+      port = ":" + this.opts.port;
+    }
+
+    // append timestamp to URI
+    if (this.opts.timestampRequests) {
+      query[this.opts.timestampParam] = yeast();
+    }
+
+    // communicate binary support capabilities
+    if (!this.supportsBinary) {
+      query.b64 = 1;
+    }
+
+    query = parseqs.encode(query);
+
+    // prepend ? to query
+    if (query.length) {
+      query = "?" + query;
+    }
+
+    const ipv6 = this.opts.hostname.indexOf(":") !== -1;
+    return (
+      schema +
+      "://" +
+      (ipv6 ? "[" + this.opts.hostname + "]" : this.opts.hostname) +
+      port +
+      this.opts.path +
+      query
+    );
+  }
+
+  /**
+   * Feature detection for WebSocket.
+   *
+   * @return {Boolean} whether this transport is available.
+   * @api public
+   */
+  check() {
+    return (
+      !!WebSocket &&
+      !("__initialize" in WebSocket && this.name === WS.prototype.name)
+    );
+  }
+}
+
+module.exports = WS;
+
+/* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(/*! ./../../../buffer/index.js */ "./node_modules/buffer/index.js").Buffer))
+
+/***/ }),
+
+/***/ "./node_modules/engine.io-client/lib/util.js":
+/*!***************************************************!*\
+  !*** ./node_modules/engine.io-client/lib/util.js ***!
+  \***************************************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+module.exports.pick = (obj, ...attr) => {
+  return attr.reduce((acc, k) => {
+    acc[k] = obj[k];
+    return acc;
+  }, {});
+};
+
+
+/***/ }),
+
+/***/ "./node_modules/engine.io-client/lib/xmlhttprequest.js":
+/*!*************************************************************!*\
+  !*** ./node_modules/engine.io-client/lib/xmlhttprequest.js ***!
+  \*************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+// browser shim for xmlhttprequest module
+
+const hasCORS = __webpack_require__(/*! has-cors */ "./node_modules/has-cors/index.js");
+const globalThis = __webpack_require__(/*! ./globalThis */ "./node_modules/engine.io-client/lib/globalThis.browser.js");
+
+module.exports = function(opts) {
+  const xdomain = opts.xdomain;
+
+  // scheme must be same when usign XDomainRequest
+  // http://blogs.msdn.com/b/ieinternals/archive/2010/05/13/xdomainrequest-restrictions-limitations-and-workarounds.aspx
+  const xscheme = opts.xscheme;
+
+  // XDomainRequest has a flow of not sending cookie, therefore it should be disabled as a default.
+  // https://github.com/Automattic/engine.io-client/pull/217
+  const enablesXDR = opts.enablesXDR;
+
+  // XMLHttpRequest can be disabled on IE
+  try {
+    if ("undefined" !== typeof XMLHttpRequest && (!xdomain || hasCORS)) {
+      return new XMLHttpRequest();
+    }
+  } catch (e) {}
+
+  // Use XDomainRequest for IE8 if enablesXDR is true
+  // because loading bar keeps flashing when using jsonp-polling
+  // https://github.com/yujiosaka/socke.io-ie8-loading-example
+  try {
+    if ("undefined" !== typeof XDomainRequest && !xscheme && enablesXDR) {
+      return new XDomainRequest();
+    }
+  } catch (e) {}
+
+  if (!xdomain) {
+    try {
+      return new globalThis[["Active"].concat("Object").join("X")](
+        "Microsoft.XMLHTTP"
+      );
+    } catch (e) {}
+  }
+};
+
+
+/***/ }),
+
+/***/ "./node_modules/engine.io-client/node_modules/debug/src/browser.js":
+/*!*************************************************************************!*\
+  !*** ./node_modules/engine.io-client/node_modules/debug/src/browser.js ***!
+  \*************************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+/* WEBPACK VAR INJECTION */(function(process) {/* eslint-env browser */
+
+/**
+ * This is the web browser implementation of `debug()`.
+ */
+
+exports.formatArgs = formatArgs;
+exports.save = save;
+exports.load = load;
+exports.useColors = useColors;
+exports.storage = localstorage();
+exports.destroy = (() => {
+	let warned = false;
+
+	return () => {
+		if (!warned) {
+			warned = true;
+			console.warn('Instance method `debug.destroy()` is deprecated and no longer does anything. It will be removed in the next major version of `debug`.');
+		}
+	};
+})();
+
+/**
+ * Colors.
+ */
+
+exports.colors = [
+	'#0000CC',
+	'#0000FF',
+	'#0033CC',
+	'#0033FF',
+	'#0066CC',
+	'#0066FF',
+	'#0099CC',
+	'#0099FF',
+	'#00CC00',
+	'#00CC33',
+	'#00CC66',
+	'#00CC99',
+	'#00CCCC',
+	'#00CCFF',
+	'#3300CC',
+	'#3300FF',
+	'#3333CC',
+	'#3333FF',
+	'#3366CC',
+	'#3366FF',
+	'#3399CC',
+	'#3399FF',
+	'#33CC00',
+	'#33CC33',
+	'#33CC66',
+	'#33CC99',
+	'#33CCCC',
+	'#33CCFF',
+	'#6600CC',
+	'#6600FF',
+	'#6633CC',
+	'#6633FF',
+	'#66CC00',
+	'#66CC33',
+	'#9900CC',
+	'#9900FF',
+	'#9933CC',
+	'#9933FF',
+	'#99CC00',
+	'#99CC33',
+	'#CC0000',
+	'#CC0033',
+	'#CC0066',
+	'#CC0099',
+	'#CC00CC',
+	'#CC00FF',
+	'#CC3300',
+	'#CC3333',
+	'#CC3366',
+	'#CC3399',
+	'#CC33CC',
+	'#CC33FF',
+	'#CC6600',
+	'#CC6633',
+	'#CC9900',
+	'#CC9933',
+	'#CCCC00',
+	'#CCCC33',
+	'#FF0000',
+	'#FF0033',
+	'#FF0066',
+	'#FF0099',
+	'#FF00CC',
+	'#FF00FF',
+	'#FF3300',
+	'#FF3333',
+	'#FF3366',
+	'#FF3399',
+	'#FF33CC',
+	'#FF33FF',
+	'#FF6600',
+	'#FF6633',
+	'#FF9900',
+	'#FF9933',
+	'#FFCC00',
+	'#FFCC33'
+];
+
+/**
+ * Currently only WebKit-based Web Inspectors, Firefox >= v31,
+ * and the Firebug extension (any Firefox version) are known
+ * to support "%c" CSS customizations.
+ *
+ * TODO: add a `localStorage` variable to explicitly enable/disable colors
+ */
+
+// eslint-disable-next-line complexity
+function useColors() {
+	// NB: In an Electron preload script, document will be defined but not fully
+	// initialized. Since we know we're in Chrome, we'll just detect this case
+	// explicitly
+	if (typeof window !== 'undefined' && window.process && (window.process.type === 'renderer' || window.process.__nwjs)) {
+		return true;
+	}
+
+	// Internet Explorer and Edge do not support colors.
+	if (typeof navigator !== 'undefined' && navigator.userAgent && navigator.userAgent.toLowerCase().match(/(edge|trident)\/(\d+)/)) {
+		return false;
+	}
+
+	// Is webkit? http://stackoverflow.com/a/16459606/376773
+	// document is undefined in react-native: https://github.com/facebook/react-native/pull/1632
+	return (typeof document !== 'undefined' && document.documentElement && document.documentElement.style && document.documentElement.style.WebkitAppearance) ||
+		// Is firebug? http://stackoverflow.com/a/398120/376773
+		(typeof window !== 'undefined' && window.console && (window.console.firebug || (window.console.exception && window.console.table))) ||
+		// Is firefox >= v31?
+		// https://developer.mozilla.org/en-US/docs/Tools/Web_Console#Styling_messages
+		(typeof navigator !== 'undefined' && navigator.userAgent && navigator.userAgent.toLowerCase().match(/firefox\/(\d+)/) && parseInt(RegExp.$1, 10) >= 31) ||
+		// Double check webkit in userAgent just in case we are in a worker
+		(typeof navigator !== 'undefined' && navigator.userAgent && navigator.userAgent.toLowerCase().match(/applewebkit\/(\d+)/));
+}
+
+/**
+ * Colorize log arguments if enabled.
+ *
+ * @api public
+ */
+
+function formatArgs(args) {
+	args[0] = (this.useColors ? '%c' : '') +
+		this.namespace +
+		(this.useColors ? ' %c' : ' ') +
+		args[0] +
+		(this.useColors ? '%c ' : ' ') +
+		'+' + module.exports.humanize(this.diff);
+
+	if (!this.useColors) {
+		return;
+	}
+
+	const c = 'color: ' + this.color;
+	args.splice(1, 0, c, 'color: inherit');
+
+	// The final "%c" is somewhat tricky, because there could be other
+	// arguments passed either before or after the %c, so we need to
+	// figure out the correct index to insert the CSS into
+	let index = 0;
+	let lastC = 0;
+	args[0].replace(/%[a-zA-Z%]/g, match => {
+		if (match === '%%') {
+			return;
+		}
+		index++;
+		if (match === '%c') {
+			// We only are interested in the *last* %c
+			// (the user may have provided their own)
+			lastC = index;
+		}
+	});
+
+	args.splice(lastC, 0, c);
+}
+
+/**
+ * Invokes `console.debug()` when available.
+ * No-op when `console.debug` is not a "function".
+ * If `console.debug` is not available, falls back
+ * to `console.log`.
+ *
+ * @api public
+ */
+exports.log = console.debug || console.log || (() => {});
+
+/**
+ * Save `namespaces`.
+ *
+ * @param {String} namespaces
+ * @api private
+ */
+function save(namespaces) {
+	try {
+		if (namespaces) {
+			exports.storage.setItem('debug', namespaces);
+		} else {
+			exports.storage.removeItem('debug');
+		}
+	} catch (error) {
+		// Swallow
+		// XXX (@Qix-) should we be logging these?
+	}
+}
+
+/**
+ * Load `namespaces`.
+ *
+ * @return {String} returns the previously persisted debug modes
+ * @api private
+ */
+function load() {
+	let r;
+	try {
+		r = exports.storage.getItem('debug');
+	} catch (error) {
+		// Swallow
+		// XXX (@Qix-) should we be logging these?
+	}
+
+	// If debug isn't set in LS, and we're in Electron, try to load $DEBUG
+	if (!r && typeof process !== 'undefined' && 'env' in process) {
+		r = process.env.DEBUG;
+	}
+
+	return r;
+}
+
+/**
+ * Localstorage attempts to return the localstorage.
+ *
+ * This is necessary because safari throws
+ * when a user disables cookies/localstorage
+ * and you attempt to access it.
+ *
+ * @return {LocalStorage}
+ * @api private
+ */
+
+function localstorage() {
+	try {
+		// TVMLKit (Apple TV JS Runtime) does not have a window object, just localStorage in the global context
+		// The Browser also has localStorage in the global context.
+		return localStorage;
+	} catch (error) {
+		// Swallow
+		// XXX (@Qix-) should we be logging these?
+	}
+}
+
+module.exports = __webpack_require__(/*! ./common */ "./node_modules/engine.io-client/node_modules/debug/src/common.js")(exports);
+
+const {formatters} = module.exports;
+
+/**
+ * Map %j to `JSON.stringify()`, since no Web Inspectors do that by default.
+ */
+
+formatters.j = function (v) {
+	try {
+		return JSON.stringify(v);
+	} catch (error) {
+		return '[UnexpectedJSONParseError]: ' + error.message;
+	}
+};
+
+/* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(/*! ./../../../../process/browser.js */ "./node_modules/process/browser.js")))
+
+/***/ }),
+
+/***/ "./node_modules/engine.io-client/node_modules/debug/src/common.js":
+/*!************************************************************************!*\
+  !*** ./node_modules/engine.io-client/node_modules/debug/src/common.js ***!
+  \************************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+
+/**
+ * This is the common logic for both the Node.js and web browser
+ * implementations of `debug()`.
+ */
+
+function setup(env) {
+	createDebug.debug = createDebug;
+	createDebug.default = createDebug;
+	createDebug.coerce = coerce;
+	createDebug.disable = disable;
+	createDebug.enable = enable;
+	createDebug.enabled = enabled;
+	createDebug.humanize = __webpack_require__(/*! ms */ "./node_modules/ms/index.js");
+	createDebug.destroy = destroy;
+
+	Object.keys(env).forEach(key => {
+		createDebug[key] = env[key];
+	});
+
+	/**
+	* The currently active debug mode names, and names to skip.
+	*/
+
+	createDebug.names = [];
+	createDebug.skips = [];
+
+	/**
+	* Map of special "%n" handling functions, for the debug "format" argument.
+	*
+	* Valid key names are a single, lower or upper-case letter, i.e. "n" and "N".
+	*/
+	createDebug.formatters = {};
+
+	/**
+	* Selects a color for a debug namespace
+	* @param {String} namespace The namespace string for the for the debug instance to be colored
+	* @return {Number|String} An ANSI color code for the given namespace
+	* @api private
+	*/
+	function selectColor(namespace) {
+		let hash = 0;
+
+		for (let i = 0; i < namespace.length; i++) {
+			hash = ((hash << 5) - hash) + namespace.charCodeAt(i);
+			hash |= 0; // Convert to 32bit integer
+		}
+
+		return createDebug.colors[Math.abs(hash) % createDebug.colors.length];
+	}
+	createDebug.selectColor = selectColor;
+
+	/**
+	* Create a debugger with the given `namespace`.
+	*
+	* @param {String} namespace
+	* @return {Function}
+	* @api public
+	*/
+	function createDebug(namespace) {
+		let prevTime;
+		let enableOverride = null;
+
+		function debug(...args) {
+			// Disabled?
+			if (!debug.enabled) {
+				return;
+			}
+
+			const self = debug;
+
+			// Set `diff` timestamp
+			const curr = Number(new Date());
+			const ms = curr - (prevTime || curr);
+			self.diff = ms;
+			self.prev = prevTime;
+			self.curr = curr;
+			prevTime = curr;
+
+			args[0] = createDebug.coerce(args[0]);
+
+			if (typeof args[0] !== 'string') {
+				// Anything else let's inspect with %O
+				args.unshift('%O');
+			}
+
+			// Apply any `formatters` transformations
+			let index = 0;
+			args[0] = args[0].replace(/%([a-zA-Z%])/g, (match, format) => {
+				// If we encounter an escaped % then don't increase the array index
+				if (match === '%%') {
+					return '%';
+				}
+				index++;
+				const formatter = createDebug.formatters[format];
+				if (typeof formatter === 'function') {
+					const val = args[index];
+					match = formatter.call(self, val);
+
+					// Now we need to remove `args[index]` since it's inlined in the `format`
+					args.splice(index, 1);
+					index--;
+				}
+				return match;
+			});
+
+			// Apply env-specific formatting (colors, etc.)
+			createDebug.formatArgs.call(self, args);
+
+			const logFn = self.log || createDebug.log;
+			logFn.apply(self, args);
+		}
+
+		debug.namespace = namespace;
+		debug.useColors = createDebug.useColors();
+		debug.color = createDebug.selectColor(namespace);
+		debug.extend = extend;
+		debug.destroy = createDebug.destroy; // XXX Temporary. Will be removed in the next major release.
+
+		Object.defineProperty(debug, 'enabled', {
+			enumerable: true,
+			configurable: false,
+			get: () => enableOverride === null ? createDebug.enabled(namespace) : enableOverride,
+			set: v => {
+				enableOverride = v;
+			}
+		});
+
+		// Env-specific initialization logic for debug instances
+		if (typeof createDebug.init === 'function') {
+			createDebug.init(debug);
+		}
+
+		return debug;
+	}
+
+	function extend(namespace, delimiter) {
+		const newDebug = createDebug(this.namespace + (typeof delimiter === 'undefined' ? ':' : delimiter) + namespace);
+		newDebug.log = this.log;
+		return newDebug;
+	}
+
+	/**
+	* Enables a debug mode by namespaces. This can include modes
+	* separated by a colon and wildcards.
+	*
+	* @param {String} namespaces
+	* @api public
+	*/
+	function enable(namespaces) {
+		createDebug.save(namespaces);
+
+		createDebug.names = [];
+		createDebug.skips = [];
+
+		let i;
+		const split = (typeof namespaces === 'string' ? namespaces : '').split(/[\s,]+/);
+		const len = split.length;
+
+		for (i = 0; i < len; i++) {
+			if (!split[i]) {
+				// ignore empty strings
+				continue;
+			}
+
+			namespaces = split[i].replace(/\*/g, '.*?');
+
+			if (namespaces[0] === '-') {
+				createDebug.skips.push(new RegExp('^' + namespaces.substr(1) + '$'));
+			} else {
+				createDebug.names.push(new RegExp('^' + namespaces + '$'));
+			}
+		}
+	}
+
+	/**
+	* Disable debug output.
+	*
+	* @return {String} namespaces
+	* @api public
+	*/
+	function disable() {
+		const namespaces = [
+			...createDebug.names.map(toNamespace),
+			...createDebug.skips.map(toNamespace).map(namespace => '-' + namespace)
+		].join(',');
+		createDebug.enable('');
+		return namespaces;
+	}
+
+	/**
+	* Returns true if the given mode name is enabled, false otherwise.
+	*
+	* @param {String} name
+	* @return {Boolean}
+	* @api public
+	*/
+	function enabled(name) {
+		if (name[name.length - 1] === '*') {
+			return true;
+		}
+
+		let i;
+		let len;
+
+		for (i = 0, len = createDebug.skips.length; i < len; i++) {
+			if (createDebug.skips[i].test(name)) {
+				return false;
+			}
+		}
+
+		for (i = 0, len = createDebug.names.length; i < len; i++) {
+			if (createDebug.names[i].test(name)) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
+	* Convert regexp to namespace
+	*
+	* @param {RegExp} regxep
+	* @return {String} namespace
+	* @api private
+	*/
+	function toNamespace(regexp) {
+		return regexp.toString()
+			.substring(2, regexp.toString().length - 2)
+			.replace(/\.\*\?$/, '*');
+	}
+
+	/**
+	* Coerce `val`.
+	*
+	* @param {Mixed} val
+	* @return {Mixed}
+	* @api private
+	*/
+	function coerce(val) {
+		if (val instanceof Error) {
+			return val.stack || val.message;
+		}
+		return val;
+	}
+
+	/**
+	* XXX DO NOT USE. This is a temporary stub function.
+	* XXX It WILL be removed in the next major release.
+	*/
+	function destroy() {
+		console.warn('Instance method `debug.destroy()` is deprecated and no longer does anything. It will be removed in the next major version of `debug`.');
+	}
+
+	createDebug.enable(createDebug.load());
+
+	return createDebug;
+}
+
+module.exports = setup;
+
+
+/***/ }),
+
+/***/ "./node_modules/engine.io-parser/lib/commons.js":
+/*!******************************************************!*\
+  !*** ./node_modules/engine.io-parser/lib/commons.js ***!
+  \******************************************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+const PACKET_TYPES = Object.create(null); // no Map = no polyfill
+PACKET_TYPES["open"] = "0";
+PACKET_TYPES["close"] = "1";
+PACKET_TYPES["ping"] = "2";
+PACKET_TYPES["pong"] = "3";
+PACKET_TYPES["message"] = "4";
+PACKET_TYPES["upgrade"] = "5";
+PACKET_TYPES["noop"] = "6";
+
+const PACKET_TYPES_REVERSE = Object.create(null);
+Object.keys(PACKET_TYPES).forEach(key => {
+  PACKET_TYPES_REVERSE[PACKET_TYPES[key]] = key;
+});
+
+const ERROR_PACKET = { type: "error", data: "parser error" };
+
+module.exports = {
+  PACKET_TYPES,
+  PACKET_TYPES_REVERSE,
+  ERROR_PACKET
+};
+
+
+/***/ }),
+
+/***/ "./node_modules/engine.io-parser/lib/decodePacket.browser.js":
+/*!*******************************************************************!*\
+  !*** ./node_modules/engine.io-parser/lib/decodePacket.browser.js ***!
+  \*******************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+const { PACKET_TYPES_REVERSE, ERROR_PACKET } = __webpack_require__(/*! ./commons */ "./node_modules/engine.io-parser/lib/commons.js");
+
+const withNativeArrayBuffer = typeof ArrayBuffer === "function";
+
+let base64decoder;
+if (withNativeArrayBuffer) {
+  base64decoder = __webpack_require__(/*! base64-arraybuffer */ "./node_modules/base64-arraybuffer/lib/base64-arraybuffer.js");
+}
+
+const decodePacket = (encodedPacket, binaryType) => {
+  if (typeof encodedPacket !== "string") {
+    return {
+      type: "message",
+      data: mapBinary(encodedPacket, binaryType)
+    };
+  }
+  const type = encodedPacket.charAt(0);
+  if (type === "b") {
+    return {
+      type: "message",
+      data: decodeBase64Packet(encodedPacket.substring(1), binaryType)
+    };
+  }
+  const packetType = PACKET_TYPES_REVERSE[type];
+  if (!packetType) {
+    return ERROR_PACKET;
+  }
+  return encodedPacket.length > 1
+    ? {
+        type: PACKET_TYPES_REVERSE[type],
+        data: encodedPacket.substring(1)
+      }
+    : {
+        type: PACKET_TYPES_REVERSE[type]
+      };
+};
+
+const decodeBase64Packet = (data, binaryType) => {
+  if (base64decoder) {
+    const decoded = base64decoder.decode(data);
+    return mapBinary(decoded, binaryType);
+  } else {
+    return { base64: true, data }; // fallback for old browsers
+  }
+};
+
+const mapBinary = (data, binaryType) => {
+  switch (binaryType) {
+    case "blob":
+      return data instanceof ArrayBuffer ? new Blob([data]) : data;
+    case "arraybuffer":
+    default:
+      return data; // assuming the data is already an ArrayBuffer
+  }
+};
+
+module.exports = decodePacket;
+
+
+/***/ }),
+
+/***/ "./node_modules/engine.io-parser/lib/encodePacket.browser.js":
+/*!*******************************************************************!*\
+  !*** ./node_modules/engine.io-parser/lib/encodePacket.browser.js ***!
+  \*******************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+const { PACKET_TYPES } = __webpack_require__(/*! ./commons */ "./node_modules/engine.io-parser/lib/commons.js");
+
+const withNativeBlob =
+  typeof Blob === "function" ||
+  (typeof Blob !== "undefined" &&
+    Object.prototype.toString.call(Blob) === "[object BlobConstructor]");
+const withNativeArrayBuffer = typeof ArrayBuffer === "function";
+
+// ArrayBuffer.isView method is not defined in IE10
+const isView = obj => {
+  return typeof ArrayBuffer.isView === "function"
+    ? ArrayBuffer.isView(obj)
+    : obj && obj.buffer instanceof ArrayBuffer;
+};
+
+const encodePacket = ({ type, data }, supportsBinary, callback) => {
+  if (withNativeBlob && data instanceof Blob) {
+    if (supportsBinary) {
+      return callback(data);
+    } else {
+      return encodeBlobAsBase64(data, callback);
+    }
+  } else if (
+    withNativeArrayBuffer &&
+    (data instanceof ArrayBuffer || isView(data))
+  ) {
+    if (supportsBinary) {
+      return callback(data instanceof ArrayBuffer ? data : data.buffer);
+    } else {
+      return encodeBlobAsBase64(new Blob([data]), callback);
+    }
+  }
+  // plain string
+  return callback(PACKET_TYPES[type] + (data || ""));
+};
+
+const encodeBlobAsBase64 = (data, callback) => {
+  const fileReader = new FileReader();
+  fileReader.onload = function() {
+    const content = fileReader.result.split(",")[1];
+    callback("b" + content);
+  };
+  return fileReader.readAsDataURL(data);
+};
+
+module.exports = encodePacket;
+
+
+/***/ }),
+
+/***/ "./node_modules/engine.io-parser/lib/index.js":
+/*!****************************************************!*\
+  !*** ./node_modules/engine.io-parser/lib/index.js ***!
+  \****************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+const encodePacket = __webpack_require__(/*! ./encodePacket */ "./node_modules/engine.io-parser/lib/encodePacket.browser.js");
+const decodePacket = __webpack_require__(/*! ./decodePacket */ "./node_modules/engine.io-parser/lib/decodePacket.browser.js");
+
+const SEPARATOR = String.fromCharCode(30); // see https://en.wikipedia.org/wiki/Delimiter#ASCII_delimited_text
+
+const encodePayload = (packets, callback) => {
+  // some packets may be added to the array while encoding, so the initial length must be saved
+  const length = packets.length;
+  const encodedPackets = new Array(length);
+  let count = 0;
+
+  packets.forEach((packet, i) => {
+    // force base64 encoding for binary packets
+    encodePacket(packet, false, encodedPacket => {
+      encodedPackets[i] = encodedPacket;
+      if (++count === length) {
+        callback(encodedPackets.join(SEPARATOR));
+      }
+    });
+  });
+};
+
+const decodePayload = (encodedPayload, binaryType) => {
+  const encodedPackets = encodedPayload.split(SEPARATOR);
+  const packets = [];
+  for (let i = 0; i < encodedPackets.length; i++) {
+    const decodedPacket = decodePacket(encodedPackets[i], binaryType);
+    packets.push(decodedPacket);
+    if (decodedPacket.type === "error") {
+      break;
+    }
+  }
+  return packets;
+};
+
+module.exports = {
+  protocol: 4,
+  encodePacket,
+  encodePayload,
+  decodePacket,
+  decodePayload
+};
+
+
+/***/ }),
+
+/***/ "./node_modules/has-cors/index.js":
+/*!****************************************!*\
+  !*** ./node_modules/has-cors/index.js ***!
+  \****************************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+
+/**
+ * Module exports.
+ *
+ * Logic borrowed from Modernizr:
+ *
+ *   - https://github.com/Modernizr/Modernizr/blob/master/feature-detects/cors.js
+ */
+
+try {
+  module.exports = typeof XMLHttpRequest !== 'undefined' &&
+    'withCredentials' in new XMLHttpRequest();
+} catch (err) {
+  // if XMLHttp support is disabled in IE then it will throw
+  // when trying to create
+  module.exports = false;
+}
+
+
+/***/ }),
+
+/***/ "./node_modules/ieee754/index.js":
+/*!***************************************!*\
+  !*** ./node_modules/ieee754/index.js ***!
+  \***************************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+/*! ieee754. BSD-3-Clause License. Feross Aboukhadijeh <https://feross.org/opensource> */
+exports.read = function (buffer, offset, isLE, mLen, nBytes) {
+  var e, m
+  var eLen = (nBytes * 8) - mLen - 1
+  var eMax = (1 << eLen) - 1
+  var eBias = eMax >> 1
+  var nBits = -7
+  var i = isLE ? (nBytes - 1) : 0
+  var d = isLE ? -1 : 1
+  var s = buffer[offset + i]
+
+  i += d
+
+  e = s & ((1 << (-nBits)) - 1)
+  s >>= (-nBits)
+  nBits += eLen
+  for (; nBits > 0; e = (e * 256) + buffer[offset + i], i += d, nBits -= 8) {}
+
+  m = e & ((1 << (-nBits)) - 1)
+  e >>= (-nBits)
+  nBits += mLen
+  for (; nBits > 0; m = (m * 256) + buffer[offset + i], i += d, nBits -= 8) {}
+
+  if (e === 0) {
+    e = 1 - eBias
+  } else if (e === eMax) {
+    return m ? NaN : ((s ? -1 : 1) * Infinity)
+  } else {
+    m = m + Math.pow(2, mLen)
+    e = e - eBias
+  }
+  return (s ? -1 : 1) * m * Math.pow(2, e - mLen)
+}
+
+exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
+  var e, m, c
+  var eLen = (nBytes * 8) - mLen - 1
+  var eMax = (1 << eLen) - 1
+  var eBias = eMax >> 1
+  var rt = (mLen === 23 ? Math.pow(2, -24) - Math.pow(2, -77) : 0)
+  var i = isLE ? 0 : (nBytes - 1)
+  var d = isLE ? 1 : -1
+  var s = value < 0 || (value === 0 && 1 / value < 0) ? 1 : 0
+
+  value = Math.abs(value)
+
+  if (isNaN(value) || value === Infinity) {
+    m = isNaN(value) ? 1 : 0
+    e = eMax
+  } else {
+    e = Math.floor(Math.log(value) / Math.LN2)
+    if (value * (c = Math.pow(2, -e)) < 1) {
+      e--
+      c *= 2
+    }
+    if (e + eBias >= 1) {
+      value += rt / c
+    } else {
+      value += rt * Math.pow(2, 1 - eBias)
+    }
+    if (value * c >= 2) {
+      e++
+      c /= 2
+    }
+
+    if (e + eBias >= eMax) {
+      m = 0
+      e = eMax
+    } else if (e + eBias >= 1) {
+      m = ((value * c) - 1) * Math.pow(2, mLen)
+      e = e + eBias
+    } else {
+      m = value * Math.pow(2, eBias - 1) * Math.pow(2, mLen)
+      e = 0
+    }
+  }
+
+  for (; mLen >= 8; buffer[offset + i] = m & 0xff, i += d, m /= 256, mLen -= 8) {}
+
+  e = (e << mLen) | m
+  eLen += mLen
+  for (; eLen > 0; buffer[offset + i] = e & 0xff, i += d, e /= 256, eLen -= 8) {}
+
+  buffer[offset + i - d] |= s * 128
+}
+
+
+/***/ }),
+
+/***/ "./node_modules/isarray/index.js":
+/*!***************************************!*\
+  !*** ./node_modules/isarray/index.js ***!
+  \***************************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+var toString = {}.toString;
+
+module.exports = Array.isArray || function (arr) {
+  return toString.call(arr) == '[object Array]';
+};
+
+
+/***/ }),
+
+/***/ "./node_modules/ms/index.js":
+/*!**********************************!*\
+  !*** ./node_modules/ms/index.js ***!
+  \**********************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+/**
+ * Helpers.
+ */
+
+var s = 1000;
+var m = s * 60;
+var h = m * 60;
+var d = h * 24;
+var w = d * 7;
+var y = d * 365.25;
+
+/**
+ * Parse or format the given `val`.
+ *
+ * Options:
+ *
+ *  - `long` verbose formatting [false]
+ *
+ * @param {String|Number} val
+ * @param {Object} [options]
+ * @throws {Error} throw an error if val is not a non-empty string or a number
+ * @return {String|Number}
+ * @api public
+ */
+
+module.exports = function(val, options) {
+  options = options || {};
+  var type = typeof val;
+  if (type === 'string' && val.length > 0) {
+    return parse(val);
+  } else if (type === 'number' && isFinite(val)) {
+    return options.long ? fmtLong(val) : fmtShort(val);
+  }
+  throw new Error(
+    'val is not a non-empty string or a valid number. val=' +
+      JSON.stringify(val)
+  );
+};
+
+/**
+ * Parse the given `str` and return milliseconds.
+ *
+ * @param {String} str
+ * @return {Number}
+ * @api private
+ */
+
+function parse(str) {
+  str = String(str);
+  if (str.length > 100) {
+    return;
+  }
+  var match = /^(-?(?:\d+)?\.?\d+) *(milliseconds?|msecs?|ms|seconds?|secs?|s|minutes?|mins?|m|hours?|hrs?|h|days?|d|weeks?|w|years?|yrs?|y)?$/i.exec(
+    str
+  );
+  if (!match) {
+    return;
+  }
+  var n = parseFloat(match[1]);
+  var type = (match[2] || 'ms').toLowerCase();
+  switch (type) {
+    case 'years':
+    case 'year':
+    case 'yrs':
+    case 'yr':
+    case 'y':
+      return n * y;
+    case 'weeks':
+    case 'week':
+    case 'w':
+      return n * w;
+    case 'days':
+    case 'day':
+    case 'd':
+      return n * d;
+    case 'hours':
+    case 'hour':
+    case 'hrs':
+    case 'hr':
+    case 'h':
+      return n * h;
+    case 'minutes':
+    case 'minute':
+    case 'mins':
+    case 'min':
+    case 'm':
+      return n * m;
+    case 'seconds':
+    case 'second':
+    case 'secs':
+    case 'sec':
+    case 's':
+      return n * s;
+    case 'milliseconds':
+    case 'millisecond':
+    case 'msecs':
+    case 'msec':
+    case 'ms':
+      return n;
+    default:
+      return undefined;
+  }
+}
+
+/**
+ * Short format for `ms`.
+ *
+ * @param {Number} ms
+ * @return {String}
+ * @api private
+ */
+
+function fmtShort(ms) {
+  var msAbs = Math.abs(ms);
+  if (msAbs >= d) {
+    return Math.round(ms / d) + 'd';
+  }
+  if (msAbs >= h) {
+    return Math.round(ms / h) + 'h';
+  }
+  if (msAbs >= m) {
+    return Math.round(ms / m) + 'm';
+  }
+  if (msAbs >= s) {
+    return Math.round(ms / s) + 's';
+  }
+  return ms + 'ms';
+}
+
+/**
+ * Long format for `ms`.
+ *
+ * @param {Number} ms
+ * @return {String}
+ * @api private
+ */
+
+function fmtLong(ms) {
+  var msAbs = Math.abs(ms);
+  if (msAbs >= d) {
+    return plural(ms, msAbs, d, 'day');
+  }
+  if (msAbs >= h) {
+    return plural(ms, msAbs, h, 'hour');
+  }
+  if (msAbs >= m) {
+    return plural(ms, msAbs, m, 'minute');
+  }
+  if (msAbs >= s) {
+    return plural(ms, msAbs, s, 'second');
+  }
+  return ms + ' ms';
+}
+
+/**
+ * Pluralization helper.
+ */
+
+function plural(ms, msAbs, n, name) {
+  var isPlural = msAbs >= n * 1.5;
+  return Math.round(ms / n) + ' ' + name + (isPlural ? 's' : '');
+}
+
+
+/***/ }),
+
+/***/ "./node_modules/parseqs/index.js":
+/*!***************************************!*\
+  !*** ./node_modules/parseqs/index.js ***!
+  \***************************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+/**
+ * Compiles a querystring
+ * Returns string representation of the object
+ *
+ * @param {Object}
+ * @api private
+ */
+
+exports.encode = function (obj) {
+  var str = '';
+
+  for (var i in obj) {
+    if (obj.hasOwnProperty(i)) {
+      if (str.length) str += '&';
+      str += encodeURIComponent(i) + '=' + encodeURIComponent(obj[i]);
+    }
+  }
+
+  return str;
+};
+
+/**
+ * Parses a simple querystring into an object
+ *
+ * @param {String} qs
+ * @api private
+ */
+
+exports.decode = function(qs){
+  var qry = {};
+  var pairs = qs.split('&');
+  for (var i = 0, l = pairs.length; i < l; i++) {
+    var pair = pairs[i].split('=');
+    qry[decodeURIComponent(pair[0])] = decodeURIComponent(pair[1]);
+  }
+  return qry;
+};
+
+
+/***/ }),
+
+/***/ "./node_modules/parseuri/index.js":
+/*!****************************************!*\
+  !*** ./node_modules/parseuri/index.js ***!
+  \****************************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+/**
+ * Parses an URI
+ *
+ * @author Steven Levithan <stevenlevithan.com> (MIT license)
+ * @api private
+ */
+
+var re = /^(?:(?![^:@]+:[^:@\/]*@)(http|https|ws|wss):\/\/)?((?:(([^:@]*)(?::([^:@]*))?)?@)?((?:[a-f0-9]{0,4}:){2,7}[a-f0-9]{0,4}|[^:\/?#]*)(?::(\d*))?)(((\/(?:[^?#](?![^?#\/]*\.[^?#\/.]+(?:[?#]|$)))*\/?)?([^?#\/]*))(?:\?([^#]*))?(?:#(.*))?)/;
+
+var parts = [
+    'source', 'protocol', 'authority', 'userInfo', 'user', 'password', 'host', 'port', 'relative', 'path', 'directory', 'file', 'query', 'anchor'
+];
+
+module.exports = function parseuri(str) {
+    var src = str,
+        b = str.indexOf('['),
+        e = str.indexOf(']');
+
+    if (b != -1 && e != -1) {
+        str = str.substring(0, b) + str.substring(b, e).replace(/:/g, ';') + str.substring(e, str.length);
+    }
+
+    var m = re.exec(str || ''),
+        uri = {},
+        i = 14;
+
+    while (i--) {
+        uri[parts[i]] = m[i] || '';
+    }
+
+    if (b != -1 && e != -1) {
+        uri.source = src;
+        uri.host = uri.host.substring(1, uri.host.length - 1).replace(/;/g, ':');
+        uri.authority = uri.authority.replace('[', '').replace(']', '').replace(/;/g, ':');
+        uri.ipv6uri = true;
+    }
+
+    uri.pathNames = pathNames(uri, uri['path']);
+    uri.queryKey = queryKey(uri, uri['query']);
+
+    return uri;
+};
+
+function pathNames(obj, path) {
+    var regx = /\/{2,9}/g,
+        names = path.replace(regx, "/").split("/");
+
+    if (path.substr(0, 1) == '/' || path.length === 0) {
+        names.splice(0, 1);
+    }
+    if (path.substr(path.length - 1, 1) == '/') {
+        names.splice(names.length - 1, 1);
+    }
+
+    return names;
+}
+
+function queryKey(uri, query) {
+    var data = {};
+
+    query.replace(/(?:^|&)([^&=]*)=?([^&]*)/g, function ($0, $1, $2) {
+        if ($1) {
+            data[$1] = $2;
+        }
+    });
+
+    return data;
+}
+
+
+/***/ }),
+
 /***/ "./node_modules/playcanvas/build/playcanvas.js":
 /*!*****************************************************!*\
   !*** ./node_modules/playcanvas/build/playcanvas.js ***!
@@ -868,7 +6448,7 @@
 
 /**
  * @license
- * PlayCanvas Engine v1.38.3 revision a9cf16e58
+ * PlayCanvas Engine v1.38.0 revision 98cb89ec5
  * Copyright 2011-2021 PlayCanvas Ltd. All rights reserved.
  */
 (function (global, factory) {
@@ -1408,8 +6988,8 @@
 		return result;
 	}();
 
-	var version = "1.38.3";
-	var revision = "a9cf16e58";
+	var version = "1.38.0";
+	var revision = "98cb89ec5";
 	var config = {};
 	var common = {};
 	var apps = {};
@@ -15650,8 +21230,8 @@
 	var viewPosL = new Vec3();
 	var viewPosR = new Vec3();
 	var projL, projR;
-	var viewMat3L = new Mat3();
-	var viewMat3R = new Mat3();
+	var viewMat3L = new Mat4();
+	var viewMat3R = new Mat4();
 	var viewProjMatL = new Mat4();
 	var viewProjMatR = new Mat4();
 	var worldMatX$1 = new Vec3();
@@ -23645,80 +29225,89 @@
 		return AnimTrack;
 	}();
 
-	var AnimBinder = function () {
-		function AnimBinder() {}
-
-		AnimBinder.joinPath = function joinPath(pathSegments, character) {
-			character = character || '.';
-
-			var escape = function escape(string) {
-				return string.replace(/\\/g, '\\\\').replace(new RegExp('\\' + character, 'g'), '\\' + character);
-			};
-
-			return pathSegments.map(escape).join(character);
-		};
-
-		AnimBinder.splitPath = function splitPath(path, character) {
-			character = character || '.';
-			var result = [];
-			var curr = "";
-			var i = 0;
-
-			while (i < path.length) {
-				var c = path[i++];
-
-				if (c === '\\' && i < path.length) {
-					c = path[i++];
-
-					if (c === '\\' || c === character) {
-						curr += c;
-					} else {
-						curr += '\\' + c;
-					}
-				} else if (c === character) {
-					result.push(curr);
-					curr = '';
-				} else {
-					curr += c;
-				}
-			}
-
-			if (curr.length > 0) {
-				result.push(curr);
-			}
-
-			return result;
-		};
-
-		AnimBinder.encode = function encode(locator) {
-			return AnimBinder.joinPath([AnimBinder.joinPath(Array.isArray(locator.entityPath) ? locator.entityPath : [locator.entityPath]), locator.component, AnimBinder.joinPath(Array.isArray(locator.propertyPath) ? locator.propertyPath : [locator.propertyPath])], '/');
-		};
-
-		AnimBinder.decode = function decode(locator) {
-			var locatorSections = AnimBinder.splitPath(locator, '/');
-			return {
-				entityPath: AnimBinder.splitPath(locatorSections[0]),
-				component: locatorSections[1],
-				propertyPath: AnimBinder.splitPath(locatorSections[2])
-			};
-		};
-
-		var _proto = AnimBinder.prototype;
-
-		_proto.resolve = function resolve(path) {
-			return null;
-		};
-
-		_proto.unresolve = function unresolve(path) {};
-
-		_proto.update = function update(deltaTime) {};
-
-		return AnimBinder;
-	}();
-
 	var INTERPOLATION_STEP = 0;
 	var INTERPOLATION_LINEAR = 1;
 	var INTERPOLATION_CUBIC = 2;
+
+	var I18nParser = function () {
+		function I18nParser() {}
+
+		var _proto = I18nParser.prototype;
+
+		_proto._validate = function _validate(data) {
+			if (!data.header) {
+				throw new Error('pc.I18n#addData: Missing "header" field');
+			}
+
+			if (!data.header.version) {
+				throw new Error('pc.I18n#addData: Missing "header.version" field');
+			}
+
+			if (data.header.version !== 1) {
+				throw new Error('pc.I18n#addData: Invalid "header.version" field');
+			}
+
+			if (!data.data) {
+				throw new Error('pc.I18n#addData: Missing "data" field');
+			} else if (!Array.isArray(data.data)) {
+				throw new Error('pc.I18n#addData: "data" field must be an array');
+			}
+
+			for (var i = 0, len = data.data.length; i < len; i++) {
+				var entry = data.data[i];
+
+				if (!entry.info) {
+					throw new Error('pc.I18n#addData: missing "data[' + i + '].info" field');
+				}
+
+				if (!entry.info.locale) {
+					throw new Error('pc.I18n#addData: missing "data[' + i + '].info.locale" field');
+				}
+
+				if (typeof entry.info.locale !== 'string') {
+					throw new Error('pc.I18n#addData: "data[' + i + '].info.locale" must be a string');
+				}
+
+				if (!entry.messages) {
+					throw new Error('pc.I18n#addData: missing "data[' + i + '].messages" field');
+				}
+			}
+		};
+
+		_proto.parse = function parse(data) {
+			return data.data;
+		};
+
+		return I18nParser;
+	}();
+
+	var PLURALS = {};
+
+	var definePluralFn = function definePluralFn(locales, fn) {
+		for (var i = 0, len = locales.length; i < len; i++) {
+			PLURALS[locales[i]] = fn;
+		}
+	};
+
+	var getLang = function getLang(locale) {
+		var idx = locale.indexOf('-');
+
+		if (idx !== -1) {
+			return locale.substring(0, idx);
+		}
+
+		return locale;
+	};
+
+	var replaceLang = function replaceLang(locale, desiredLang) {
+		var idx = locale.indexOf('-');
+
+		if (idx !== -1) {
+			return desiredLang + locale.substring(idx);
+		}
+
+		return desiredLang;
+	};
 
 	var DEFAULT_LOCALE = 'en-US';
 	var DEFAULT_LOCALE_FALLBACKS = {
@@ -23734,60 +29323,6 @@
 		'ru': 'ru-RU',
 		'ja': 'ja-JP'
 	};
-
-	var PLURALS = {};
-
-	function definePluralFn(locales, fn) {
-		for (var i = 0, len = locales.length; i < len; i++) {
-			PLURALS[locales[i]] = fn;
-		}
-	}
-
-	function getLang(locale) {
-		var idx = locale.indexOf('-');
-
-		if (idx !== -1) {
-			return locale.substring(0, idx);
-		}
-
-		return locale;
-	}
-
-	function replaceLang(locale, desiredLang) {
-		var idx = locale.indexOf('-');
-
-		if (idx !== -1) {
-			return desiredLang + locale.substring(idx);
-		}
-
-		return desiredLang;
-	}
-
-	function findAvailableLocale(desiredLocale, availableLocales) {
-		if (availableLocales[desiredLocale]) {
-			return desiredLocale;
-		}
-
-		var fallback = DEFAULT_LOCALE_FALLBACKS[desiredLocale];
-
-		if (fallback && availableLocales[fallback]) {
-			return fallback;
-		}
-
-		var lang = getLang(desiredLocale);
-		fallback = DEFAULT_LOCALE_FALLBACKS[lang];
-
-		if (availableLocales[fallback]) {
-			return fallback;
-		}
-
-		if (availableLocales[lang]) {
-			return lang;
-		}
-
-		return DEFAULT_LOCALE;
-	}
-
 	definePluralFn(['ja', 'ko', 'th', 'vi', 'zh', 'id'], function (n) {
 		return 0;
 	});
@@ -23876,9 +29411,342 @@
 	});
 	var DEFAULT_PLURAL_FN = PLURALS[getLang(DEFAULT_LOCALE)];
 
-	function getPluralFn(lang) {
+	var getPluralFn = function getPluralFn(lang) {
 		return PLURALS[lang] || DEFAULT_PLURAL_FN;
-	}
+	};
+
+	var I18n = function (_EventHandler) {
+		_inheritsLoose(I18n, _EventHandler);
+
+		function I18n(app) {
+			var _this;
+
+			_this = _EventHandler.call(this) || this;
+
+			_this.destroy = function () {
+				this._translations = null;
+				this._availableLangs = null;
+				this._assets = null;
+				this._parser = null;
+				this.off();
+			};
+
+			_this.locale = DEFAULT_LOCALE;
+			_this._translations = {};
+			_this._availableLangs = {};
+			_this._app = app;
+			_this._assets = [];
+			_this._parser = new I18nParser();
+			return _this;
+		}
+
+		I18n.findAvailableLocale = function findAvailableLocale(desiredLocale, availableLocales) {
+			if (availableLocales[desiredLocale]) {
+				return desiredLocale;
+			}
+
+			var fallback = DEFAULT_LOCALE_FALLBACKS[desiredLocale];
+
+			if (fallback && availableLocales[fallback]) {
+				return fallback;
+			}
+
+			var lang = getLang(desiredLocale);
+			fallback = DEFAULT_LOCALE_FALLBACKS[lang];
+
+			if (availableLocales[fallback]) {
+				return fallback;
+			}
+
+			if (availableLocales[lang]) {
+				return lang;
+			}
+
+			return DEFAULT_LOCALE;
+		};
+
+		var _proto = I18n.prototype;
+
+		_proto.getText = function getText(key, locale) {
+			var result = key;
+			var lang;
+
+			if (!locale) {
+				locale = this._locale;
+				lang = this._lang;
+			}
+
+			var translations = this._translations[locale];
+
+			if (!translations) {
+				if (!lang) {
+					lang = getLang(locale);
+				}
+
+				locale = this._findFallbackLocale(locale, lang);
+				translations = this._translations[locale];
+			}
+
+			if (translations && translations.hasOwnProperty(key)) {
+				result = translations[key];
+
+				if (Array.isArray(result)) {
+					result = result[0];
+				}
+
+				if (result === null || result === undefined) {
+					result = key;
+				}
+			}
+
+			return result;
+		};
+
+		_proto.getPluralText = function getPluralText(key, n, locale) {
+			var result = key;
+			var pluralFn;
+			var lang;
+
+			if (!locale) {
+				locale = this._locale;
+				lang = this._lang;
+				pluralFn = this._pluralFn;
+			} else {
+				lang = getLang(locale);
+				pluralFn = getPluralFn(lang);
+			}
+
+			var translations = this._translations[locale];
+
+			if (!translations) {
+				locale = this._findFallbackLocale(locale, lang);
+				lang = getLang(locale);
+				pluralFn = getPluralFn(lang);
+				translations = this._translations[locale];
+			}
+
+			if (translations && translations[key] && pluralFn) {
+				var index = pluralFn(n);
+				result = translations[key][index];
+
+				if (result === null || result === undefined) {
+					result = key;
+				}
+			}
+
+			return result;
+		};
+
+		_proto.addData = function addData(data) {
+			var parsed;
+
+			try {
+				parsed = this._parser.parse(data);
+			} catch (err) {
+				console.error(err);
+				return;
+			}
+
+			for (var i = 0, len = parsed.length; i < len; i++) {
+				var entry = parsed[i];
+				var locale = entry.info.locale;
+				var messages = entry.messages;
+
+				if (!this._translations[locale]) {
+					this._translations[locale] = {};
+					var lang = getLang(locale);
+
+					if (!this._availableLangs[lang]) {
+						this._availableLangs[lang] = locale;
+					}
+				}
+
+				Object.assign(this._translations[locale], messages);
+				this.fire('data:add', locale, messages);
+			}
+		};
+
+		_proto.removeData = function removeData(data) {
+			var parsed;
+			var key;
+
+			try {
+				parsed = this._parser.parse(data);
+			} catch (err) {
+				console.error(err);
+				return;
+			}
+
+			for (var i = 0, len = parsed.length; i < len; i++) {
+				var entry = parsed[i];
+				var locale = entry.info.locale;
+				var translations = this._translations[locale];
+				if (!translations) continue;
+				var messages = entry.messages;
+
+				for (key in messages) {
+					delete translations[key];
+				}
+
+				var hasAny = false;
+
+				for (key in translations) {
+					hasAny = true;
+					break;
+				}
+
+				if (!hasAny) {
+					delete this._translations[locale];
+					delete this._availableLangs[getLang(locale)];
+				}
+
+				this.fire('data:remove', locale, messages);
+			}
+		};
+
+		_proto._findFallbackLocale = function _findFallbackLocale(locale, lang) {
+			var result = DEFAULT_LOCALE_FALLBACKS[locale];
+
+			if (result && this._translations[result]) {
+				return result;
+			}
+
+			result = DEFAULT_LOCALE_FALLBACKS[lang];
+
+			if (result && this._translations[result]) {
+				return result;
+			}
+
+			result = this._availableLangs[lang];
+
+			if (result && this._translations[result]) {
+				return result;
+			}
+
+			return DEFAULT_LOCALE;
+		};
+
+		_proto._onAssetAdd = function _onAssetAdd(asset) {
+			asset.on('load', this._onAssetLoad, this);
+			asset.on('change', this._onAssetChange, this);
+			asset.on('remove', this._onAssetRemove, this);
+			asset.on('unload', this._onAssetUnload, this);
+
+			if (asset.resource) {
+				this._onAssetLoad(asset);
+			}
+		};
+
+		_proto._onAssetLoad = function _onAssetLoad(asset) {
+			this.addData(asset.resource);
+		};
+
+		_proto._onAssetChange = function _onAssetChange(asset) {
+			if (asset.resource) {
+				this.addData(asset.resource);
+			}
+		};
+
+		_proto._onAssetRemove = function _onAssetRemove(asset) {
+			asset.off('load', this._onAssetLoad, this);
+			asset.off('change', this._onAssetChange, this);
+			asset.off('remove', this._onAssetRemove, this);
+			asset.off('unload', this._onAssetUnload, this);
+
+			if (asset.resource) {
+				this.removeData(asset.resource);
+			}
+
+			this._app.assets.once('add:' + asset.id, this._onAssetAdd, this);
+		};
+
+		_proto._onAssetUnload = function _onAssetUnload(asset) {
+			if (asset.resource) {
+				this.removeData(asset.resource);
+			}
+		};
+
+		_createClass(I18n, [{
+			key: "locale",
+			get: function get() {
+				return this._locale;
+			},
+			set: function set(value) {
+				if (this._locale === value) {
+					return;
+				}
+
+				var lang = getLang(value);
+
+				if (lang === 'in') {
+					lang = 'id';
+					value = replaceLang(value, lang);
+
+					if (this._locale === value) {
+						return;
+					}
+				}
+
+				var old = this._locale;
+				this._locale = value;
+				this._lang = lang;
+				this._pluralFn = getPluralFn(this._lang);
+				this.fire('set:locale', value, old);
+			}
+		}, {
+			key: "assets",
+			get: function get() {
+				return this._assets;
+			},
+			set: function set(value) {
+				var i;
+				var len;
+				var id;
+				var asset;
+				var index = {};
+
+				for (i = 0, len = value.length; i < len; i++) {
+					id = value[i] instanceof Asset ? value[i].id : value[i];
+					index[id] = true;
+				}
+
+				i = this._assets.length;
+
+				while (i--) {
+					id = this._assets[i];
+
+					if (!index[id]) {
+						this._app.assets.off('add:' + id, this._onAssetAdd, this);
+
+						asset = this._app.assets.get(id);
+
+						if (asset) {
+							this._onAssetRemove(asset);
+						}
+
+						this._assets.splice(i, 1);
+					}
+				}
+
+				for (id in index) {
+					id = parseInt(id, 10);
+					if (this._assets.indexOf(id) !== -1) continue;
+
+					this._assets.push(id);
+
+					asset = this._app.assets.get(id);
+
+					if (!asset) {
+						this._app.assets.once('add:' + id, this._onAssetAdd, this);
+					} else {
+						this._onAssetAdd(asset);
+					}
+				}
+			}
+		}]);
+
+		return I18n;
+	}(EventHandler);
 
 	var ABSOLUTE_URL = new RegExp('^' + '\\s*' + '(?:' + '(?:' + '[a-z]+[a-z0-9\\-\\+\\.]*' + ':' + ')?' + '//' + '|' + 'data:' + '|blob:' + ')', 'i');
 	var ASSET_ANIMATION = 'animation';
@@ -24041,7 +29909,7 @@
 		};
 
 		_proto.getLocalizedAssetId = function getLocalizedAssetId(locale) {
-			locale = findAvailableLocale(locale, this._i18n);
+			locale = I18n.findAvailableLocale(locale, this._i18n);
 			return this._i18n[locale] || null;
 		};
 
@@ -24217,6 +30085,81 @@
 
 		return Asset;
 	}(EventHandler);
+
+	var AnimBinder = function () {
+		function AnimBinder() {}
+
+		AnimBinder.joinPath = function joinPath(pathSegments, character) {
+			character = character || '.';
+
+			var escape = function escape(string) {
+				return string.replace(/\\/g, '\\\\').replace(new RegExp('\\' + character, 'g'), '\\' + character);
+			};
+
+			return pathSegments.map(escape).join(character);
+		};
+
+		AnimBinder.splitPath = function splitPath(path, character) {
+			character = character || '.';
+			var result = [];
+			var curr = "";
+			var i = 0;
+
+			while (i < path.length) {
+				var c = path[i++];
+
+				if (c === '\\' && i < path.length) {
+					c = path[i++];
+
+					if (c === '\\' || c === character) {
+						curr += c;
+					} else {
+						curr += '\\' + c;
+					}
+				} else if (c === character) {
+					result.push(curr);
+					curr = '';
+				} else {
+					curr += c;
+				}
+			}
+
+			if (curr.length > 0) {
+				result.push(curr);
+			}
+
+			return result;
+		};
+
+		var _proto = AnimBinder.prototype;
+
+		_proto.resolve = function resolve(path) {
+			return null;
+		};
+
+		_proto.unresolve = function unresolve(path) {};
+
+		_proto.update = function update(deltaTime) {};
+
+		return AnimBinder;
+	}();
+
+	var AnimPropertyLocator = function () {
+		function AnimPropertyLocator() {}
+
+		var _proto = AnimPropertyLocator.prototype;
+
+		_proto.encode = function encode(locator) {
+			return AnimBinder.joinPath([AnimBinder.joinPath(locator[0]), locator[1], AnimBinder.joinPath(locator[2])], '/');
+		};
+
+		_proto.decode = function decode(locator) {
+			var locatorSections = AnimBinder.splitPath(locator, '/');
+			return [AnimBinder.splitPath(locatorSections[0]), locatorSections[1], AnimBinder.splitPath(locatorSections[2])];
+		};
+
+		return AnimPropertyLocator;
+	}();
 
 	var isDataURI = function isDataURI(uri) {
 		return /^data:.*,.*$/i.test(uri);
@@ -24978,9 +30921,9 @@
 						options.name = targets.length.toString(10);
 					}
 
-					targets.push(new MorphTarget(options));
+					targets.push(new MorphTarget(device, options));
 				});
-				mesh.morph = new Morph(targets, device);
+				mesh.morph = new Morph(targets);
 
 				if (gltfMesh.hasOwnProperty('weights')) {
 					for (var i = 0; i < gltfMesh.weights.length; ++i) {
@@ -25306,6 +31249,7 @@
 		}
 
 		var quatArrays = [];
+		var propertyLocator = new AnimPropertyLocator();
 		var transformSchema = {
 			'translation': 'localPosition',
 			'rotation': 'localRotation',
@@ -25318,11 +31262,7 @@
 			var target = channel.target;
 			var curve = curves[channel.sampler];
 
-			curve._paths.push(AnimBinder.encode({
-				entityPath: [nodes[target.node].path],
-				component: 'graph',
-				propertyPath: [transformSchema[target.path]]
-			}));
+			curve._paths.push(propertyLocator.encode([[nodes[target.node].name], 'graph', [transformSchema[target.path]]]));
 
 			if (target.path.startsWith('rotation') && curve.interpolation !== INTERPOLATION_CUBIC) {
 				quatArrays.push(curve.output);
@@ -31675,18 +37615,18 @@
 			none: BASIS_FORMAT.cTFRGBA4444
 		};
 		var basisToEngineMapping = {};
-		basisToEngineMapping[BASIS_FORMAT.cTFETC1] = 21;
-		basisToEngineMapping[BASIS_FORMAT.cTFETC2] = 23;
-		basisToEngineMapping[BASIS_FORMAT.cTFBC1] = 8;
-		basisToEngineMapping[BASIS_FORMAT.cTFBC3] = 10;
-		basisToEngineMapping[BASIS_FORMAT.cTFPVRTC1_4_RGB] = 26;
-		basisToEngineMapping[BASIS_FORMAT.cTFPVRTC1_4_RGBA] = 27;
-		basisToEngineMapping[BASIS_FORMAT.cTFASTC_4x4] = 28;
-		basisToEngineMapping[BASIS_FORMAT.cTFATC_RGB] = 29;
-		basisToEngineMapping[BASIS_FORMAT.cTFATC_RGBA_INTERPOLATED_ALPHA] = 30;
-		basisToEngineMapping[BASIS_FORMAT.cTFRGBA32] = 7;
-		basisToEngineMapping[BASIS_FORMAT.cTFRGB565] = 3;
-		basisToEngineMapping[BASIS_FORMAT.cTFRGBA4444] = 5;
+		basisToEngineMapping[BASIS_FORMAT.cTFETC1] = PIXELFORMAT_ETC1;
+		basisToEngineMapping[BASIS_FORMAT.cTFETC2] = PIXELFORMAT_ETC2_RGBA;
+		basisToEngineMapping[BASIS_FORMAT.cTFBC1] = PIXELFORMAT_DXT1;
+		basisToEngineMapping[BASIS_FORMAT.cTFBC3] = PIXELFORMAT_DXT5;
+		basisToEngineMapping[BASIS_FORMAT.cTFPVRTC1_4_RGB] = PIXELFORMAT_PVRTC_4BPP_RGB_1;
+		basisToEngineMapping[BASIS_FORMAT.cTFPVRTC1_4_RGBA] = PIXELFORMAT_PVRTC_4BPP_RGBA_1;
+		basisToEngineMapping[BASIS_FORMAT.cTFASTC_4x4] = PIXELFORMAT_ASTC_4x4;
+		basisToEngineMapping[BASIS_FORMAT.cTFATC_RGB] = PIXELFORMAT_ATC_RGB;
+		basisToEngineMapping[BASIS_FORMAT.cTFATC_RGBA_INTERPOLATED_ALPHA] = PIXELFORMAT_ATC_RGBA;
+		basisToEngineMapping[BASIS_FORMAT.cTFRGBA32] = PIXELFORMAT_R8_G8_B8_A8;
+		basisToEngineMapping[BASIS_FORMAT.cTFRGB565] = PIXELFORMAT_R5_G6_B5;
+		basisToEngineMapping[BASIS_FORMAT.cTFRGBA4444] = PIXELFORMAT_R4_G4_B4_A4;
 		var hasPerformance = typeof performance !== 'undefined';
 
 		var unswizzleGGGR = function unswizzleGGGR(data) {
@@ -31964,7 +37904,7 @@
 	}
 
 	function basisInitialize(basisCode, basisModule, callback) {
-		var code = ["/* basis.js */", basisCode, "", "/* worker */", '(' + BasisWorker.toString() + ')()\n\n'].join('\n');
+		var code = ["/* basis.js */", basisCode, "/* mappings */", "var PIXELFORMAT_ETC1 = " + PIXELFORMAT_ETC1 + ";", "var PIXELFORMAT_ETC2_RGBA = " + PIXELFORMAT_ETC2_RGBA + ";", "var PIXELFORMAT_DXT1 = " + PIXELFORMAT_DXT1 + ";", "var PIXELFORMAT_DXT5 = " + PIXELFORMAT_DXT5 + ";", "var PIXELFORMAT_PVRTC_4BPP_RGB_1 = " + PIXELFORMAT_PVRTC_4BPP_RGB_1 + ";", "var PIXELFORMAT_PVRTC_4BPP_RGBA_1 = " + PIXELFORMAT_PVRTC_4BPP_RGBA_1 + ";", "var PIXELFORMAT_ASTC_4x4 = " + PIXELFORMAT_ASTC_4x4 + ";", "var PIXELFORMAT_ATC_RGB = " + PIXELFORMAT_ATC_RGB + ";", "var PIXELFORMAT_ATC_RGBA = " + PIXELFORMAT_ATC_RGBA + ";", "var PIXELFORMAT_R8_G8_B8_A8 = " + PIXELFORMAT_R8_G8_B8_A8 + ";", "var PIXELFORMAT_R5_G6_B5 = " + PIXELFORMAT_R5_G6_B5 + ";", "var PIXELFORMAT_R4_G4_B4_A4 = " + PIXELFORMAT_R4_G4_B4_A4 + ";", "", "/* worker */", '(' + BasisWorker.toString() + ')()\n\n'].join('\n');
 		var blob = new Blob([code], {
 			type: 'application/javascript'
 		});
@@ -33645,370 +39585,6 @@
 		return ScriptRegistry;
 	}(EventHandler);
 
-	var I18nParser = function () {
-		function I18nParser() {}
-
-		var _proto = I18nParser.prototype;
-
-		_proto._validate = function _validate(data) {
-			if (!data.header) {
-				throw new Error('pc.I18n#addData: Missing "header" field');
-			}
-
-			if (!data.header.version) {
-				throw new Error('pc.I18n#addData: Missing "header.version" field');
-			}
-
-			if (data.header.version !== 1) {
-				throw new Error('pc.I18n#addData: Invalid "header.version" field');
-			}
-
-			if (!data.data) {
-				throw new Error('pc.I18n#addData: Missing "data" field');
-			} else if (!Array.isArray(data.data)) {
-				throw new Error('pc.I18n#addData: "data" field must be an array');
-			}
-
-			for (var i = 0, len = data.data.length; i < len; i++) {
-				var entry = data.data[i];
-
-				if (!entry.info) {
-					throw new Error('pc.I18n#addData: missing "data[' + i + '].info" field');
-				}
-
-				if (!entry.info.locale) {
-					throw new Error('pc.I18n#addData: missing "data[' + i + '].info.locale" field');
-				}
-
-				if (typeof entry.info.locale !== 'string') {
-					throw new Error('pc.I18n#addData: "data[' + i + '].info.locale" must be a string');
-				}
-
-				if (!entry.messages) {
-					throw new Error('pc.I18n#addData: missing "data[' + i + '].messages" field');
-				}
-			}
-		};
-
-		_proto.parse = function parse(data) {
-			return data.data;
-		};
-
-		return I18nParser;
-	}();
-
-	var I18n = function (_EventHandler) {
-		_inheritsLoose(I18n, _EventHandler);
-
-		function I18n(app) {
-			var _this;
-
-			_this = _EventHandler.call(this) || this;
-
-			_this.destroy = function () {
-				this._translations = null;
-				this._availableLangs = null;
-				this._assets = null;
-				this._parser = null;
-				this.off();
-			};
-
-			_this.locale = DEFAULT_LOCALE;
-			_this._translations = {};
-			_this._availableLangs = {};
-			_this._app = app;
-			_this._assets = [];
-			_this._parser = new I18nParser();
-			return _this;
-		}
-
-		I18n.findAvailableLocale = function findAvailableLocale$1(desiredLocale, availableLocales) {
-			return findAvailableLocale(desiredLocale, availableLocales);
-		};
-
-		var _proto = I18n.prototype;
-
-		_proto.getText = function getText(key, locale) {
-			var result = key;
-			var lang;
-
-			if (!locale) {
-				locale = this._locale;
-				lang = this._lang;
-			}
-
-			var translations = this._translations[locale];
-
-			if (!translations) {
-				if (!lang) {
-					lang = getLang(locale);
-				}
-
-				locale = this._findFallbackLocale(locale, lang);
-				translations = this._translations[locale];
-			}
-
-			if (translations && translations.hasOwnProperty(key)) {
-				result = translations[key];
-
-				if (Array.isArray(result)) {
-					result = result[0];
-				}
-
-				if (result === null || result === undefined) {
-					result = key;
-				}
-			}
-
-			return result;
-		};
-
-		_proto.getPluralText = function getPluralText(key, n, locale) {
-			var result = key;
-			var pluralFn;
-			var lang;
-
-			if (!locale) {
-				locale = this._locale;
-				lang = this._lang;
-				pluralFn = this._pluralFn;
-			} else {
-				lang = getLang(locale);
-				pluralFn = getPluralFn(lang);
-			}
-
-			var translations = this._translations[locale];
-
-			if (!translations) {
-				locale = this._findFallbackLocale(locale, lang);
-				lang = getLang(locale);
-				pluralFn = getPluralFn(lang);
-				translations = this._translations[locale];
-			}
-
-			if (translations && translations[key] && pluralFn) {
-				var index = pluralFn(n);
-				result = translations[key][index];
-
-				if (result === null || result === undefined) {
-					result = key;
-				}
-			}
-
-			return result;
-		};
-
-		_proto.addData = function addData(data) {
-			var parsed;
-
-			try {
-				parsed = this._parser.parse(data);
-			} catch (err) {
-				console.error(err);
-				return;
-			}
-
-			for (var i = 0, len = parsed.length; i < len; i++) {
-				var entry = parsed[i];
-				var locale = entry.info.locale;
-				var messages = entry.messages;
-
-				if (!this._translations[locale]) {
-					this._translations[locale] = {};
-					var lang = getLang(locale);
-
-					if (!this._availableLangs[lang]) {
-						this._availableLangs[lang] = locale;
-					}
-				}
-
-				Object.assign(this._translations[locale], messages);
-				this.fire('data:add', locale, messages);
-			}
-		};
-
-		_proto.removeData = function removeData(data) {
-			var parsed;
-			var key;
-
-			try {
-				parsed = this._parser.parse(data);
-			} catch (err) {
-				console.error(err);
-				return;
-			}
-
-			for (var i = 0, len = parsed.length; i < len; i++) {
-				var entry = parsed[i];
-				var locale = entry.info.locale;
-				var translations = this._translations[locale];
-				if (!translations) continue;
-				var messages = entry.messages;
-
-				for (key in messages) {
-					delete translations[key];
-				}
-
-				var hasAny = false;
-
-				for (key in translations) {
-					hasAny = true;
-					break;
-				}
-
-				if (!hasAny) {
-					delete this._translations[locale];
-					delete this._availableLangs[getLang(locale)];
-				}
-
-				this.fire('data:remove', locale, messages);
-			}
-		};
-
-		_proto._findFallbackLocale = function _findFallbackLocale(locale, lang) {
-			var result = DEFAULT_LOCALE_FALLBACKS[locale];
-
-			if (result && this._translations[result]) {
-				return result;
-			}
-
-			result = DEFAULT_LOCALE_FALLBACKS[lang];
-
-			if (result && this._translations[result]) {
-				return result;
-			}
-
-			result = this._availableLangs[lang];
-
-			if (result && this._translations[result]) {
-				return result;
-			}
-
-			return DEFAULT_LOCALE;
-		};
-
-		_proto._onAssetAdd = function _onAssetAdd(asset) {
-			asset.on('load', this._onAssetLoad, this);
-			asset.on('change', this._onAssetChange, this);
-			asset.on('remove', this._onAssetRemove, this);
-			asset.on('unload', this._onAssetUnload, this);
-
-			if (asset.resource) {
-				this._onAssetLoad(asset);
-			}
-		};
-
-		_proto._onAssetLoad = function _onAssetLoad(asset) {
-			this.addData(asset.resource);
-		};
-
-		_proto._onAssetChange = function _onAssetChange(asset) {
-			if (asset.resource) {
-				this.addData(asset.resource);
-			}
-		};
-
-		_proto._onAssetRemove = function _onAssetRemove(asset) {
-			asset.off('load', this._onAssetLoad, this);
-			asset.off('change', this._onAssetChange, this);
-			asset.off('remove', this._onAssetRemove, this);
-			asset.off('unload', this._onAssetUnload, this);
-
-			if (asset.resource) {
-				this.removeData(asset.resource);
-			}
-
-			this._app.assets.once('add:' + asset.id, this._onAssetAdd, this);
-		};
-
-		_proto._onAssetUnload = function _onAssetUnload(asset) {
-			if (asset.resource) {
-				this.removeData(asset.resource);
-			}
-		};
-
-		_createClass(I18n, [{
-			key: "locale",
-			get: function get() {
-				return this._locale;
-			},
-			set: function set(value) {
-				if (this._locale === value) {
-					return;
-				}
-
-				var lang = getLang(value);
-
-				if (lang === 'in') {
-					lang = 'id';
-					value = replaceLang(value, lang);
-
-					if (this._locale === value) {
-						return;
-					}
-				}
-
-				var old = this._locale;
-				this._locale = value;
-				this._lang = lang;
-				this._pluralFn = getPluralFn(this._lang);
-				this.fire('set:locale', value, old);
-			}
-		}, {
-			key: "assets",
-			get: function get() {
-				return this._assets;
-			},
-			set: function set(value) {
-				var i;
-				var len;
-				var id;
-				var asset;
-				var index = {};
-
-				for (i = 0, len = value.length; i < len; i++) {
-					id = value[i] instanceof Asset ? value[i].id : value[i];
-					index[id] = true;
-				}
-
-				i = this._assets.length;
-
-				while (i--) {
-					id = this._assets[i];
-
-					if (!index[id]) {
-						this._app.assets.off('add:' + id, this._onAssetAdd, this);
-
-						asset = this._app.assets.get(id);
-
-						if (asset) {
-							this._onAssetRemove(asset);
-						}
-
-						this._assets.splice(i, 1);
-					}
-				}
-
-				for (id in index) {
-					id = parseInt(id, 10);
-					if (this._assets.indexOf(id) !== -1) continue;
-
-					this._assets.push(id);
-
-					asset = this._app.assets.get(id);
-
-					if (!asset) {
-						this._app.assets.once('add:' + id, this._onAssetAdd, this);
-					} else {
-						this._onAssetAdd(asset);
-					}
-				}
-			}
-		}]);
-
-		return I18n;
-	}(EventHandler);
-
 	var FILLMODE_NONE = 'NONE';
 	var FILLMODE_FILL_WINDOW = 'FILL_WINDOW';
 	var FILLMODE_KEEP_ASPECT = 'KEEP_ASPECT';
@@ -34252,8 +39828,6 @@
 		function VrManager(app) {
 			var _this;
 
-			_this = _EventHandler.call(this) || this;
-
 			var self = _assertThisInitialized(_this);
 
 			_this.isSupported = VrManager.isSupported;
@@ -34278,7 +39852,7 @@
 				}
 			});
 
-			return _this;
+			return _assertThisInitialized(_this);
 		}
 
 		var _proto = VrManager.prototype;
@@ -37269,12 +42843,15 @@
 
 	var DefaultAnimBinder = function () {
 		function DefaultAnimBinder(graph) {
-			this.graph = graph;
+			this.propertyLocator = new AnimPropertyLocator();
 			if (!graph) return;
 			var nodes = {};
 
 			var flatten = function flatten(node) {
-				nodes[node.name] = node;
+				nodes[node.name] = {
+					node: node,
+					count: 0
+				};
 
 				for (var i = 0; i < node.children.length; ++i) {
 					flatten(node.children[i]);
@@ -37282,7 +42859,6 @@
 			};
 
 			flatten(graph);
-			this.nodes = nodes;
 
 			var findMeshInstances = function findMeshInstances(node) {
 				var object = node;
@@ -37304,7 +42880,7 @@
 				return meshInstances;
 			};
 
-			this.nodeCounts = {};
+			this.nodes = nodes;
 			this.activeNodes = [];
 			this.handlers = {
 				'localPosition': function localPosition(node) {
@@ -37395,48 +42971,40 @@
 		var _proto = DefaultAnimBinder.prototype;
 
 		_proto.resolve = function resolve(path) {
-			var propertyLocation = AnimBinder.decode(path);
-			var node = this.graph.root.findByPath(this.graph.path + "/" + (propertyLocation.entityPath[0] || ""));
-
-			if (!node) {
-				var entityPath = AnimBinder.splitPath(propertyLocation.entityPath[0], '/');
-				node = this.nodes[entityPath[entityPath.length - 1] || ""];
-			}
+			var pathSections = this.propertyLocator.decode(path);
+			var node = this.nodes[pathSections[0][0] || ""];
 
 			if (!node) {
 				return null;
 			}
 
-			var handler = this.handlers[propertyLocation.propertyPath[0]];
+			var handler = this.handlers[pathSections[2][0]];
 
 			if (!handler) {
 				return null;
 			}
 
-			var target = handler(node);
+			var target = handler(node.node);
 
 			if (!target) {
 				return null;
 			}
 
-			if (!this.nodeCounts[node.path]) {
-				this.activeNodes.push(node);
-				this.nodeCounts[node.path] = 1;
-			} else {
-				this.nodeCounts[node.path]++;
+			if (node.count === 0) {
+				this.activeNodes.push(node.node);
 			}
 
+			node.count++;
 			return target;
 		};
 
 		_proto.unresolve = function unresolve(path) {
-			var propertyLocation = AnimBinder.decode(path);
-			if (propertyLocation.component !== 'graph') return;
-			var entityPath = AnimBinder.splitPath(propertyLocation.entityPath[0], '/');
-			var node = this.nodes[entityPath[entityPath.length - 1] || ""];
-			this.nodeCounts[node.path]--;
+			var pathSections = this.propertyLocator.decode(path);
+			if (pathSections[1] !== 'graph') return;
+			var node = this.nodes[pathSections[0][0]];
+			node.count--;
 
-			if (this.nodeCounts[node.path] === 0) {
+			if (node.count === 0) {
 				var activeNodes = this.activeNodes;
 				var i = activeNodes.indexOf(node.node);
 				var len = activeNodes.length;
@@ -38341,74 +43909,6 @@
 
 	Component._buildAccessors(AnimationComponent.prototype, _schema);
 
-	var AnimNode = function () {
-		function AnimNode(state, parent, name, point, speed) {
-			if (speed === void 0) {
-				speed = 1;
-			}
-
-			this._state = state;
-			this._parent = parent;
-			this._name = name;
-			this._point = Array.isArray(point) ? new pc.Vec2(point) : point;
-			this._speed = speed;
-			this._weight = 1.0;
-			this._animTrack = null;
-		}
-
-		_createClass(AnimNode, [{
-			key: "parent",
-			get: function get() {
-				return this._parent;
-			}
-		}, {
-			key: "name",
-			get: function get() {
-				return this._name;
-			}
-		}, {
-			key: "path",
-			get: function get() {
-				return this._parent ? this._parent.path + '.' + this._name : this._name;
-			}
-		}, {
-			key: "point",
-			get: function get() {
-				return this._point;
-			}
-		}, {
-			key: "weight",
-			get: function get() {
-				return this._parent ? this._parent.weight * this._weight : this._weight;
-			},
-			set: function set(value) {
-				this._weight = value;
-			}
-		}, {
-			key: "normalizedWeight",
-			get: function get() {
-				var totalWeight = this._state.totalWeight;
-				if (totalWeight === 0.0) return 0.0;
-				return this.weight / totalWeight;
-			}
-		}, {
-			key: "speed",
-			get: function get() {
-				return this._speed;
-			}
-		}, {
-			key: "animTrack",
-			get: function get() {
-				return this._animTrack;
-			},
-			set: function set(value) {
-				this._animTrack = value;
-			}
-		}]);
-
-		return AnimNode;
-	}();
-
 	var ANIM_INTERRUPTION_NONE = 'NONE';
 	var ANIM_INTERRUPTION_PREV = 'PREV_STATE';
 	var ANIM_INTERRUPTION_NEXT = 'NEXT_STATE';
@@ -38431,1003 +43931,6 @@
 	var ANIM_STATE_START = 'START';
 	var ANIM_STATE_END = 'END';
 	var ANIM_STATE_ANY = 'ANY';
-
-	function between(num, a, b, inclusive) {
-		var min = Math.min(a, b),
-				max = Math.max(a, b);
-		return inclusive ? num >= min && num <= max : num > min && num < max;
-	}
-
-	function getAngleRad(a, b) {
-		return Math.atan2(a.x * b.y - a.y * b.x, a.x * b.x + a.y * b.y);
-	}
-
-	function clamp(num, min, max) {
-		return num <= min ? min : num >= max ? max : num;
-	}
-
-	var AnimBlendTree = function (_AnimNode) {
-		_inheritsLoose(AnimBlendTree, _AnimNode);
-
-		function AnimBlendTree(state, parent, name, point, type, parameters, children, findParameter) {
-			var _this;
-
-			_this = _AnimNode.call(this, state, parent, name, point) || this;
-			_this._type = type;
-			_this._parameters = parameters;
-			_this._parameterValues = null;
-			_this._children = [];
-			_this._findParameter = findParameter;
-
-			for (var i = 0; i < children.length; i++) {
-				var child = children[i];
-
-				if (child.children) {
-					_this._children.push(new AnimBlendTree(state, _assertThisInitialized(_this), child.name, child.point, child.type, child.parameter ? [child.parameter] : child.parameters, child.children, findParameter));
-				} else {
-					_this._children.push(new AnimNode(state, _assertThisInitialized(_this), child.name, child.point, child.speed));
-				}
-			}
-
-			return _this;
-		}
-
-		var _proto = AnimBlendTree.prototype;
-
-		_proto.getChild = function getChild(name) {
-			for (var i = 0; i < this._children.length; i++) {
-				if (this._children[i].name === name) return this._children[i];
-			}
-		};
-
-		_proto.calculateWeights = function calculateWeights() {
-			var i, j, p, pi, pj, pip, pipj, parameterValues, minj, result, weightSum;
-
-			switch (this._type) {
-				case ANIM_BLEND_1D:
-					{
-						var parameterValue = this._findParameter(this._parameters[0]).value;
-
-						if (this._parameterValues && this._parameterValues[0] === parameterValue) {
-							return;
-						}
-
-						this._parameterValues = [parameterValue];
-						this._children[0].weight = 0.0;
-
-						for (i = 0; i < this._children.length - 1; i++) {
-							var child1 = this._children[i];
-							var child2 = this._children[i + 1];
-
-							if (between(parameterValue, child1.point, child2.point, true)) {
-								var child2Distance = Math.abs(child1.point - child2.point);
-								var parameterDistance = Math.abs(child1.point - parameterValue);
-								var weight = (child2Distance - parameterDistance) / child2Distance;
-								child1.weight = weight;
-								child2.weight = 1.0 - weight;
-							} else {
-								child2.weight = 0.0;
-							}
-						}
-
-						break;
-					}
-
-				case ANIM_BLEND_2D_CARTESIAN:
-					{
-						parameterValues = this._parameters.map(function (param) {
-							return this._findParameter(param).value;
-						}.bind(this));
-
-						if (this._parameterValues && JSON.stringify(this._parameterValues) === JSON.stringify(parameterValues)) {
-							return;
-						}
-
-						this._parameterValues = parameterValues;
-						p = new pc.Vec2(this._parameterValues);
-						weightSum = 0.0;
-
-						for (i = 0; i < this._children.length; i++) {
-							pi = this._children[i].point.clone();
-							minj = Number.MAX_VALUE;
-
-							for (j = 0; j < this._children.length; j++) {
-								if (i === j) continue;
-								pj = this._children[j].point.clone();
-								pipj = pj.clone().sub(pi);
-								pip = p.clone().sub(pi);
-								result = clamp(1.0 - pip.clone().dot(pipj) / pipj.lengthSq(), 0.0, 1.0);
-								if (result < minj) minj = result;
-							}
-
-							this._children[i].weight = minj;
-							weightSum += minj;
-						}
-
-						for (i = 0; i < this._children.length; i++) {
-							this._children[i].weight = this._children[i]._weight / weightSum;
-						}
-
-						break;
-					}
-
-				case ANIM_BLEND_2D_DIRECTIONAL:
-					{
-						parameterValues = this._parameters.map(function (param) {
-							return this._findParameter(param).value;
-						}.bind(this));
-
-						if (this._parameterValues && JSON.stringify(this._parameterValues) === JSON.stringify(parameterValues)) {
-							return;
-						}
-
-						this._parameterValues = parameterValues;
-						p = new pc.Vec2(this._parameterValues);
-						weightSum = 0.0;
-
-						for (i = 0; i < this._children.length; i++) {
-							pi = this._children[i].point.clone();
-							minj = Number.MAX_VALUE;
-
-							for (j = 0; j < this._children.length; j++) {
-								if (i === j) continue;
-								pj = this._children[j].point.clone();
-								var pipAngle = getAngleRad(pi, p);
-								var pipjAngle = getAngleRad(pi, pj);
-								pipj = new pc.Vec2((pj.length() - pi.length()) / ((pj.length() + pi.length()) / 2), pipjAngle * 2.0);
-								pip = new pc.Vec2((p.length() - pi.length()) / ((pj.length() + pi.length()) / 2), pipAngle * 2.0);
-								result = clamp(1.0 - Math.abs(pip.clone().dot(pipj) / pipj.lengthSq()), 0.0, 1.0);
-								if (result < minj) minj = result;
-							}
-
-							this._children[i].weight = minj;
-							weightSum += minj;
-						}
-
-						for (i = 0; i < this._children.length; i++) {
-							this._children[i].weight = this._children[i]._weight / weightSum;
-						}
-
-						break;
-					}
-
-				case ANIM_BLEND_DIRECT:
-					{
-						parameterValues = this._parameters.map(function (param) {
-							return this._findParameter(param).value;
-						}.bind(this));
-
-						if (this._parameterValues === parameterValues) {
-							return;
-						}
-
-						this._parameterValues = parameterValues;
-						weightSum = 0.0;
-
-						for (i = 0; i < this._children.length; i++) {
-							weightSum += clamp(this._parameterValues[i], 0.0, Number.MAX_VALUE);
-						}
-
-						for (i = 0; i < this._children.length; i++) {
-							this._children[i].weight = clamp(this._parameterValues[i], 0.0, Number.MAX_VALUE) / weightSum;
-						}
-
-						break;
-					}
-			}
-		};
-
-		_proto.getNodeCount = function getNodeCount() {
-			var count = 0;
-
-			for (var i = 0; i < this._children.length; i++) {
-				var child = this._children[i];
-
-				if (child.constructor === AnimBlendTree) {
-					count += this._children[i].getNodeCount();
-				} else {
-					count++;
-				}
-			}
-
-			return count;
-		};
-
-		_createClass(AnimBlendTree, [{
-			key: "parent",
-			get: function get() {
-				return this._parent;
-			}
-		}, {
-			key: "name",
-			get: function get() {
-				return this._name;
-			}
-		}, {
-			key: "point",
-			get: function get() {
-				return this._point;
-			}
-		}, {
-			key: "weight",
-			get: function get() {
-				this.calculateWeights();
-				return this._parent ? this._parent.weight * this._weight : this._weight;
-			},
-			set: function set(value) {
-				this._weight = value;
-			}
-		}, {
-			key: "speed",
-			get: function get() {
-				return this._speed;
-			}
-		}]);
-
-		return AnimBlendTree;
-	}(AnimNode);
-
-	var AnimState = function () {
-		function AnimState(controller, name, speed, loop, blendTree) {
-			this._controller = controller;
-			this._name = name;
-			this._animations = {};
-			this._animationList = [];
-			this._speed = speed || 1.0;
-			this._loop = loop === undefined ? true : loop;
-
-			var findParameter = this._controller.findParameter.bind(this._controller);
-
-			if (blendTree) {
-				this._blendTree = new AnimBlendTree(this, null, name, 1.0, blendTree.type, blendTree.parameter ? [blendTree.parameter] : blendTree.parameters, blendTree.children, findParameter);
-			} else {
-				this._blendTree = new AnimNode(this, null, name, 1.0, speed);
-			}
-		}
-
-		var _proto = AnimState.prototype;
-
-		_proto._getNodeFromPath = function _getNodeFromPath(path) {
-			var currNode = this._blendTree;
-
-			for (var i = 1; i < path.length; i++) {
-				currNode = currNode.getChild(path[i]);
-			}
-
-			return currNode;
-		};
-
-		_proto.addAnimation = function addAnimation(path, animTrack) {
-			var indexOfAnimation = this._animationList.findIndex(function (animation) {
-				return animation.path === path;
-			});
-
-			if (indexOfAnimation >= 0) {
-				this._animationList[indexOfAnimation].animTrack = animTrack;
-			} else {
-				var node = this._getNodeFromPath(path);
-
-				node.animTrack = animTrack;
-
-				this._animationList.push(node);
-			}
-		};
-
-		_createClass(AnimState, [{
-			key: "name",
-			get: function get() {
-				return this._name;
-			}
-		}, {
-			key: "animations",
-			get: function get() {
-				return this._animationList;
-			},
-			set: function set(value) {
-				this._animationList = value;
-			}
-		}, {
-			key: "speed",
-			get: function get() {
-				return this._speed;
-			}
-		}, {
-			key: "loop",
-			get: function get() {
-				return this._loop;
-			}
-		}, {
-			key: "nodeCount",
-			get: function get() {
-				if (!this._blendTree || !(this._blendTree.constructor === AnimBlendTree)) return 1;
-				return this._blendTree.getNodeCount();
-			}
-		}, {
-			key: "playable",
-			get: function get() {
-				return this.name === ANIM_STATE_START || this.name === ANIM_STATE_END || this.name === ANIM_STATE_ANY || this.animations.length === this.nodeCount;
-			}
-		}, {
-			key: "looping",
-			get: function get() {
-				if (this.animations.length > 0) {
-					var trackClipName = this.name + '.' + this.animations[0].animTrack.name;
-
-					var trackClip = this._controller.animEvaluator.findClip(trackClipName);
-
-					if (trackClip) {
-						return trackClip.loop;
-					}
-				}
-
-				return false;
-			}
-		}, {
-			key: "totalWeight",
-			get: function get() {
-				var sum = 0;
-				var i;
-
-				for (i = 0; i < this.animations.length; i++) {
-					sum += this.animations[i].weight;
-				}
-
-				return sum;
-			}
-		}, {
-			key: "timelineDuration",
-			get: function get() {
-				var duration = 0;
-				var i;
-
-				for (i = 0; i < this.animations.length; i++) {
-					var animation = this.animations[i];
-
-					if (animation.animTrack.duration > duration) {
-						duration = animation.animTrack.duration;
-					}
-				}
-
-				return duration;
-			}
-		}]);
-
-		return AnimState;
-	}();
-
-	var AnimTransition = function () {
-		function AnimTransition(controller, from, to, time, priority, conditions, exitTime, transitionOffset, interruptionSource) {
-			if (interruptionSource === void 0) {
-				interruptionSource = ANIM_INTERRUPTION_NONE;
-			}
-
-			this._controller = controller;
-			this._from = from;
-			this._to = to;
-			this._time = time;
-			this._priority = priority;
-			this._conditions = conditions || [];
-			this._exitTime = exitTime || null;
-			this._transitionOffset = transitionOffset || null;
-			this._interruptionSource = interruptionSource;
-		}
-
-		_createClass(AnimTransition, [{
-			key: "from",
-			get: function get() {
-				return this._from;
-			}
-		}, {
-			key: "to",
-			get: function get() {
-				return this._to;
-			}
-		}, {
-			key: "time",
-			get: function get() {
-				return this._time;
-			}
-		}, {
-			key: "priority",
-			get: function get() {
-				return this._priority;
-			}
-		}, {
-			key: "conditions",
-			get: function get() {
-				return this._conditions;
-			}
-		}, {
-			key: "exitTime",
-			get: function get() {
-				return this._exitTime;
-			}
-		}, {
-			key: "transitionOffset",
-			get: function get() {
-				return this._transitionOffset;
-			}
-		}, {
-			key: "interruptionSource",
-			get: function get() {
-				return this._interruptionSource;
-			}
-		}, {
-			key: "hasExitTime",
-			get: function get() {
-				return !!this.exitTime;
-			}
-		}, {
-			key: "hasConditionsMet",
-			get: function get() {
-				var conditionsMet = true;
-				var i;
-
-				for (i = 0; i < this.conditions.length; i++) {
-					var condition = this.conditions[i];
-
-					var parameter = this._controller.findParameter(condition.parameterName);
-
-					switch (condition.predicate) {
-						case ANIM_GREATER_THAN:
-							conditionsMet = conditionsMet && parameter.value > condition.value;
-							break;
-
-						case ANIM_LESS_THAN:
-							conditionsMet = conditionsMet && parameter.value < condition.value;
-							break;
-
-						case ANIM_GREATER_THAN_EQUAL_TO:
-							conditionsMet = conditionsMet && parameter.value >= condition.value;
-							break;
-
-						case ANIM_LESS_THAN_EQUAL_TO:
-							conditionsMet = conditionsMet && parameter.value <= condition.value;
-							break;
-
-						case ANIM_EQUAL_TO:
-							conditionsMet = conditionsMet && parameter.value === condition.value;
-							break;
-
-						case ANIM_NOT_EQUAL_TO:
-							conditionsMet = conditionsMet && parameter.value !== condition.value;
-							break;
-					}
-
-					if (!conditionsMet) return conditionsMet;
-				}
-
-				return conditionsMet;
-			}
-		}]);
-
-		return AnimTransition;
-	}();
-
-	var AnimController = function () {
-		function AnimController(animEvaluator, states, transitions, parameters, activate) {
-			this._animEvaluator = animEvaluator;
-			this._states = {};
-			this._stateNames = [];
-			var i;
-
-			for (i = 0; i < states.length; i++) {
-				this._states[states[i].name] = new AnimState(this, states[i].name, states[i].speed, states[i].loop, states[i].blendTree);
-
-				this._stateNames.push(states[i].name);
-			}
-
-			this._transitions = transitions.map(function (transition) {
-				return new AnimTransition(this, transition.from, transition.to, transition.time, transition.priority, transition.conditions, transition.exitTime, transition.transitionOffset, transition.interruptionSource);
-			}.bind(this));
-			this._findTransitionsFromStateCache = {};
-			this._findTransitionsBetweenStatesCache = {};
-			this._parameters = parameters;
-			this._previousStateName = null;
-			this._activeStateName = ANIM_STATE_START;
-			this._playing = false;
-			this._activate = activate;
-			this._currTransitionTime = 1.0;
-			this._totalTransitionTime = 1.0;
-			this._isTransitioning = false;
-			this._transitionInterruptionSource = ANIM_INTERRUPTION_NONE;
-			this._transitionPreviousStates = [];
-			this._timeInState = 0;
-			this._timeInStateBefore = 0;
-		}
-
-		var _proto = AnimController.prototype;
-
-		_proto._findState = function _findState(stateName) {
-			return this._states[stateName];
-		};
-
-		_proto._getActiveStateProgressForTime = function _getActiveStateProgressForTime(time) {
-			if (this.activeStateName === ANIM_STATE_START || this.activeStateName === ANIM_STATE_END || this.activeStateName === ANIM_STATE_ANY) return 1.0;
-
-			var activeClip = this._animEvaluator.findClip(this.activeStateAnimations[0].name);
-
-			if (activeClip) {
-				return time / activeClip.track.duration;
-			}
-
-			return null;
-		};
-
-		_proto._findTransitionsFromState = function _findTransitionsFromState(stateName) {
-			var transitions = this._findTransitionsFromStateCache[stateName];
-
-			if (!transitions) {
-				transitions = this._transitions.filter(function (transition) {
-					return transition.from === stateName;
-				});
-				transitions.sort(function (a, b) {
-					return a.priority < b.priority;
-				});
-				this._findTransitionsFromStateCache[stateName] = transitions;
-			}
-
-			return transitions;
-		};
-
-		_proto._findTransitionsBetweenStates = function _findTransitionsBetweenStates(sourceStateName, destinationStateName) {
-			var transitions = this._findTransitionsBetweenStatesCache[sourceStateName + '->' + destinationStateName];
-
-			if (!transitions) {
-				transitions = this._transitions.filter(function (transition) {
-					return transition.from === sourceStateName && transition.to === destinationStateName;
-				});
-				transitions.sort(function (a, b) {
-					return a.priority < b.priority;
-				});
-				this._findTransitionsBetweenStatesCache[sourceStateName + '->' + destinationStateName] = transitions;
-			}
-
-			return transitions;
-		};
-
-		_proto._findTransition = function _findTransition(from, to) {
-			var transitions = [];
-
-			if (from && to) {
-				transitions.concat(this._findTransitionsBetweenStates(from, to));
-			} else {
-				if (!this._isTransitioning) {
-					transitions = transitions.concat(this._findTransitionsFromState(this._activeStateName));
-					transitions = transitions.concat(this._findTransitionsFromState(ANIM_STATE_ANY));
-				} else {
-					switch (this._transitionInterruptionSource) {
-						case ANIM_INTERRUPTION_PREV:
-							transitions = transitions.concat(this._findTransitionsFromState(this._previousStateName));
-							transitions = transitions.concat(this._findTransitionsFromState(ANIM_STATE_ANY));
-							break;
-
-						case ANIM_INTERRUPTION_NEXT:
-							transitions = transitions.concat(this._findTransitionsFromState(this._activeStateName));
-							transitions = transitions.concat(this._findTransitionsFromState(ANIM_STATE_ANY));
-							break;
-
-						case ANIM_INTERRUPTION_PREV_NEXT:
-							transitions = transitions.concat(this._findTransitionsFromState(this._previousStateName));
-							transitions = transitions.concat(this._findTransitionsFromState(this._activeStateName));
-							transitions = transitions.concat(this._findTransitionsFromState(ANIM_STATE_ANY));
-							break;
-
-						case ANIM_INTERRUPTION_NEXT_PREV:
-							transitions = transitions.concat(this._findTransitionsFromState(this._activeStateName));
-							transitions = transitions.concat(this._findTransitionsFromState(this._previousStateName));
-							transitions = transitions.concat(this._findTransitionsFromState(ANIM_STATE_ANY));
-							break;
-					}
-				}
-			}
-
-			transitions = transitions.filter(function (transition) {
-				if (transition.to === this.activeStateName) {
-					return false;
-				}
-
-				if (transition.hasExitTime) {
-					var progressBefore = this._getActiveStateProgressForTime(this._timeInStateBefore);
-
-					var progress = this._getActiveStateProgressForTime(this._timeInState);
-
-					if (transition.exitTime < 1.0 && this.activeState.looping) {
-						progressBefore -= Math.floor(progressBefore);
-						progress -= Math.floor(progress);
-					}
-
-					if (!(transition.exitTime > progressBefore && transition.exitTime <= progress)) {
-						return null;
-					}
-				}
-
-				return transition.hasConditionsMet;
-			}.bind(this));
-
-			if (transitions.length > 0) {
-				return transitions[0];
-			}
-
-			return null;
-		};
-
-		_proto._updateStateFromTransition = function _updateStateFromTransition(transition) {
-			var i;
-			var j;
-			var state;
-			var animation;
-			var clip;
-			this.previousState = transition.from;
-			this.activeState = transition.to;
-
-			for (i = 0; i < transition.conditions.length; i++) {
-				var condition = transition.conditions[i];
-				var parameter = this.findParameter(condition.parameterName);
-
-				if (parameter.type === ANIM_PARAMETER_TRIGGER) {
-					parameter.value = false;
-				}
-			}
-
-			if (this.previousState) {
-				if (!this._isTransitioning) {
-					this._transitionPreviousStates = [];
-				}
-
-				this._transitionPreviousStates.push({
-					name: this._previousStateName,
-					weight: 1
-				});
-
-				var interpolatedTime = Math.min(this._currTransitionTime / this._totalTransitionTime, 1.0);
-
-				for (i = 0; i < this._transitionPreviousStates.length; i++) {
-					if (!this._isTransitioning) {
-						this._transitionPreviousStates[i].weight = 1.0;
-					} else if (i !== this._transitionPreviousStates.length - 1) {
-						this._transitionPreviousStates[i].weight *= 1.0 - interpolatedTime;
-					} else {
-						this._transitionPreviousStates[i].weight = interpolatedTime;
-					}
-
-					state = this._findState(this._transitionPreviousStates[i].name);
-
-					for (j = 0; j < state.animations.length; j++) {
-						animation = state.animations[j];
-						clip = this._animEvaluator.findClip(animation.name + '.previous.' + i);
-
-						if (!clip) {
-							clip = this._animEvaluator.findClip(animation.name);
-							clip.name = animation.name + '.previous.' + i;
-						}
-
-						if (i !== this._transitionPreviousStates.length - 1) {
-							clip.pause();
-						}
-					}
-				}
-			}
-
-			this._isTransitioning = true;
-			this._totalTransitionTime = transition.time;
-			this._currTransitionTime = 0;
-			this._transitionInterruptionSource = transition.interruptionSource;
-			var hasTransitionOffset = transition.transitionOffset && transition.transitionOffset > 0.0 && transition.transitionOffset < 1.0;
-			var activeState = this.activeState;
-
-			for (i = 0; i < activeState.animations.length; i++) {
-				clip = this._animEvaluator.findClip(activeState.animations[i].name);
-
-				if (!clip) {
-					var speed = Number.isFinite(activeState.animations[i].speed) ? activeState.animations[i].speed : activeState.speed;
-					clip = new AnimClip(activeState.animations[i].animTrack, 0, speed, true, activeState.loop);
-					clip.name = activeState.animations[i].name;
-
-					this._animEvaluator.addClip(clip);
-				} else {
-					clip.reset();
-				}
-
-				if (transition.time > 0) {
-					clip.blendWeight = 0.0;
-				} else {
-					clip.blendWeight = activeState.animations[i].normalizedWeight;
-				}
-
-				clip.play();
-
-				if (hasTransitionOffset) {
-					clip.time = activeState.timelineDuration * transition.transitionOffset;
-				} else {
-					var startTime = activeState.speed >= 0 ? 0 : this.activeStateDuration;
-					clip.time = startTime;
-				}
-			}
-
-			var timeInState = 0;
-			var timeInStateBefore = 0;
-
-			if (hasTransitionOffset) {
-				var offsetTime = activeState.timelineDuration * transition.transitionOffset;
-				timeInState = offsetTime;
-				timeInStateBefore = offsetTime;
-			}
-
-			this._timeInState = timeInState;
-			this._timeInStateBefore = timeInStateBefore;
-		};
-
-		_proto._transitionToState = function _transitionToState(newStateName) {
-			if (newStateName === this._activeStateName) {
-				return;
-			}
-
-			if (!this._findState(newStateName)) {
-				return;
-			}
-
-			var transition = this._findTransition(this._activeStateName, newStateName);
-
-			if (!transition) {
-				this._animEvaluator.removeClips();
-
-				transition = new AnimTransition(this, null, newStateName, 0, 0);
-			}
-
-			this._updateStateFromTransition(transition);
-		};
-
-		_proto.assignAnimation = function assignAnimation(pathString, animTrack) {
-			var path = pathString.split('.');
-
-			var state = this._findState(path[0]);
-
-			if (!state) {
-				return;
-			}
-
-			state.addAnimation(path, animTrack);
-
-			if (!this._playing && this._activate && this.playable) {
-				this.play();
-			}
-		};
-
-		_proto.removeNodeAnimations = function removeNodeAnimations(nodeName) {
-			var state = this._findState(nodeName);
-
-			if (!state) {
-				return;
-			}
-
-			state.animations = [];
-		};
-
-		_proto.play = function play(stateName) {
-			if (stateName) {
-				this._transitionToState(stateName);
-			}
-
-			this._playing = true;
-		};
-
-		_proto.pause = function pause() {
-			this._playing = false;
-		};
-
-		_proto.reset = function reset() {
-			this._previousStateName = null;
-			this._activeStateName = ANIM_STATE_START;
-			this._playing = false;
-			this._currTransitionTime = 1.0;
-			this._totalTransitionTime = 1.0;
-			this._isTransitioning = false;
-			this._timeInState = 0;
-			this._timeInStateBefore = 0;
-
-			this._animEvaluator.removeClips();
-		};
-
-		_proto.update = function update(dt) {
-			if (!this._playing) {
-				return;
-			}
-
-			var i;
-			var j;
-			var state;
-			var animation;
-			var clip;
-			this._timeInStateBefore = this._timeInState;
-			this._timeInState += dt;
-
-			var transition = this._findTransition(this._activeStateName);
-
-			if (transition) this._updateStateFromTransition(transition);
-
-			if (this._isTransitioning) {
-				this._currTransitionTime += dt;
-
-				if (this._currTransitionTime <= this._totalTransitionTime) {
-					var interpolatedTime = this._currTransitionTime / this._totalTransitionTime;
-
-					for (i = 0; i < this._transitionPreviousStates.length; i++) {
-						state = this._findState(this._transitionPreviousStates[i].name);
-						var stateWeight = this._transitionPreviousStates[i].weight;
-
-						for (j = 0; j < state.animations.length; j++) {
-							animation = state.animations[j];
-							clip = this._animEvaluator.findClip(animation.name + '.previous.' + i);
-
-							if (clip) {
-								clip.blendWeight = (1.0 - interpolatedTime) * animation.normalizedWeight * stateWeight;
-							}
-						}
-					}
-
-					state = this.activeState;
-
-					for (i = 0; i < state.animations.length; i++) {
-						animation = state.animations[i];
-						this._animEvaluator.findClip(animation.name).blendWeight = interpolatedTime * animation.normalizedWeight;
-					}
-				} else {
-					this._isTransitioning = false;
-					var activeClips = this.activeStateAnimations.length;
-					var totalClips = this._animEvaluator.clips.length;
-
-					for (i = 0; i < totalClips - activeClips; i++) {
-						this._animEvaluator.removeClip(0);
-					}
-
-					this._transitionPreviousStates = [];
-					state = this.activeState;
-
-					for (i = 0; i < state.animations.length; i++) {
-						animation = state.animations[i];
-						clip = this._animEvaluator.findClip(animation.name);
-
-						if (clip) {
-							clip.blendWeight = animation.normalizedWeight;
-						}
-					}
-				}
-			} else {
-				if (this.activeState._blendTree.constructor === AnimBlendTree) {
-					state = this.activeState;
-
-					for (i = 0; i < state.animations.length; i++) {
-						animation = state.animations[i];
-						clip = this._animEvaluator.findClip(animation.name);
-
-						if (clip) {
-							clip.blendWeight = animation.normalizedWeight;
-						}
-					}
-				}
-			}
-
-			this._animEvaluator.update(dt);
-		};
-
-		_proto.findParameter = function findParameter(name) {
-			return this._parameters[name];
-		};
-
-		_createClass(AnimController, [{
-			key: "animEvaluator",
-			get: function get() {
-				return this._animEvaluator;
-			}
-		}, {
-			key: "activeState",
-			get: function get() {
-				return this._findState(this._activeStateName);
-			},
-			set: function set(stateName) {
-				this._activeStateName = stateName;
-			}
-		}, {
-			key: "activeStateName",
-			get: function get() {
-				return this._activeStateName;
-			}
-		}, {
-			key: "activeStateAnimations",
-			get: function get() {
-				return this.activeState.animations;
-			}
-		}, {
-			key: "previousState",
-			get: function get() {
-				return this._findState(this._previousStateName);
-			},
-			set: function set(stateName) {
-				this._previousStateName = stateName;
-			}
-		}, {
-			key: "previousStateName",
-			get: function get() {
-				return this._previousStateName;
-			}
-		}, {
-			key: "playable",
-			get: function get() {
-				var playable = true;
-				var i;
-
-				for (i = 0; i < this._stateNames.length; i++) {
-					if (!this._states[this._stateNames[i]].playable) {
-						playable = false;
-					}
-				}
-
-				return playable;
-			}
-		}, {
-			key: "playing",
-			get: function get() {
-				return this._playing;
-			},
-			set: function set(value) {
-				this._playing = value;
-			}
-		}, {
-			key: "activeStateProgress",
-			get: function get() {
-				return this._getActiveStateProgressForTime(this._timeInState);
-			}
-		}, {
-			key: "activeStateDuration",
-			get: function get() {
-				if (this.activeStateName === ANIM_STATE_START || this.activeStateName === ANIM_STATE_END) return 0.0;
-				var maxDuration = 0.0;
-
-				for (var i = 0; i < this.activeStateAnimations.length; i++) {
-					var activeClip = this._animEvaluator.findClip(this.activeStateAnimations[i].name);
-
-					maxDuration = Math.max(maxDuration, activeClip.track.duration);
-				}
-
-				return maxDuration;
-			}
-		}, {
-			key: "activeStateCurrentTime",
-			get: function get() {
-				return this._timeInState;
-			},
-			set: function set(time) {
-				this._timeInStateBefore = time;
-				this._timeInState = time;
-
-				for (var i = 0; i < this.activeStateAnimations.length; i++) {
-					var clip = this.animEvaluator.findClip(this.activeStateAnimations[i].name);
-
-					if (clip) {
-						clip.time = time;
-					}
-				}
-			}
-		}, {
-			key: "transitioning",
-			get: function get() {
-				return this._isTransitioning;
-			}
-		}, {
-			key: "transitionProgress",
-			get: function get() {
-				return this._currTransitionTime / this._totalTransitionTime;
-			}
-		}, {
-			key: "states",
-			get: function get() {
-				return this._stateNames;
-			}
-		}]);
-
-		return AnimController;
-	}();
 
 	var v2 = new Vec2();
 	var v3 = new Vec3();
@@ -39494,37 +43997,35 @@
 		var _proto = AnimComponentBinder.prototype;
 
 		_proto.resolve = function resolve(path) {
-			var propertyLocation = AnimBinder.decode(path);
+			var pathSections = this.propertyLocator.decode(path);
+			var entityHierarchy = pathSections[0];
+			var component = pathSections[1];
+			var propertyHierarchy = pathSections[2];
 
-			var entity = this._getEntityFromHierarchy(propertyLocation.entityPath);
+			var entity = this._getEntityFromHierarchy(entityHierarchy);
 
 			if (!entity) return null;
 			var propertyComponent;
 
-			switch (propertyLocation.component) {
+			switch (component) {
 				case 'entity':
 					propertyComponent = entity;
 					break;
 
 				case 'graph':
-					if (entity.model && entity.model.model && entity.model.model.graph) {
-						propertyComponent = pc.app.root.findByPath(entity.model.model.graph.path + "/" + propertyLocation.entityPath[0]);
+					if (!this.nodes || !this.nodes[entityHierarchy[0]]) {
+						return null;
 					}
 
-					if (!propertyComponent) {
-						var entityPath = AnimBinder.splitPath(propertyLocation.entityPath[0], '/');
-						propertyComponent = this.nodes[entityPath[entityPath.length - 1] || ""];
-					}
-
-					if (!propertyComponent) return null;
+					propertyComponent = this.nodes[entityHierarchy[0]].node;
 					break;
 
 				default:
-					propertyComponent = entity.findComponent(propertyLocation.component);
+					propertyComponent = entity.findComponent(component);
 					if (!propertyComponent) return null;
 			}
 
-			return this._createAnimTargetForProperty(propertyComponent, propertyLocation.propertyPath);
+			return this._createAnimTargetForProperty(propertyComponent, propertyHierarchy);
 		};
 
 		_proto.update = function update(deltaTime) {
@@ -39783,6 +44284,1071 @@
 		}]);
 
 		return AnimComponentLayer;
+	}();
+
+	var AnimNode = function () {
+		function AnimNode(state, parent, name, point, speed) {
+			if (speed === void 0) {
+				speed = 1;
+			}
+
+			this._state = state;
+			this._parent = parent;
+			this._name = name;
+			this._point = Array.isArray(point) ? new pc.Vec2(point) : point;
+			this._speed = speed;
+			this._weight = 1.0;
+			this._animTrack = null;
+		}
+
+		_createClass(AnimNode, [{
+			key: "parent",
+			get: function get() {
+				return this._parent;
+			}
+		}, {
+			key: "name",
+			get: function get() {
+				return this._name;
+			}
+		}, {
+			key: "path",
+			get: function get() {
+				return this._parent ? this._parent.path + '.' + this._name : this._name;
+			}
+		}, {
+			key: "point",
+			get: function get() {
+				return this._point;
+			}
+		}, {
+			key: "weight",
+			get: function get() {
+				return this._parent ? this._parent.weight * this._weight : this._weight;
+			},
+			set: function set(value) {
+				this._weight = value;
+			}
+		}, {
+			key: "normalizedWeight",
+			get: function get() {
+				var totalWeight = this._state.totalWeight;
+				if (totalWeight === 0.0) return 0.0;
+				return this.weight / totalWeight;
+			}
+		}, {
+			key: "speed",
+			get: function get() {
+				return this._speed;
+			}
+		}, {
+			key: "animTrack",
+			get: function get() {
+				return this._animTrack;
+			},
+			set: function set(value) {
+				this._animTrack = value;
+			}
+		}]);
+
+		return AnimNode;
+	}();
+
+	function between(num, a, b, inclusive) {
+		var min = Math.min(a, b),
+				max = Math.max(a, b);
+		return inclusive ? num >= min && num <= max : num > min && num < max;
+	}
+
+	function getAngleRad(a, b) {
+		return Math.atan2(a.x * b.y - a.y * b.x, a.x * b.x + a.y * b.y);
+	}
+
+	function clamp(num, min, max) {
+		return num <= min ? min : num >= max ? max : num;
+	}
+
+	var BlendTree = function (_AnimNode) {
+		_inheritsLoose(BlendTree, _AnimNode);
+
+		function BlendTree(state, parent, name, point, type, parameters, children, findParameter) {
+			var _this;
+
+			_this = _AnimNode.call(this, state, parent, name, point) || this;
+			_this._type = type;
+			_this._parameters = parameters;
+			_this._parameterValues = null;
+			_this._children = [];
+			_this._findParameter = findParameter;
+
+			for (var i = 0; i < children.length; i++) {
+				var child = children[i];
+
+				if (child.children) {
+					_this._children.push(new BlendTree(state, _assertThisInitialized(_this), child.name, child.point, child.type, child.parameter ? [child.parameter] : child.parameters, child.children, findParameter));
+				} else {
+					_this._children.push(new AnimNode(state, _assertThisInitialized(_this), child.name, child.point, child.speed));
+				}
+			}
+
+			return _this;
+		}
+
+		var _proto = BlendTree.prototype;
+
+		_proto.getChild = function getChild(name) {
+			for (var i = 0; i < this._children.length; i++) {
+				if (this._children[i].name === name) return this._children[i];
+			}
+		};
+
+		_proto.calculateWeights = function calculateWeights() {
+			var i, j, p, pi, pj, pip, pipj, parameterValues, minj, result, weightSum;
+
+			switch (this._type) {
+				case ANIM_BLEND_1D:
+					{
+						var parameterValue = this._findParameter(this._parameters[0]).value;
+
+						if (this._parameterValues && this._parameterValues[0] === parameterValue) {
+							return;
+						}
+
+						this._parameterValues = [parameterValue];
+						this._children[0].weight = 0.0;
+
+						for (i = 0; i < this._children.length - 1; i++) {
+							var child1 = this._children[i];
+							var child2 = this._children[i + 1];
+
+							if (between(parameterValue, child1.point, child2.point, true)) {
+								var child2Distance = Math.abs(child1.point - child2.point);
+								var parameterDistance = Math.abs(child1.point - parameterValue);
+								var weight = (child2Distance - parameterDistance) / child2Distance;
+								child1.weight = weight;
+								child2.weight = 1.0 - weight;
+							} else {
+								child2.weight = 0.0;
+							}
+						}
+
+						break;
+					}
+
+				case ANIM_BLEND_2D_CARTESIAN:
+					{
+						parameterValues = this._parameters.map(function (param) {
+							return this._findParameter(param).value;
+						}.bind(this));
+
+						if (this._parameterValues && this._parameterValues.equals(parameterValues)) {
+							return;
+						}
+
+						this._parameterValues = parameterValues;
+						p = new pc.Vec2(this._parameterValues);
+						weightSum = 0.0;
+
+						for (i = 0; i < this._children.length; i++) {
+							pi = this._children[i].point.clone();
+							minj = Number.MAX_VALUE;
+
+							for (j = 0; j < this._children.length; j++) {
+								if (i === j) continue;
+								pj = this._children[j].point.clone();
+								pipj = pj.clone().sub(pi);
+								pip = p.clone().sub(pi);
+								result = clamp(1.0 - pip.clone().dot(pipj) / pipj.lengthSq(), 0.0, 1.0);
+								if (result < minj) minj = result;
+							}
+
+							this._children[i].weight = minj;
+							weightSum += minj;
+						}
+
+						for (i = 0; i < this._children.length; i++) {
+							this._children[i].weight = this._children[i]._weight / weightSum;
+						}
+
+						break;
+					}
+
+				case ANIM_BLEND_2D_DIRECTIONAL:
+					{
+						parameterValues = this._parameters.map(function (param) {
+							return this._findParameter(param).value;
+						}.bind(this));
+
+						if (this._parameterValues && this._parameterValues.equals(parameterValues)) {
+							return;
+						}
+
+						this._parameterValues = parameterValues;
+						p = new pc.Vec2(this._parameterValues);
+						weightSum = 0.0;
+
+						for (i = 0; i < this._children.length; i++) {
+							pi = this._children[i].point.clone();
+							minj = Number.MAX_VALUE;
+
+							for (j = 0; j < this._children.length; j++) {
+								if (i === j) continue;
+								pj = this._children[j].point.clone();
+								var pipAngle = getAngleRad(pi, p);
+								var pipjAngle = getAngleRad(pi, pj);
+								pipj = new pc.Vec2((pj.length() - pi.length()) / ((pj.length() + pi.length()) / 2), pipjAngle * 2.0);
+								pip = new pc.Vec2((p.length() - pi.length()) / ((pj.length() + pi.length()) / 2), pipAngle * 2.0);
+								result = clamp(1.0 - Math.abs(pip.clone().dot(pipj) / pipj.lengthSq()), 0.0, 1.0);
+								if (result < minj) minj = result;
+							}
+
+							this._children[i].weight = minj;
+							weightSum += minj;
+						}
+
+						for (i = 0; i < this._children.length; i++) {
+							this._children[i].weight = this._children[i]._weight / weightSum;
+						}
+
+						break;
+					}
+
+				case ANIM_BLEND_DIRECT:
+					{
+						parameterValues = this._parameters.map(function (param) {
+							return this._findParameter(param).value;
+						}.bind(this));
+
+						if (this._parameterValues === parameterValues) {
+							return;
+						}
+
+						this._parameterValues = parameterValues;
+						weightSum = 0.0;
+
+						for (i = 0; i < this._children.length; i++) {
+							weightSum += clamp(this._parameterValues[i], 0.0, Number.MAX_VALUE);
+						}
+
+						for (i = 0; i < this._children.length; i++) {
+							this._children[i].weight = clamp(this._parameterValues[i], 0.0, Number.MAX_VALUE) / weightSum;
+						}
+
+						break;
+					}
+			}
+		};
+
+		_proto.getNodeCount = function getNodeCount() {
+			var count = 0;
+
+			for (var i = 0; i < this._children.length; i++) {
+				var child = this._children[i];
+
+				if (child.constructor === BlendTree) {
+					count += this._children[i].getNodeCount();
+				} else {
+					count++;
+				}
+			}
+
+			return count;
+		};
+
+		_createClass(BlendTree, [{
+			key: "parent",
+			get: function get() {
+				return this._parent;
+			}
+		}, {
+			key: "name",
+			get: function get() {
+				return this._name;
+			}
+		}, {
+			key: "point",
+			get: function get() {
+				return this._point;
+			}
+		}, {
+			key: "weight",
+			get: function get() {
+				this.calculateWeights();
+				return this._parent ? this._parent.weight * this._weight : this._weight;
+			},
+			set: function set(value) {
+				this._weight = value;
+			}
+		}, {
+			key: "speed",
+			get: function get() {
+				return this._speed;
+			}
+		}]);
+
+		return BlendTree;
+	}(AnimNode);
+
+	var AnimState = function () {
+		function AnimState(controller, name, speed, loop, blendTree) {
+			this._controller = controller;
+			this._name = name;
+			this._animations = {};
+			this._animationList = [];
+			this._speed = speed || 1.0;
+			this._loop = loop === undefined ? true : loop;
+
+			var findParameter = this._controller.findParameter.bind(this._controller);
+
+			if (blendTree) {
+				this._blendTree = new BlendTree(this, null, name, 1.0, blendTree.type, blendTree.parameter ? [blendTree.parameter] : blendTree.parameters, blendTree.children, findParameter);
+			} else {
+				this._blendTree = new AnimNode(this, null, name, 1.0, speed);
+			}
+		}
+
+		var _proto2 = AnimState.prototype;
+
+		_proto2._getNodeFromPath = function _getNodeFromPath(path) {
+			var currNode = this._blendTree;
+
+			for (var i = 1; i < path.length; i++) {
+				currNode = currNode.getChild(path[i]);
+			}
+
+			return currNode;
+		};
+
+		_proto2.addAnimation = function addAnimation(path, animTrack) {
+			var indexOfAnimation = this._animationList.findIndex(function (animation) {
+				return animation.path === path;
+			});
+
+			if (indexOfAnimation >= 0) {
+				this._animationList[indexOfAnimation].animTrack = animTrack;
+			} else {
+				var node = this._getNodeFromPath(path);
+
+				node.animTrack = animTrack;
+
+				this._animationList.push(node);
+			}
+		};
+
+		_createClass(AnimState, [{
+			key: "name",
+			get: function get() {
+				return this._name;
+			}
+		}, {
+			key: "animations",
+			get: function get() {
+				return this._animationList;
+			},
+			set: function set(value) {
+				this._animationList = value;
+			}
+		}, {
+			key: "speed",
+			get: function get() {
+				return this._speed;
+			}
+		}, {
+			key: "loop",
+			get: function get() {
+				return this._loop;
+			}
+		}, {
+			key: "nodeCount",
+			get: function get() {
+				if (!this._blendTree || !(this._blendTree.constructor === BlendTree)) return 1;
+				return this._blendTree.getNodeCount();
+			}
+		}, {
+			key: "playable",
+			get: function get() {
+				return this.name === ANIM_STATE_START || this.name === ANIM_STATE_END || this.name === ANIM_STATE_ANY || this.animations.length === this.nodeCount;
+			}
+		}, {
+			key: "looping",
+			get: function get() {
+				if (this.animations.length > 0) {
+					var trackClipName = this.name + '.' + this.animations[0].animTrack.name;
+
+					var trackClip = this._controller.animEvaluator.findClip(trackClipName);
+
+					if (trackClip) {
+						return trackClip.loop;
+					}
+				}
+
+				return false;
+			}
+		}, {
+			key: "totalWeight",
+			get: function get() {
+				var sum = 0;
+				var i;
+
+				for (i = 0; i < this.animations.length; i++) {
+					sum += this.animations[i].weight;
+				}
+
+				return sum;
+			}
+		}, {
+			key: "timelineDuration",
+			get: function get() {
+				var duration = 0;
+				var i;
+
+				for (i = 0; i < this.animations.length; i++) {
+					var animation = this.animations[i];
+
+					if (animation.animTrack.duration > duration) {
+						duration = animation.animTrack.duration;
+					}
+				}
+
+				return duration;
+			}
+		}]);
+
+		return AnimState;
+	}();
+
+	var AnimTransition = function () {
+		function AnimTransition(controller, from, to, time, priority, conditions, exitTime, transitionOffset, interruptionSource) {
+			if (interruptionSource === void 0) {
+				interruptionSource = ANIM_INTERRUPTION_NONE;
+			}
+
+			this._controller = controller;
+			this._from = from;
+			this._to = to;
+			this._time = time;
+			this._priority = priority;
+			this._conditions = conditions || [];
+			this._exitTime = exitTime || null;
+			this._transitionOffset = transitionOffset || null;
+			this._interruptionSource = interruptionSource;
+		}
+
+		_createClass(AnimTransition, [{
+			key: "from",
+			get: function get() {
+				return this._from;
+			}
+		}, {
+			key: "to",
+			get: function get() {
+				return this._to;
+			}
+		}, {
+			key: "time",
+			get: function get() {
+				return this._time;
+			}
+		}, {
+			key: "priority",
+			get: function get() {
+				return this._priority;
+			}
+		}, {
+			key: "conditions",
+			get: function get() {
+				return this._conditions;
+			}
+		}, {
+			key: "exitTime",
+			get: function get() {
+				return this._exitTime;
+			}
+		}, {
+			key: "transitionOffset",
+			get: function get() {
+				return this._transitionOffset;
+			}
+		}, {
+			key: "interruptionSource",
+			get: function get() {
+				return this._interruptionSource;
+			}
+		}, {
+			key: "hasExitTime",
+			get: function get() {
+				return !!this.exitTime;
+			}
+		}, {
+			key: "hasConditionsMet",
+			get: function get() {
+				var conditionsMet = true;
+				var i;
+
+				for (i = 0; i < this.conditions.length; i++) {
+					var condition = this.conditions[i];
+
+					var parameter = this._controller.findParameter(condition.parameterName);
+
+					switch (condition.predicate) {
+						case ANIM_GREATER_THAN:
+							conditionsMet = conditionsMet && parameter.value > condition.value;
+							break;
+
+						case ANIM_LESS_THAN:
+							conditionsMet = conditionsMet && parameter.value < condition.value;
+							break;
+
+						case ANIM_GREATER_THAN_EQUAL_TO:
+							conditionsMet = conditionsMet && parameter.value >= condition.value;
+							break;
+
+						case ANIM_LESS_THAN_EQUAL_TO:
+							conditionsMet = conditionsMet && parameter.value <= condition.value;
+							break;
+
+						case ANIM_EQUAL_TO:
+							conditionsMet = conditionsMet && parameter.value === condition.value;
+							break;
+
+						case ANIM_NOT_EQUAL_TO:
+							conditionsMet = conditionsMet && parameter.value !== condition.value;
+							break;
+					}
+
+					if (!conditionsMet) return conditionsMet;
+				}
+
+				return conditionsMet;
+			}
+		}]);
+
+		return AnimTransition;
+	}();
+
+	var AnimController = function () {
+		function AnimController(animEvaluator, states, transitions, parameters, activate) {
+			this._animEvaluator = animEvaluator;
+			this._states = {};
+			this._stateNames = [];
+			var i;
+
+			for (i = 0; i < states.length; i++) {
+				this._states[states[i].name] = new AnimState(this, states[i].name, states[i].speed, states[i].loop, states[i].blendTree);
+
+				this._stateNames.push(states[i].name);
+			}
+
+			this._transitions = transitions.map(function (transition) {
+				return new AnimTransition(this, transition.from, transition.to, transition.time, transition.priority, transition.conditions, transition.exitTime, transition.transitionOffset, transition.interruptionSource);
+			}.bind(this));
+			this._findTransitionsFromStateCache = {};
+			this._findTransitionsBetweenStatesCache = {};
+			this._parameters = parameters;
+			this._previousStateName = null;
+			this._activeStateName = ANIM_STATE_START;
+			this._playing = false;
+			this._activate = activate;
+			this._currTransitionTime = 1.0;
+			this._totalTransitionTime = 1.0;
+			this._isTransitioning = false;
+			this._transitionInterruptionSource = ANIM_INTERRUPTION_NONE;
+			this._transitionPreviousStates = [];
+			this._timeInState = 0;
+			this._timeInStateBefore = 0;
+		}
+
+		var _proto3 = AnimController.prototype;
+
+		_proto3._findState = function _findState(stateName) {
+			return this._states[stateName];
+		};
+
+		_proto3._getActiveStateProgressForTime = function _getActiveStateProgressForTime(time) {
+			if (this.activeStateName === ANIM_STATE_START || this.activeStateName === ANIM_STATE_END || this.activeStateName === ANIM_STATE_ANY) return 1.0;
+
+			var activeClip = this._animEvaluator.findClip(this.activeStateAnimations[0].name);
+
+			if (activeClip) {
+				return time / activeClip.track.duration;
+			}
+
+			return null;
+		};
+
+		_proto3._findTransitionsFromState = function _findTransitionsFromState(stateName) {
+			var transitions = this._findTransitionsFromStateCache[stateName];
+
+			if (!transitions) {
+				transitions = this._transitions.filter(function (transition) {
+					return transition.from === stateName;
+				});
+				transitions.sort(function (a, b) {
+					return a.priority < b.priority;
+				});
+				this._findTransitionsFromStateCache[stateName] = transitions;
+			}
+
+			return transitions;
+		};
+
+		_proto3._findTransitionsBetweenStates = function _findTransitionsBetweenStates(sourceStateName, destinationStateName) {
+			var transitions = this._findTransitionsBetweenStatesCache[sourceStateName + '->' + destinationStateName];
+
+			if (!transitions) {
+				transitions = this._transitions.filter(function (transition) {
+					return transition.from === sourceStateName && transition.to === destinationStateName;
+				});
+				transitions.sort(function (a, b) {
+					return a.priority < b.priority;
+				});
+				this._findTransitionsBetweenStatesCache[sourceStateName + '->' + destinationStateName] = transitions;
+			}
+
+			return transitions;
+		};
+
+		_proto3._findTransition = function _findTransition(from, to) {
+			var transitions = [];
+
+			if (from && to) {
+				transitions.concat(this._findTransitionsBetweenStates(from, to));
+			} else {
+				if (!this._isTransitioning) {
+					transitions = transitions.concat(this._findTransitionsFromState(this._activeStateName));
+					transitions = transitions.concat(this._findTransitionsFromState(ANIM_STATE_ANY));
+				} else {
+					switch (this._transitionInterruptionSource) {
+						case ANIM_INTERRUPTION_PREV:
+							transitions = transitions.concat(this._findTransitionsFromState(this._previousStateName));
+							transitions = transitions.concat(this._findTransitionsFromState(ANIM_STATE_ANY));
+							break;
+
+						case ANIM_INTERRUPTION_NEXT:
+							transitions = transitions.concat(this._findTransitionsFromState(this._activeStateName));
+							transitions = transitions.concat(this._findTransitionsFromState(ANIM_STATE_ANY));
+							break;
+
+						case ANIM_INTERRUPTION_PREV_NEXT:
+							transitions = transitions.concat(this._findTransitionsFromState(this._previousStateName));
+							transitions = transitions.concat(this._findTransitionsFromState(this._activeStateName));
+							transitions = transitions.concat(this._findTransitionsFromState(ANIM_STATE_ANY));
+							break;
+
+						case ANIM_INTERRUPTION_NEXT_PREV:
+							transitions = transitions.concat(this._findTransitionsFromState(this._activeStateName));
+							transitions = transitions.concat(this._findTransitionsFromState(this._previousStateName));
+							transitions = transitions.concat(this._findTransitionsFromState(ANIM_STATE_ANY));
+							break;
+					}
+				}
+			}
+
+			transitions = transitions.filter(function (transition) {
+				if (transition.to === this.activeStateName) {
+					return false;
+				}
+
+				if (transition.hasExitTime) {
+					var progressBefore = this._getActiveStateProgressForTime(this._timeInStateBefore);
+
+					var progress = this._getActiveStateProgressForTime(this._timeInState);
+
+					if (transition.exitTime < 1.0 && this.activeState.looping) {
+						progressBefore -= Math.floor(progressBefore);
+						progress -= Math.floor(progress);
+					}
+
+					if (!(transition.exitTime > progressBefore && transition.exitTime <= progress)) {
+						return null;
+					}
+				}
+
+				return transition.hasConditionsMet;
+			}.bind(this));
+
+			if (transitions.length > 0) {
+				return transitions[0];
+			}
+
+			return null;
+		};
+
+		_proto3._updateStateFromTransition = function _updateStateFromTransition(transition) {
+			var i;
+			var j;
+			var state;
+			var animation;
+			var clip;
+			this.previousState = transition.from;
+			this.activeState = transition.to;
+
+			for (i = 0; i < transition.conditions.length; i++) {
+				var condition = transition.conditions[i];
+				var parameter = this.findParameter(condition.parameterName);
+
+				if (parameter.type === ANIM_PARAMETER_TRIGGER) {
+					parameter.value = false;
+				}
+			}
+
+			if (this.previousState) {
+				if (!this._isTransitioning) {
+					this._transitionPreviousStates = [];
+				}
+
+				this._transitionPreviousStates.push({
+					name: this._previousStateName,
+					weight: 1
+				});
+
+				var interpolatedTime = Math.min(this._currTransitionTime / this._totalTransitionTime, 1.0);
+
+				for (i = 0; i < this._transitionPreviousStates.length; i++) {
+					if (!this._isTransitioning) {
+						this._transitionPreviousStates[i].weight = 1.0;
+					} else if (i !== this._transitionPreviousStates.length - 1) {
+						this._transitionPreviousStates[i].weight *= 1.0 - interpolatedTime;
+					} else {
+						this._transitionPreviousStates[i].weight = interpolatedTime;
+					}
+
+					state = this._findState(this._transitionPreviousStates[i].name);
+
+					for (j = 0; j < state.animations.length; j++) {
+						animation = state.animations[j];
+						clip = this._animEvaluator.findClip(animation.name + '.previous.' + i);
+
+						if (!clip) {
+							clip = this._animEvaluator.findClip(animation.name);
+							clip.name = animation.name + '.previous.' + i;
+						}
+
+						if (i !== this._transitionPreviousStates.length - 1) {
+							clip.pause();
+						}
+					}
+				}
+			}
+
+			this._isTransitioning = true;
+			this._totalTransitionTime = transition.time;
+			this._currTransitionTime = 0;
+			this._transitionInterruptionSource = transition.interruptionSource;
+			var hasTransitionOffset = transition.transitionOffset && transition.transitionOffset > 0.0 && transition.transitionOffset < 1.0;
+			var activeState = this.activeState;
+
+			for (i = 0; i < activeState.animations.length; i++) {
+				clip = this._animEvaluator.findClip(activeState.animations[i].name);
+
+				if (!clip) {
+					var speed = Number.isFinite(activeState.animations[i].speed) ? activeState.animations[i].speed : activeState.speed;
+					clip = new AnimClip(activeState.animations[i].animTrack, 0, speed, true, activeState.loop);
+					clip.name = activeState.animations[i].name;
+
+					this._animEvaluator.addClip(clip);
+				} else {
+					clip.reset();
+				}
+
+				if (transition.time > 0) {
+					clip.blendWeight = 0.0;
+				} else {
+					clip.blendWeight = activeState.animations[i].normalizedWeight;
+				}
+
+				clip.play();
+
+				if (hasTransitionOffset) {
+					clip.time = activeState.timelineDuration * transition.transitionOffset;
+				} else {
+					var startTime = activeState.speed >= 0 ? 0 : this.activeStateDuration;
+					clip.time = startTime;
+				}
+			}
+
+			var timeInState = 0;
+			var timeInStateBefore = 0;
+
+			if (hasTransitionOffset) {
+				var offsetTime = activeState.timelineDuration * transition.transitionOffset;
+				timeInState = offsetTime;
+				timeInStateBefore = offsetTime;
+			}
+
+			this._timeInState = timeInState;
+			this._timeInStateBefore = timeInStateBefore;
+		};
+
+		_proto3._transitionToState = function _transitionToState(newStateName) {
+			if (newStateName === this._activeStateName) {
+				return;
+			}
+
+			if (!this._findState(newStateName)) {
+				return;
+			}
+
+			var transition = this._findTransition(this._activeStateName, newStateName);
+
+			if (!transition) {
+				this._animEvaluator.removeClips();
+
+				transition = new AnimTransition(this, null, newStateName, 0, 0);
+			}
+
+			this._updateStateFromTransition(transition);
+		};
+
+		_proto3.assignAnimation = function assignAnimation(pathString, animTrack) {
+			var path = pathString.split('.');
+
+			var state = this._findState(path[0]);
+
+			if (!state) {
+				return;
+			}
+
+			state.addAnimation(path, animTrack);
+
+			if (!this._playing && this._activate && this.playable) {
+				this.play();
+			}
+		};
+
+		_proto3.removeNodeAnimations = function removeNodeAnimations(nodeName) {
+			var state = this._findState(nodeName);
+
+			if (!state) {
+				return;
+			}
+
+			state.animations = [];
+		};
+
+		_proto3.play = function play(stateName) {
+			if (stateName) {
+				this._transitionToState(stateName);
+			}
+
+			this._playing = true;
+		};
+
+		_proto3.pause = function pause() {
+			this._playing = false;
+		};
+
+		_proto3.reset = function reset() {
+			this._previousStateName = null;
+			this._activeStateName = ANIM_STATE_START;
+			this._playing = false;
+			this._currTransitionTime = 1.0;
+			this._totalTransitionTime = 1.0;
+			this._isTransitioning = false;
+			this._timeInState = 0;
+			this._timeInStateBefore = 0;
+
+			this._animEvaluator.removeClips();
+		};
+
+		_proto3.update = function update(dt) {
+			if (!this._playing) {
+				return;
+			}
+
+			var i;
+			var j;
+			var state;
+			var animation;
+			var clip;
+			this._timeInStateBefore = this._timeInState;
+			this._timeInState += dt;
+
+			var transition = this._findTransition(this._activeStateName);
+
+			if (transition) this._updateStateFromTransition(transition);
+
+			if (this._isTransitioning) {
+				this._currTransitionTime += dt;
+
+				if (this._currTransitionTime <= this._totalTransitionTime) {
+					var interpolatedTime = this._currTransitionTime / this._totalTransitionTime;
+
+					for (i = 0; i < this._transitionPreviousStates.length; i++) {
+						state = this._findState(this._transitionPreviousStates[i].name);
+						var stateWeight = this._transitionPreviousStates[i].weight;
+
+						for (j = 0; j < state.animations.length; j++) {
+							animation = state.animations[j];
+							clip = this._animEvaluator.findClip(animation.name + '.previous.' + i);
+
+							if (clip) {
+								clip.blendWeight = (1.0 - interpolatedTime) * animation.normalizedWeight * stateWeight;
+							}
+						}
+					}
+
+					state = this.activeState;
+
+					for (i = 0; i < state.animations.length; i++) {
+						animation = state.animations[i];
+						this._animEvaluator.findClip(animation.name).blendWeight = interpolatedTime * animation.normalizedWeight;
+					}
+				} else {
+					this._isTransitioning = false;
+					var activeClips = this.activeStateAnimations.length;
+					var totalClips = this._animEvaluator.clips.length;
+
+					for (i = 0; i < totalClips - activeClips; i++) {
+						this._animEvaluator.removeClip(0);
+					}
+
+					this._transitionPreviousStates = [];
+					state = this.activeState;
+
+					for (i = 0; i < state.animations.length; i++) {
+						animation = state.animations[i];
+						clip = this._animEvaluator.findClip(animation.name);
+
+						if (clip) {
+							clip.blendWeight = animation.normalizedWeight;
+						}
+					}
+				}
+			} else {
+				if (this.activeState._blendTree.constructor === BlendTree) {
+					state = this.activeState;
+
+					for (i = 0; i < state.animations.length; i++) {
+						animation = state.animations[i];
+						clip = this._animEvaluator.findClip(animation.name);
+
+						if (clip) {
+							clip.blendWeight = animation.normalizedWeight;
+						}
+					}
+				}
+			}
+
+			this._animEvaluator.update(dt);
+		};
+
+		_proto3.findParameter = function findParameter(name) {
+			return this._parameters[name];
+		};
+
+		_createClass(AnimController, [{
+			key: "animEvaluator",
+			get: function get() {
+				return this._animEvaluator;
+			}
+		}, {
+			key: "activeState",
+			get: function get() {
+				return this._findState(this._activeStateName);
+			},
+			set: function set(stateName) {
+				this._activeStateName = stateName;
+			}
+		}, {
+			key: "activeStateName",
+			get: function get() {
+				return this._activeStateName;
+			}
+		}, {
+			key: "activeStateAnimations",
+			get: function get() {
+				return this.activeState.animations;
+			}
+		}, {
+			key: "previousState",
+			get: function get() {
+				return this._findState(this._previousStateName);
+			},
+			set: function set(stateName) {
+				this._previousStateName = stateName;
+			}
+		}, {
+			key: "previousStateName",
+			get: function get() {
+				return this._previousStateName;
+			}
+		}, {
+			key: "playable",
+			get: function get() {
+				var playable = true;
+				var i;
+
+				for (i = 0; i < this._stateNames.length; i++) {
+					if (!this._states[this._stateNames[i]].playable) {
+						playable = false;
+					}
+				}
+
+				return playable;
+			}
+		}, {
+			key: "playing",
+			get: function get() {
+				return this._playing;
+			},
+			set: function set(value) {
+				this._playing = value;
+			}
+		}, {
+			key: "activeStateProgress",
+			get: function get() {
+				return this._getActiveStateProgressForTime(this._timeInState);
+			}
+		}, {
+			key: "activeStateDuration",
+			get: function get() {
+				if (this.activeStateName === ANIM_STATE_START || this.activeStateName === ANIM_STATE_END) return 0.0;
+				var maxDuration = 0.0;
+
+				for (var i = 0; i < this.activeStateAnimations.length; i++) {
+					var activeClip = this._animEvaluator.findClip(this.activeStateAnimations[i].name);
+
+					maxDuration = Math.max(maxDuration, activeClip.track.duration);
+				}
+
+				return maxDuration;
+			}
+		}, {
+			key: "activeStateCurrentTime",
+			get: function get() {
+				return this._timeInState;
+			},
+			set: function set(time) {
+				this._timeInStateBefore = time;
+				this._timeInState = time;
+
+				for (var i = 0; i < this.activeStateAnimations.length; i++) {
+					var clip = this.animEvaluator.findClip(this.activeStateAnimations[i].name);
+
+					if (clip) {
+						clip.time = time;
+					}
+				}
+			}
+		}, {
+			key: "transitioning",
+			get: function get() {
+				return this._isTransitioning;
+			}
+		}, {
+			key: "transitionProgress",
+			get: function get() {
+				return this._currTransitionTime / this._totalTransitionTime;
+			}
+		}, {
+			key: "states",
+			get: function get() {
+				return this._stateNames;
+			}
+		}]);
+
+		return AnimController;
 	}();
 
 	var AnimComponent = function (_Component) {
@@ -64956,14 +70522,7 @@
 			_this.createGrabPass();
 
 			VertexFormat.init(_assertThisInitialized(_this));
-			_this._areaLightLutFormat = PIXELFORMAT_R8_G8_B8_A8;
-
-			if (_this.extTextureHalfFloat && _this.textureHalfFloatUpdatable) {
-				_this._areaLightLutFormat = PIXELFORMAT_RGBA16F;
-			} else if (_this.extTextureFloat) {
-				_this._areaLightLutFormat = PIXELFORMAT_RGBA32F;
-			}
-
+			_this._areaLightLutFormat = _this.extTextureFloat ? PIXELFORMAT_RGBA32F : _this.extTextureHalfFloat && _this.textureHalfFloatUpdatable ? PIXELFORMAT_RGBA16F : PIXELFORMAT_R8_G8_B8_A8;
 			return _this;
 		}
 
@@ -67813,6 +73372,7 @@
 			this.app = app;
 			this.device = app.graphicsDevice;
 			var device = this.device;
+			this.library = device.getProgramLibrary();
 			this.pickColor = new Float32Array(4);
 			this.pickColor[3] = 1;
 			this.mapping = [];
@@ -71817,6 +77377,7 @@
 	exports.AnimCurve = AnimCurve;
 	exports.AnimData = AnimData;
 	exports.AnimEvaluator = AnimEvaluator;
+	exports.AnimPropertyLocator = AnimPropertyLocator;
 	exports.AnimSnapshot = AnimSnapshot;
 	exports.AnimStateGraph = AnimStateGraph;
 	exports.AnimStateGraphHandler = AnimStateGraphHandler;
@@ -72656,6 +78217,3278 @@
 
 /***/ }),
 
+/***/ "./node_modules/process/browser.js":
+/*!*****************************************!*\
+  !*** ./node_modules/process/browser.js ***!
+  \*****************************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+// shim for using process in browser
+var process = module.exports = {};
+
+// cached from whatever global is present so that test runners that stub it
+// don't break things.  But we need to wrap it in a try catch in case it is
+// wrapped in strict mode code which doesn't define any globals.  It's inside a
+// function because try/catches deoptimize in certain engines.
+
+var cachedSetTimeout;
+var cachedClearTimeout;
+
+function defaultSetTimout() {
+    throw new Error('setTimeout has not been defined');
+}
+function defaultClearTimeout () {
+    throw new Error('clearTimeout has not been defined');
+}
+(function () {
+    try {
+        if (typeof setTimeout === 'function') {
+            cachedSetTimeout = setTimeout;
+        } else {
+            cachedSetTimeout = defaultSetTimout;
+        }
+    } catch (e) {
+        cachedSetTimeout = defaultSetTimout;
+    }
+    try {
+        if (typeof clearTimeout === 'function') {
+            cachedClearTimeout = clearTimeout;
+        } else {
+            cachedClearTimeout = defaultClearTimeout;
+        }
+    } catch (e) {
+        cachedClearTimeout = defaultClearTimeout;
+    }
+} ())
+function runTimeout(fun) {
+    if (cachedSetTimeout === setTimeout) {
+        //normal enviroments in sane situations
+        return setTimeout(fun, 0);
+    }
+    // if setTimeout wasn't available but was latter defined
+    if ((cachedSetTimeout === defaultSetTimout || !cachedSetTimeout) && setTimeout) {
+        cachedSetTimeout = setTimeout;
+        return setTimeout(fun, 0);
+    }
+    try {
+        // when when somebody has screwed with setTimeout but no I.E. maddness
+        return cachedSetTimeout(fun, 0);
+    } catch(e){
+        try {
+            // When we are in I.E. but the script has been evaled so I.E. doesn't trust the global object when called normally
+            return cachedSetTimeout.call(null, fun, 0);
+        } catch(e){
+            // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error
+            return cachedSetTimeout.call(this, fun, 0);
+        }
+    }
+
+
+}
+function runClearTimeout(marker) {
+    if (cachedClearTimeout === clearTimeout) {
+        //normal enviroments in sane situations
+        return clearTimeout(marker);
+    }
+    // if clearTimeout wasn't available but was latter defined
+    if ((cachedClearTimeout === defaultClearTimeout || !cachedClearTimeout) && clearTimeout) {
+        cachedClearTimeout = clearTimeout;
+        return clearTimeout(marker);
+    }
+    try {
+        // when when somebody has screwed with setTimeout but no I.E. maddness
+        return cachedClearTimeout(marker);
+    } catch (e){
+        try {
+            // When we are in I.E. but the script has been evaled so I.E. doesn't  trust the global object when called normally
+            return cachedClearTimeout.call(null, marker);
+        } catch (e){
+            // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error.
+            // Some versions of I.E. have different rules for clearTimeout vs setTimeout
+            return cachedClearTimeout.call(this, marker);
+        }
+    }
+
+
+
+}
+var queue = [];
+var draining = false;
+var currentQueue;
+var queueIndex = -1;
+
+function cleanUpNextTick() {
+    if (!draining || !currentQueue) {
+        return;
+    }
+    draining = false;
+    if (currentQueue.length) {
+        queue = currentQueue.concat(queue);
+    } else {
+        queueIndex = -1;
+    }
+    if (queue.length) {
+        drainQueue();
+    }
+}
+
+function drainQueue() {
+    if (draining) {
+        return;
+    }
+    var timeout = runTimeout(cleanUpNextTick);
+    draining = true;
+
+    var len = queue.length;
+    while(len) {
+        currentQueue = queue;
+        queue = [];
+        while (++queueIndex < len) {
+            if (currentQueue) {
+                currentQueue[queueIndex].run();
+            }
+        }
+        queueIndex = -1;
+        len = queue.length;
+    }
+    currentQueue = null;
+    draining = false;
+    runClearTimeout(timeout);
+}
+
+process.nextTick = function (fun) {
+    var args = new Array(arguments.length - 1);
+    if (arguments.length > 1) {
+        for (var i = 1; i < arguments.length; i++) {
+            args[i - 1] = arguments[i];
+        }
+    }
+    queue.push(new Item(fun, args));
+    if (queue.length === 1 && !draining) {
+        runTimeout(drainQueue);
+    }
+};
+
+// v8 likes predictible objects
+function Item(fun, array) {
+    this.fun = fun;
+    this.array = array;
+}
+Item.prototype.run = function () {
+    this.fun.apply(null, this.array);
+};
+process.title = 'browser';
+process.browser = true;
+process.env = {};
+process.argv = [];
+process.version = ''; // empty string to avoid regexp issues
+process.versions = {};
+
+function noop() {}
+
+process.on = noop;
+process.addListener = noop;
+process.once = noop;
+process.off = noop;
+process.removeListener = noop;
+process.removeAllListeners = noop;
+process.emit = noop;
+process.prependListener = noop;
+process.prependOnceListener = noop;
+
+process.listeners = function (name) { return [] }
+
+process.binding = function (name) {
+    throw new Error('process.binding is not supported');
+};
+
+process.cwd = function () { return '/' };
+process.chdir = function (dir) {
+    throw new Error('process.chdir is not supported');
+};
+process.umask = function() { return 0; };
+
+
+/***/ }),
+
+/***/ "./node_modules/socket.io-client/build/index.js":
+/*!******************************************************!*\
+  !*** ./node_modules/socket.io-client/build/index.js ***!
+  \******************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.Socket = exports.io = exports.Manager = exports.protocol = void 0;
+const url_1 = __webpack_require__(/*! ./url */ "./node_modules/socket.io-client/build/url.js");
+const manager_1 = __webpack_require__(/*! ./manager */ "./node_modules/socket.io-client/build/manager.js");
+const socket_1 = __webpack_require__(/*! ./socket */ "./node_modules/socket.io-client/build/socket.js");
+Object.defineProperty(exports, "Socket", { enumerable: true, get: function () { return socket_1.Socket; } });
+const debug = __webpack_require__(/*! debug */ "./node_modules/socket.io-client/node_modules/debug/src/browser.js")("socket.io-client");
+/**
+ * Module exports.
+ */
+module.exports = exports = lookup;
+/**
+ * Managers cache.
+ */
+const cache = (exports.managers = {});
+function lookup(uri, opts) {
+    if (typeof uri === "object") {
+        opts = uri;
+        uri = undefined;
+    }
+    opts = opts || {};
+    const parsed = url_1.url(uri);
+    const source = parsed.source;
+    const id = parsed.id;
+    const path = parsed.path;
+    const sameNamespace = cache[id] && path in cache[id]["nsps"];
+    const newConnection = opts.forceNew ||
+        opts["force new connection"] ||
+        false === opts.multiplex ||
+        sameNamespace;
+    let io;
+    if (newConnection) {
+        debug("ignoring socket cache for %s", source);
+        io = new manager_1.Manager(source, opts);
+    }
+    else {
+        if (!cache[id]) {
+            debug("new io instance for %s", source);
+            cache[id] = new manager_1.Manager(source, opts);
+        }
+        io = cache[id];
+    }
+    if (parsed.query && !opts.query) {
+        opts.query = parsed.query;
+    }
+    return io.socket(parsed.path, opts);
+}
+exports.io = lookup;
+/**
+ * Protocol version.
+ *
+ * @public
+ */
+var socket_io_parser_1 = __webpack_require__(/*! socket.io-parser */ "./node_modules/socket.io-parser/dist/index.js");
+Object.defineProperty(exports, "protocol", { enumerable: true, get: function () { return socket_io_parser_1.protocol; } });
+/**
+ * `connect`.
+ *
+ * @param {String} uri
+ * @public
+ */
+exports.connect = lookup;
+/**
+ * Expose constructors for standalone build.
+ *
+ * @public
+ */
+var manager_2 = __webpack_require__(/*! ./manager */ "./node_modules/socket.io-client/build/manager.js");
+Object.defineProperty(exports, "Manager", { enumerable: true, get: function () { return manager_2.Manager; } });
+
+
+/***/ }),
+
+/***/ "./node_modules/socket.io-client/build/manager.js":
+/*!********************************************************!*\
+  !*** ./node_modules/socket.io-client/build/manager.js ***!
+  \********************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.Manager = void 0;
+const eio = __webpack_require__(/*! engine.io-client */ "./node_modules/engine.io-client/lib/index.js");
+const socket_1 = __webpack_require__(/*! ./socket */ "./node_modules/socket.io-client/build/socket.js");
+const Emitter = __webpack_require__(/*! component-emitter */ "./node_modules/component-emitter/index.js");
+const parser = __webpack_require__(/*! socket.io-parser */ "./node_modules/socket.io-parser/dist/index.js");
+const on_1 = __webpack_require__(/*! ./on */ "./node_modules/socket.io-client/build/on.js");
+const Backoff = __webpack_require__(/*! backo2 */ "./node_modules/backo2/index.js");
+const debug = __webpack_require__(/*! debug */ "./node_modules/socket.io-client/node_modules/debug/src/browser.js")("socket.io-client:manager");
+class Manager extends Emitter {
+    constructor(uri, opts) {
+        super();
+        this.nsps = {};
+        this.subs = [];
+        if (uri && "object" === typeof uri) {
+            opts = uri;
+            uri = undefined;
+        }
+        opts = opts || {};
+        opts.path = opts.path || "/socket.io";
+        this.opts = opts;
+        this.reconnection(opts.reconnection !== false);
+        this.reconnectionAttempts(opts.reconnectionAttempts || Infinity);
+        this.reconnectionDelay(opts.reconnectionDelay || 1000);
+        this.reconnectionDelayMax(opts.reconnectionDelayMax || 5000);
+        this.randomizationFactor(opts.randomizationFactor || 0.5);
+        this.backoff = new Backoff({
+            min: this.reconnectionDelay(),
+            max: this.reconnectionDelayMax(),
+            jitter: this.randomizationFactor(),
+        });
+        this.timeout(null == opts.timeout ? 20000 : opts.timeout);
+        this._readyState = "closed";
+        this.uri = uri;
+        const _parser = opts.parser || parser;
+        this.encoder = new _parser.Encoder();
+        this.decoder = new _parser.Decoder();
+        this._autoConnect = opts.autoConnect !== false;
+        if (this._autoConnect)
+            this.open();
+    }
+    reconnection(v) {
+        if (!arguments.length)
+            return this._reconnection;
+        this._reconnection = !!v;
+        return this;
+    }
+    reconnectionAttempts(v) {
+        if (v === undefined)
+            return this._reconnectionAttempts;
+        this._reconnectionAttempts = v;
+        return this;
+    }
+    reconnectionDelay(v) {
+        var _a;
+        if (v === undefined)
+            return this._reconnectionDelay;
+        this._reconnectionDelay = v;
+        (_a = this.backoff) === null || _a === void 0 ? void 0 : _a.setMin(v);
+        return this;
+    }
+    randomizationFactor(v) {
+        var _a;
+        if (v === undefined)
+            return this._randomizationFactor;
+        this._randomizationFactor = v;
+        (_a = this.backoff) === null || _a === void 0 ? void 0 : _a.setJitter(v);
+        return this;
+    }
+    reconnectionDelayMax(v) {
+        var _a;
+        if (v === undefined)
+            return this._reconnectionDelayMax;
+        this._reconnectionDelayMax = v;
+        (_a = this.backoff) === null || _a === void 0 ? void 0 : _a.setMax(v);
+        return this;
+    }
+    timeout(v) {
+        if (!arguments.length)
+            return this._timeout;
+        this._timeout = v;
+        return this;
+    }
+    /**
+     * Starts trying to reconnect if reconnection is enabled and we have not
+     * started reconnecting yet
+     *
+     * @private
+     */
+    maybeReconnectOnOpen() {
+        // Only try to reconnect if it's the first time we're connecting
+        if (!this._reconnecting &&
+            this._reconnection &&
+            this.backoff.attempts === 0) {
+            // keeps reconnection from firing twice for the same reconnection loop
+            this.reconnect();
+        }
+    }
+    /**
+     * Sets the current transport `socket`.
+     *
+     * @param {Function} fn - optional, callback
+     * @return self
+     * @public
+     */
+    open(fn) {
+        debug("readyState %s", this._readyState);
+        if (~this._readyState.indexOf("open"))
+            return this;
+        debug("opening %s", this.uri);
+        this.engine = eio(this.uri, this.opts);
+        const socket = this.engine;
+        const self = this;
+        this._readyState = "opening";
+        this.skipReconnect = false;
+        // emit `open`
+        const openSubDestroy = on_1.on(socket, "open", function () {
+            self.onopen();
+            fn && fn();
+        });
+        // emit `error`
+        const errorSub = on_1.on(socket, "error", (err) => {
+            debug("error");
+            self.cleanup();
+            self._readyState = "closed";
+            super.emit("error", err);
+            if (fn) {
+                fn(err);
+            }
+            else {
+                // Only do this if there is no fn to handle the error
+                self.maybeReconnectOnOpen();
+            }
+        });
+        if (false !== this._timeout) {
+            const timeout = this._timeout;
+            debug("connect attempt will timeout after %d", timeout);
+            if (timeout === 0) {
+                openSubDestroy(); // prevents a race condition with the 'open' event
+            }
+            // set timer
+            const timer = setTimeout(() => {
+                debug("connect attempt timed out after %d", timeout);
+                openSubDestroy();
+                socket.close();
+                socket.emit("error", new Error("timeout"));
+            }, timeout);
+            this.subs.push(function subDestroy() {
+                clearTimeout(timer);
+            });
+        }
+        this.subs.push(openSubDestroy);
+        this.subs.push(errorSub);
+        return this;
+    }
+    /**
+     * Alias for open()
+     *
+     * @return self
+     * @public
+     */
+    connect(fn) {
+        return this.open(fn);
+    }
+    /**
+     * Called upon transport open.
+     *
+     * @private
+     */
+    onopen() {
+        debug("open");
+        // clear old subs
+        this.cleanup();
+        // mark as open
+        this._readyState = "open";
+        super.emit("open");
+        // add new subs
+        const socket = this.engine;
+        this.subs.push(on_1.on(socket, "ping", this.onping.bind(this)), on_1.on(socket, "data", this.ondata.bind(this)), on_1.on(socket, "error", this.onerror.bind(this)), on_1.on(socket, "close", this.onclose.bind(this)), on_1.on(this.decoder, "decoded", this.ondecoded.bind(this)));
+    }
+    /**
+     * Called upon a ping.
+     *
+     * @private
+     */
+    onping() {
+        super.emit("ping");
+    }
+    /**
+     * Called with data.
+     *
+     * @private
+     */
+    ondata(data) {
+        this.decoder.add(data);
+    }
+    /**
+     * Called when parser fully decodes a packet.
+     *
+     * @private
+     */
+    ondecoded(packet) {
+        super.emit("packet", packet);
+    }
+    /**
+     * Called upon socket error.
+     *
+     * @private
+     */
+    onerror(err) {
+        debug("error", err);
+        super.emit("error", err);
+    }
+    /**
+     * Creates a new socket for the given `nsp`.
+     *
+     * @return {Socket}
+     * @public
+     */
+    socket(nsp, opts) {
+        let socket = this.nsps[nsp];
+        if (!socket) {
+            socket = new socket_1.Socket(this, nsp, opts);
+            this.nsps[nsp] = socket;
+        }
+        return socket;
+    }
+    /**
+     * Called upon a socket close.
+     *
+     * @param socket
+     * @private
+     */
+    _destroy(socket) {
+        const nsps = Object.keys(this.nsps);
+        for (const nsp of nsps) {
+            const socket = this.nsps[nsp];
+            if (socket.active) {
+                debug("socket %s is still active, skipping close", nsp);
+                return;
+            }
+        }
+        this._close();
+    }
+    /**
+     * Writes a packet.
+     *
+     * @param packet
+     * @private
+     */
+    _packet(packet) {
+        debug("writing packet %j", packet);
+        if (packet.query && packet.type === 0)
+            packet.nsp += "?" + packet.query;
+        const encodedPackets = this.encoder.encode(packet);
+        for (let i = 0; i < encodedPackets.length; i++) {
+            this.engine.write(encodedPackets[i], packet.options);
+        }
+    }
+    /**
+     * Clean up transport subscriptions and packet buffer.
+     *
+     * @private
+     */
+    cleanup() {
+        debug("cleanup");
+        this.subs.forEach((subDestroy) => subDestroy());
+        this.subs.length = 0;
+        this.decoder.destroy();
+    }
+    /**
+     * Close the current socket.
+     *
+     * @private
+     */
+    _close() {
+        debug("disconnect");
+        this.skipReconnect = true;
+        this._reconnecting = false;
+        if ("opening" === this._readyState) {
+            // `onclose` will not fire because
+            // an open event never happened
+            this.cleanup();
+        }
+        this.backoff.reset();
+        this._readyState = "closed";
+        if (this.engine)
+            this.engine.close();
+    }
+    /**
+     * Alias for close()
+     *
+     * @private
+     */
+    disconnect() {
+        return this._close();
+    }
+    /**
+     * Called upon engine close.
+     *
+     * @private
+     */
+    onclose(reason) {
+        debug("onclose");
+        this.cleanup();
+        this.backoff.reset();
+        this._readyState = "closed";
+        super.emit("close", reason);
+        if (this._reconnection && !this.skipReconnect) {
+            this.reconnect();
+        }
+    }
+    /**
+     * Attempt a reconnection.
+     *
+     * @private
+     */
+    reconnect() {
+        if (this._reconnecting || this.skipReconnect)
+            return this;
+        const self = this;
+        if (this.backoff.attempts >= this._reconnectionAttempts) {
+            debug("reconnect failed");
+            this.backoff.reset();
+            super.emit("reconnect_failed");
+            this._reconnecting = false;
+        }
+        else {
+            const delay = this.backoff.duration();
+            debug("will wait %dms before reconnect attempt", delay);
+            this._reconnecting = true;
+            const timer = setTimeout(() => {
+                if (self.skipReconnect)
+                    return;
+                debug("attempting reconnect");
+                super.emit("reconnect_attempt", self.backoff.attempts);
+                // check again for the case socket closed in above events
+                if (self.skipReconnect)
+                    return;
+                self.open((err) => {
+                    if (err) {
+                        debug("reconnect attempt error");
+                        self._reconnecting = false;
+                        self.reconnect();
+                        super.emit("reconnect_error", err);
+                    }
+                    else {
+                        debug("reconnect success");
+                        self.onreconnect();
+                    }
+                });
+            }, delay);
+            this.subs.push(function subDestroy() {
+                clearTimeout(timer);
+            });
+        }
+    }
+    /**
+     * Called upon successful reconnect.
+     *
+     * @private
+     */
+    onreconnect() {
+        const attempt = this.backoff.attempts;
+        this._reconnecting = false;
+        this.backoff.reset();
+        super.emit("reconnect", attempt);
+    }
+}
+exports.Manager = Manager;
+
+
+/***/ }),
+
+/***/ "./node_modules/socket.io-client/build/on.js":
+/*!***************************************************!*\
+  !*** ./node_modules/socket.io-client/build/on.js ***!
+  \***************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.on = void 0;
+function on(obj, ev, fn) {
+    obj.on(ev, fn);
+    return function subDestroy() {
+        obj.off(ev, fn);
+    };
+}
+exports.on = on;
+
+
+/***/ }),
+
+/***/ "./node_modules/socket.io-client/build/socket.js":
+/*!*******************************************************!*\
+  !*** ./node_modules/socket.io-client/build/socket.js ***!
+  \*******************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.Socket = void 0;
+const socket_io_parser_1 = __webpack_require__(/*! socket.io-parser */ "./node_modules/socket.io-parser/dist/index.js");
+const Emitter = __webpack_require__(/*! component-emitter */ "./node_modules/component-emitter/index.js");
+const on_1 = __webpack_require__(/*! ./on */ "./node_modules/socket.io-client/build/on.js");
+const debug = __webpack_require__(/*! debug */ "./node_modules/socket.io-client/node_modules/debug/src/browser.js")("socket.io-client:socket");
+/**
+ * Internal events.
+ * These events can't be emitted by the user.
+ */
+const RESERVED_EVENTS = Object.freeze({
+    connect: 1,
+    connect_error: 1,
+    disconnect: 1,
+    disconnecting: 1,
+    // EventEmitter reserved events: https://nodejs.org/api/events.html#events_event_newlistener
+    newListener: 1,
+    removeListener: 1,
+});
+class Socket extends Emitter {
+    /**
+     * `Socket` constructor.
+     *
+     * @public
+     */
+    constructor(io, nsp, opts) {
+        super();
+        this.receiveBuffer = [];
+        this.sendBuffer = [];
+        this.ids = 0;
+        this.acks = {};
+        this.flags = {};
+        this.io = io;
+        this.nsp = nsp;
+        this.ids = 0;
+        this.acks = {};
+        this.receiveBuffer = [];
+        this.sendBuffer = [];
+        this.connected = false;
+        this.disconnected = true;
+        this.flags = {};
+        if (opts && opts.auth) {
+            this.auth = opts.auth;
+        }
+        if (this.io._autoConnect)
+            this.open();
+    }
+    /**
+     * Subscribe to open, close and packet events
+     *
+     * @private
+     */
+    subEvents() {
+        if (this.subs)
+            return;
+        const io = this.io;
+        this.subs = [
+            on_1.on(io, "open", this.onopen.bind(this)),
+            on_1.on(io, "packet", this.onpacket.bind(this)),
+            on_1.on(io, "error", this.onerror.bind(this)),
+            on_1.on(io, "close", this.onclose.bind(this)),
+        ];
+    }
+    /**
+     * Whether the Socket will try to reconnect when its Manager connects or reconnects
+     */
+    get active() {
+        return !!this.subs;
+    }
+    /**
+     * "Opens" the socket.
+     *
+     * @public
+     */
+    connect() {
+        if (this.connected)
+            return this;
+        this.subEvents();
+        if (!this.io["_reconnecting"])
+            this.io.open(); // ensure open
+        if ("open" === this.io._readyState)
+            this.onopen();
+        return this;
+    }
+    /**
+     * Alias for connect()
+     */
+    open() {
+        return this.connect();
+    }
+    /**
+     * Sends a `message` event.
+     *
+     * @return self
+     * @public
+     */
+    send(...args) {
+        args.unshift("message");
+        this.emit.apply(this, args);
+        return this;
+    }
+    /**
+     * Override `emit`.
+     * If the event is in `events`, it's emitted normally.
+     *
+     * @param ev - event name
+     * @return self
+     * @public
+     */
+    emit(ev, ...args) {
+        if (RESERVED_EVENTS.hasOwnProperty(ev)) {
+            throw new Error('"' + ev + '" is a reserved event name');
+        }
+        args.unshift(ev);
+        const packet = {
+            type: socket_io_parser_1.PacketType.EVENT,
+            data: args,
+        };
+        packet.options = {};
+        packet.options.compress = this.flags.compress !== false;
+        // event ack callback
+        if ("function" === typeof args[args.length - 1]) {
+            debug("emitting packet with ack id %d", this.ids);
+            this.acks[this.ids] = args.pop();
+            packet.id = this.ids++;
+        }
+        const isTransportWritable = this.io.engine &&
+            this.io.engine.transport &&
+            this.io.engine.transport.writable;
+        const discardPacket = this.flags.volatile && (!isTransportWritable || !this.connected);
+        if (discardPacket) {
+            debug("discard packet as the transport is not currently writable");
+        }
+        else if (this.connected) {
+            this.packet(packet);
+        }
+        else {
+            this.sendBuffer.push(packet);
+        }
+        this.flags = {};
+        return this;
+    }
+    /**
+     * Sends a packet.
+     *
+     * @param packet
+     * @private
+     */
+    packet(packet) {
+        packet.nsp = this.nsp;
+        this.io._packet(packet);
+    }
+    /**
+     * Called upon engine `open`.
+     *
+     * @private
+     */
+    onopen() {
+        debug("transport is open - connecting");
+        if (typeof this.auth == "function") {
+            this.auth((data) => {
+                this.packet({ type: socket_io_parser_1.PacketType.CONNECT, data });
+            });
+        }
+        else {
+            this.packet({ type: socket_io_parser_1.PacketType.CONNECT, data: this.auth });
+        }
+    }
+    /**
+     * Called upon engine or manager `error`.
+     *
+     * @param err
+     * @private
+     */
+    onerror(err) {
+        if (!this.connected) {
+            super.emit("connect_error", err);
+        }
+    }
+    /**
+     * Called upon engine `close`.
+     *
+     * @param reason
+     * @private
+     */
+    onclose(reason) {
+        debug("close (%s)", reason);
+        this.connected = false;
+        this.disconnected = true;
+        delete this.id;
+        super.emit("disconnect", reason);
+    }
+    /**
+     * Called with socket packet.
+     *
+     * @param packet
+     * @private
+     */
+    onpacket(packet) {
+        const sameNamespace = packet.nsp === this.nsp;
+        if (!sameNamespace)
+            return;
+        switch (packet.type) {
+            case socket_io_parser_1.PacketType.CONNECT:
+                if (packet.data && packet.data.sid) {
+                    const id = packet.data.sid;
+                    this.onconnect(id);
+                }
+                else {
+                    super.emit("connect_error", new Error("It seems you are trying to reach a Socket.IO server in v2.x with a v3.x client, but they are not compatible (more information here: https://socket.io/docs/v3/migrating-from-2-x-to-3-0/)"));
+                }
+                break;
+            case socket_io_parser_1.PacketType.EVENT:
+                this.onevent(packet);
+                break;
+            case socket_io_parser_1.PacketType.BINARY_EVENT:
+                this.onevent(packet);
+                break;
+            case socket_io_parser_1.PacketType.ACK:
+                this.onack(packet);
+                break;
+            case socket_io_parser_1.PacketType.BINARY_ACK:
+                this.onack(packet);
+                break;
+            case socket_io_parser_1.PacketType.DISCONNECT:
+                this.ondisconnect();
+                break;
+            case socket_io_parser_1.PacketType.CONNECT_ERROR:
+                const err = new Error(packet.data.message);
+                // @ts-ignore
+                err.data = packet.data.data;
+                super.emit("connect_error", err);
+                break;
+        }
+    }
+    /**
+     * Called upon a server event.
+     *
+     * @param packet
+     * @private
+     */
+    onevent(packet) {
+        const args = packet.data || [];
+        debug("emitting event %j", args);
+        if (null != packet.id) {
+            debug("attaching ack callback to event");
+            args.push(this.ack(packet.id));
+        }
+        if (this.connected) {
+            this.emitEvent(args);
+        }
+        else {
+            this.receiveBuffer.push(Object.freeze(args));
+        }
+    }
+    emitEvent(args) {
+        if (this._anyListeners && this._anyListeners.length) {
+            const listeners = this._anyListeners.slice();
+            for (const listener of listeners) {
+                listener.apply(this, args);
+            }
+        }
+        super.emit.apply(this, args);
+    }
+    /**
+     * Produces an ack callback to emit with an event.
+     *
+     * @private
+     */
+    ack(id) {
+        const self = this;
+        let sent = false;
+        return function (...args) {
+            // prevent double callbacks
+            if (sent)
+                return;
+            sent = true;
+            debug("sending ack %j", args);
+            self.packet({
+                type: socket_io_parser_1.PacketType.ACK,
+                id: id,
+                data: args,
+            });
+        };
+    }
+    /**
+     * Called upon a server acknowlegement.
+     *
+     * @param packet
+     * @private
+     */
+    onack(packet) {
+        const ack = this.acks[packet.id];
+        if ("function" === typeof ack) {
+            debug("calling ack %s with %j", packet.id, packet.data);
+            ack.apply(this, packet.data);
+            delete this.acks[packet.id];
+        }
+        else {
+            debug("bad ack %s", packet.id);
+        }
+    }
+    /**
+     * Called upon server connect.
+     *
+     * @private
+     */
+    onconnect(id) {
+        debug("socket connected with id %s", id);
+        this.id = id;
+        this.connected = true;
+        this.disconnected = false;
+        super.emit("connect");
+        this.emitBuffered();
+    }
+    /**
+     * Emit buffered events (received and emitted).
+     *
+     * @private
+     */
+    emitBuffered() {
+        this.receiveBuffer.forEach((args) => this.emitEvent(args));
+        this.receiveBuffer = [];
+        this.sendBuffer.forEach((packet) => this.packet(packet));
+        this.sendBuffer = [];
+    }
+    /**
+     * Called upon server disconnect.
+     *
+     * @private
+     */
+    ondisconnect() {
+        debug("server disconnect (%s)", this.nsp);
+        this.destroy();
+        this.onclose("io server disconnect");
+    }
+    /**
+     * Called upon forced client/server side disconnections,
+     * this method ensures the manager stops tracking us and
+     * that reconnections don't get triggered for this.
+     *
+     * @private
+     */
+    destroy() {
+        if (this.subs) {
+            // clean subscriptions to avoid reconnections
+            this.subs.forEach((subDestroy) => subDestroy());
+            this.subs = undefined;
+        }
+        this.io["_destroy"](this);
+    }
+    /**
+     * Disconnects the socket manually.
+     *
+     * @return self
+     * @public
+     */
+    disconnect() {
+        if (this.connected) {
+            debug("performing disconnect (%s)", this.nsp);
+            this.packet({ type: socket_io_parser_1.PacketType.DISCONNECT });
+        }
+        // remove socket from pool
+        this.destroy();
+        if (this.connected) {
+            // fire events
+            this.onclose("io client disconnect");
+        }
+        return this;
+    }
+    /**
+     * Alias for disconnect()
+     *
+     * @return self
+     * @public
+     */
+    close() {
+        return this.disconnect();
+    }
+    /**
+     * Sets the compress flag.
+     *
+     * @param compress - if `true`, compresses the sending data
+     * @return self
+     * @public
+     */
+    compress(compress) {
+        this.flags.compress = compress;
+        return this;
+    }
+    /**
+     * Sets a modifier for a subsequent event emission that the event message will be dropped when this socket is not
+     * ready to send messages.
+     *
+     * @returns self
+     * @public
+     */
+    get volatile() {
+        this.flags.volatile = true;
+        return this;
+    }
+    /**
+     * Adds a listener that will be fired when any event is emitted. The event name is passed as the first argument to the
+     * callback.
+     *
+     * @param listener
+     * @public
+     */
+    onAny(listener) {
+        this._anyListeners = this._anyListeners || [];
+        this._anyListeners.push(listener);
+        return this;
+    }
+    /**
+     * Adds a listener that will be fired when any event is emitted. The event name is passed as the first argument to the
+     * callback. The listener is added to the beginning of the listeners array.
+     *
+     * @param listener
+     * @public
+     */
+    prependAny(listener) {
+        this._anyListeners = this._anyListeners || [];
+        this._anyListeners.unshift(listener);
+        return this;
+    }
+    /**
+     * Removes the listener that will be fired when any event is emitted.
+     *
+     * @param listener
+     * @public
+     */
+    offAny(listener) {
+        if (!this._anyListeners) {
+            return this;
+        }
+        if (listener) {
+            const listeners = this._anyListeners;
+            for (let i = 0; i < listeners.length; i++) {
+                if (listener === listeners[i]) {
+                    listeners.splice(i, 1);
+                    return this;
+                }
+            }
+        }
+        else {
+            this._anyListeners = [];
+        }
+        return this;
+    }
+    /**
+     * Returns an array of listeners that are listening for any event that is specified. This array can be manipulated,
+     * e.g. to remove listeners.
+     *
+     * @public
+     */
+    listenersAny() {
+        return this._anyListeners || [];
+    }
+}
+exports.Socket = Socket;
+
+
+/***/ }),
+
+/***/ "./node_modules/socket.io-client/build/url.js":
+/*!****************************************************!*\
+  !*** ./node_modules/socket.io-client/build/url.js ***!
+  \****************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.url = void 0;
+const parseuri = __webpack_require__(/*! parseuri */ "./node_modules/parseuri/index.js");
+const debug = __webpack_require__(/*! debug */ "./node_modules/socket.io-client/node_modules/debug/src/browser.js")("socket.io-client:url");
+/**
+ * URL parser.
+ *
+ * @param uri - url
+ * @param loc - An object meant to mimic window.location.
+ *        Defaults to window.location.
+ * @public
+ */
+function url(uri, loc) {
+    let obj = uri;
+    // default to window.location
+    loc = loc || (typeof location !== "undefined" && location);
+    if (null == uri)
+        uri = loc.protocol + "//" + loc.host;
+    // relative path support
+    if (typeof uri === "string") {
+        if ("/" === uri.charAt(0)) {
+            if ("/" === uri.charAt(1)) {
+                uri = loc.protocol + uri;
+            }
+            else {
+                uri = loc.host + uri;
+            }
+        }
+        if (!/^(https?|wss?):\/\//.test(uri)) {
+            debug("protocol-less url %s", uri);
+            if ("undefined" !== typeof loc) {
+                uri = loc.protocol + "//" + uri;
+            }
+            else {
+                uri = "https://" + uri;
+            }
+        }
+        // parse
+        debug("parse %s", uri);
+        obj = parseuri(uri);
+    }
+    // make sure we treat `localhost:80` and `localhost` equally
+    if (!obj.port) {
+        if (/^(http|ws)$/.test(obj.protocol)) {
+            obj.port = "80";
+        }
+        else if (/^(http|ws)s$/.test(obj.protocol)) {
+            obj.port = "443";
+        }
+    }
+    obj.path = obj.path || "/";
+    const ipv6 = obj.host.indexOf(":") !== -1;
+    const host = ipv6 ? "[" + obj.host + "]" : obj.host;
+    // define unique id
+    obj.id = obj.protocol + "://" + host + ":" + obj.port;
+    // define href
+    obj.href =
+        obj.protocol +
+            "://" +
+            host +
+            (loc && loc.port === obj.port ? "" : ":" + obj.port);
+    return obj;
+}
+exports.url = url;
+
+
+/***/ }),
+
+/***/ "./node_modules/socket.io-client/node_modules/debug/src/browser.js":
+/*!*************************************************************************!*\
+  !*** ./node_modules/socket.io-client/node_modules/debug/src/browser.js ***!
+  \*************************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+/* WEBPACK VAR INJECTION */(function(process) {/* eslint-env browser */
+
+/**
+ * This is the web browser implementation of `debug()`.
+ */
+
+exports.formatArgs = formatArgs;
+exports.save = save;
+exports.load = load;
+exports.useColors = useColors;
+exports.storage = localstorage();
+exports.destroy = (() => {
+	let warned = false;
+
+	return () => {
+		if (!warned) {
+			warned = true;
+			console.warn('Instance method `debug.destroy()` is deprecated and no longer does anything. It will be removed in the next major version of `debug`.');
+		}
+	};
+})();
+
+/**
+ * Colors.
+ */
+
+exports.colors = [
+	'#0000CC',
+	'#0000FF',
+	'#0033CC',
+	'#0033FF',
+	'#0066CC',
+	'#0066FF',
+	'#0099CC',
+	'#0099FF',
+	'#00CC00',
+	'#00CC33',
+	'#00CC66',
+	'#00CC99',
+	'#00CCCC',
+	'#00CCFF',
+	'#3300CC',
+	'#3300FF',
+	'#3333CC',
+	'#3333FF',
+	'#3366CC',
+	'#3366FF',
+	'#3399CC',
+	'#3399FF',
+	'#33CC00',
+	'#33CC33',
+	'#33CC66',
+	'#33CC99',
+	'#33CCCC',
+	'#33CCFF',
+	'#6600CC',
+	'#6600FF',
+	'#6633CC',
+	'#6633FF',
+	'#66CC00',
+	'#66CC33',
+	'#9900CC',
+	'#9900FF',
+	'#9933CC',
+	'#9933FF',
+	'#99CC00',
+	'#99CC33',
+	'#CC0000',
+	'#CC0033',
+	'#CC0066',
+	'#CC0099',
+	'#CC00CC',
+	'#CC00FF',
+	'#CC3300',
+	'#CC3333',
+	'#CC3366',
+	'#CC3399',
+	'#CC33CC',
+	'#CC33FF',
+	'#CC6600',
+	'#CC6633',
+	'#CC9900',
+	'#CC9933',
+	'#CCCC00',
+	'#CCCC33',
+	'#FF0000',
+	'#FF0033',
+	'#FF0066',
+	'#FF0099',
+	'#FF00CC',
+	'#FF00FF',
+	'#FF3300',
+	'#FF3333',
+	'#FF3366',
+	'#FF3399',
+	'#FF33CC',
+	'#FF33FF',
+	'#FF6600',
+	'#FF6633',
+	'#FF9900',
+	'#FF9933',
+	'#FFCC00',
+	'#FFCC33'
+];
+
+/**
+ * Currently only WebKit-based Web Inspectors, Firefox >= v31,
+ * and the Firebug extension (any Firefox version) are known
+ * to support "%c" CSS customizations.
+ *
+ * TODO: add a `localStorage` variable to explicitly enable/disable colors
+ */
+
+// eslint-disable-next-line complexity
+function useColors() {
+	// NB: In an Electron preload script, document will be defined but not fully
+	// initialized. Since we know we're in Chrome, we'll just detect this case
+	// explicitly
+	if (typeof window !== 'undefined' && window.process && (window.process.type === 'renderer' || window.process.__nwjs)) {
+		return true;
+	}
+
+	// Internet Explorer and Edge do not support colors.
+	if (typeof navigator !== 'undefined' && navigator.userAgent && navigator.userAgent.toLowerCase().match(/(edge|trident)\/(\d+)/)) {
+		return false;
+	}
+
+	// Is webkit? http://stackoverflow.com/a/16459606/376773
+	// document is undefined in react-native: https://github.com/facebook/react-native/pull/1632
+	return (typeof document !== 'undefined' && document.documentElement && document.documentElement.style && document.documentElement.style.WebkitAppearance) ||
+		// Is firebug? http://stackoverflow.com/a/398120/376773
+		(typeof window !== 'undefined' && window.console && (window.console.firebug || (window.console.exception && window.console.table))) ||
+		// Is firefox >= v31?
+		// https://developer.mozilla.org/en-US/docs/Tools/Web_Console#Styling_messages
+		(typeof navigator !== 'undefined' && navigator.userAgent && navigator.userAgent.toLowerCase().match(/firefox\/(\d+)/) && parseInt(RegExp.$1, 10) >= 31) ||
+		// Double check webkit in userAgent just in case we are in a worker
+		(typeof navigator !== 'undefined' && navigator.userAgent && navigator.userAgent.toLowerCase().match(/applewebkit\/(\d+)/));
+}
+
+/**
+ * Colorize log arguments if enabled.
+ *
+ * @api public
+ */
+
+function formatArgs(args) {
+	args[0] = (this.useColors ? '%c' : '') +
+		this.namespace +
+		(this.useColors ? ' %c' : ' ') +
+		args[0] +
+		(this.useColors ? '%c ' : ' ') +
+		'+' + module.exports.humanize(this.diff);
+
+	if (!this.useColors) {
+		return;
+	}
+
+	const c = 'color: ' + this.color;
+	args.splice(1, 0, c, 'color: inherit');
+
+	// The final "%c" is somewhat tricky, because there could be other
+	// arguments passed either before or after the %c, so we need to
+	// figure out the correct index to insert the CSS into
+	let index = 0;
+	let lastC = 0;
+	args[0].replace(/%[a-zA-Z%]/g, match => {
+		if (match === '%%') {
+			return;
+		}
+		index++;
+		if (match === '%c') {
+			// We only are interested in the *last* %c
+			// (the user may have provided their own)
+			lastC = index;
+		}
+	});
+
+	args.splice(lastC, 0, c);
+}
+
+/**
+ * Invokes `console.debug()` when available.
+ * No-op when `console.debug` is not a "function".
+ * If `console.debug` is not available, falls back
+ * to `console.log`.
+ *
+ * @api public
+ */
+exports.log = console.debug || console.log || (() => {});
+
+/**
+ * Save `namespaces`.
+ *
+ * @param {String} namespaces
+ * @api private
+ */
+function save(namespaces) {
+	try {
+		if (namespaces) {
+			exports.storage.setItem('debug', namespaces);
+		} else {
+			exports.storage.removeItem('debug');
+		}
+	} catch (error) {
+		// Swallow
+		// XXX (@Qix-) should we be logging these?
+	}
+}
+
+/**
+ * Load `namespaces`.
+ *
+ * @return {String} returns the previously persisted debug modes
+ * @api private
+ */
+function load() {
+	let r;
+	try {
+		r = exports.storage.getItem('debug');
+	} catch (error) {
+		// Swallow
+		// XXX (@Qix-) should we be logging these?
+	}
+
+	// If debug isn't set in LS, and we're in Electron, try to load $DEBUG
+	if (!r && typeof process !== 'undefined' && 'env' in process) {
+		r = process.env.DEBUG;
+	}
+
+	return r;
+}
+
+/**
+ * Localstorage attempts to return the localstorage.
+ *
+ * This is necessary because safari throws
+ * when a user disables cookies/localstorage
+ * and you attempt to access it.
+ *
+ * @return {LocalStorage}
+ * @api private
+ */
+
+function localstorage() {
+	try {
+		// TVMLKit (Apple TV JS Runtime) does not have a window object, just localStorage in the global context
+		// The Browser also has localStorage in the global context.
+		return localStorage;
+	} catch (error) {
+		// Swallow
+		// XXX (@Qix-) should we be logging these?
+	}
+}
+
+module.exports = __webpack_require__(/*! ./common */ "./node_modules/socket.io-client/node_modules/debug/src/common.js")(exports);
+
+const {formatters} = module.exports;
+
+/**
+ * Map %j to `JSON.stringify()`, since no Web Inspectors do that by default.
+ */
+
+formatters.j = function (v) {
+	try {
+		return JSON.stringify(v);
+	} catch (error) {
+		return '[UnexpectedJSONParseError]: ' + error.message;
+	}
+};
+
+/* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(/*! ./../../../../process/browser.js */ "./node_modules/process/browser.js")))
+
+/***/ }),
+
+/***/ "./node_modules/socket.io-client/node_modules/debug/src/common.js":
+/*!************************************************************************!*\
+  !*** ./node_modules/socket.io-client/node_modules/debug/src/common.js ***!
+  \************************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+
+/**
+ * This is the common logic for both the Node.js and web browser
+ * implementations of `debug()`.
+ */
+
+function setup(env) {
+	createDebug.debug = createDebug;
+	createDebug.default = createDebug;
+	createDebug.coerce = coerce;
+	createDebug.disable = disable;
+	createDebug.enable = enable;
+	createDebug.enabled = enabled;
+	createDebug.humanize = __webpack_require__(/*! ms */ "./node_modules/ms/index.js");
+	createDebug.destroy = destroy;
+
+	Object.keys(env).forEach(key => {
+		createDebug[key] = env[key];
+	});
+
+	/**
+	* The currently active debug mode names, and names to skip.
+	*/
+
+	createDebug.names = [];
+	createDebug.skips = [];
+
+	/**
+	* Map of special "%n" handling functions, for the debug "format" argument.
+	*
+	* Valid key names are a single, lower or upper-case letter, i.e. "n" and "N".
+	*/
+	createDebug.formatters = {};
+
+	/**
+	* Selects a color for a debug namespace
+	* @param {String} namespace The namespace string for the for the debug instance to be colored
+	* @return {Number|String} An ANSI color code for the given namespace
+	* @api private
+	*/
+	function selectColor(namespace) {
+		let hash = 0;
+
+		for (let i = 0; i < namespace.length; i++) {
+			hash = ((hash << 5) - hash) + namespace.charCodeAt(i);
+			hash |= 0; // Convert to 32bit integer
+		}
+
+		return createDebug.colors[Math.abs(hash) % createDebug.colors.length];
+	}
+	createDebug.selectColor = selectColor;
+
+	/**
+	* Create a debugger with the given `namespace`.
+	*
+	* @param {String} namespace
+	* @return {Function}
+	* @api public
+	*/
+	function createDebug(namespace) {
+		let prevTime;
+		let enableOverride = null;
+
+		function debug(...args) {
+			// Disabled?
+			if (!debug.enabled) {
+				return;
+			}
+
+			const self = debug;
+
+			// Set `diff` timestamp
+			const curr = Number(new Date());
+			const ms = curr - (prevTime || curr);
+			self.diff = ms;
+			self.prev = prevTime;
+			self.curr = curr;
+			prevTime = curr;
+
+			args[0] = createDebug.coerce(args[0]);
+
+			if (typeof args[0] !== 'string') {
+				// Anything else let's inspect with %O
+				args.unshift('%O');
+			}
+
+			// Apply any `formatters` transformations
+			let index = 0;
+			args[0] = args[0].replace(/%([a-zA-Z%])/g, (match, format) => {
+				// If we encounter an escaped % then don't increase the array index
+				if (match === '%%') {
+					return '%';
+				}
+				index++;
+				const formatter = createDebug.formatters[format];
+				if (typeof formatter === 'function') {
+					const val = args[index];
+					match = formatter.call(self, val);
+
+					// Now we need to remove `args[index]` since it's inlined in the `format`
+					args.splice(index, 1);
+					index--;
+				}
+				return match;
+			});
+
+			// Apply env-specific formatting (colors, etc.)
+			createDebug.formatArgs.call(self, args);
+
+			const logFn = self.log || createDebug.log;
+			logFn.apply(self, args);
+		}
+
+		debug.namespace = namespace;
+		debug.useColors = createDebug.useColors();
+		debug.color = createDebug.selectColor(namespace);
+		debug.extend = extend;
+		debug.destroy = createDebug.destroy; // XXX Temporary. Will be removed in the next major release.
+
+		Object.defineProperty(debug, 'enabled', {
+			enumerable: true,
+			configurable: false,
+			get: () => enableOverride === null ? createDebug.enabled(namespace) : enableOverride,
+			set: v => {
+				enableOverride = v;
+			}
+		});
+
+		// Env-specific initialization logic for debug instances
+		if (typeof createDebug.init === 'function') {
+			createDebug.init(debug);
+		}
+
+		return debug;
+	}
+
+	function extend(namespace, delimiter) {
+		const newDebug = createDebug(this.namespace + (typeof delimiter === 'undefined' ? ':' : delimiter) + namespace);
+		newDebug.log = this.log;
+		return newDebug;
+	}
+
+	/**
+	* Enables a debug mode by namespaces. This can include modes
+	* separated by a colon and wildcards.
+	*
+	* @param {String} namespaces
+	* @api public
+	*/
+	function enable(namespaces) {
+		createDebug.save(namespaces);
+
+		createDebug.names = [];
+		createDebug.skips = [];
+
+		let i;
+		const split = (typeof namespaces === 'string' ? namespaces : '').split(/[\s,]+/);
+		const len = split.length;
+
+		for (i = 0; i < len; i++) {
+			if (!split[i]) {
+				// ignore empty strings
+				continue;
+			}
+
+			namespaces = split[i].replace(/\*/g, '.*?');
+
+			if (namespaces[0] === '-') {
+				createDebug.skips.push(new RegExp('^' + namespaces.substr(1) + '$'));
+			} else {
+				createDebug.names.push(new RegExp('^' + namespaces + '$'));
+			}
+		}
+	}
+
+	/**
+	* Disable debug output.
+	*
+	* @return {String} namespaces
+	* @api public
+	*/
+	function disable() {
+		const namespaces = [
+			...createDebug.names.map(toNamespace),
+			...createDebug.skips.map(toNamespace).map(namespace => '-' + namespace)
+		].join(',');
+		createDebug.enable('');
+		return namespaces;
+	}
+
+	/**
+	* Returns true if the given mode name is enabled, false otherwise.
+	*
+	* @param {String} name
+	* @return {Boolean}
+	* @api public
+	*/
+	function enabled(name) {
+		if (name[name.length - 1] === '*') {
+			return true;
+		}
+
+		let i;
+		let len;
+
+		for (i = 0, len = createDebug.skips.length; i < len; i++) {
+			if (createDebug.skips[i].test(name)) {
+				return false;
+			}
+		}
+
+		for (i = 0, len = createDebug.names.length; i < len; i++) {
+			if (createDebug.names[i].test(name)) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
+	* Convert regexp to namespace
+	*
+	* @param {RegExp} regxep
+	* @return {String} namespace
+	* @api private
+	*/
+	function toNamespace(regexp) {
+		return regexp.toString()
+			.substring(2, regexp.toString().length - 2)
+			.replace(/\.\*\?$/, '*');
+	}
+
+	/**
+	* Coerce `val`.
+	*
+	* @param {Mixed} val
+	* @return {Mixed}
+	* @api private
+	*/
+	function coerce(val) {
+		if (val instanceof Error) {
+			return val.stack || val.message;
+		}
+		return val;
+	}
+
+	/**
+	* XXX DO NOT USE. This is a temporary stub function.
+	* XXX It WILL be removed in the next major release.
+	*/
+	function destroy() {
+		console.warn('Instance method `debug.destroy()` is deprecated and no longer does anything. It will be removed in the next major version of `debug`.');
+	}
+
+	createDebug.enable(createDebug.load());
+
+	return createDebug;
+}
+
+module.exports = setup;
+
+
+/***/ }),
+
+/***/ "./node_modules/socket.io-parser/dist/binary.js":
+/*!******************************************************!*\
+  !*** ./node_modules/socket.io-parser/dist/binary.js ***!
+  \******************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.reconstructPacket = exports.deconstructPacket = void 0;
+const is_binary_1 = __webpack_require__(/*! ./is-binary */ "./node_modules/socket.io-parser/dist/is-binary.js");
+/**
+ * Replaces every Buffer | ArrayBuffer | Blob | File in packet with a numbered placeholder.
+ *
+ * @param {Object} packet - socket.io event packet
+ * @return {Object} with deconstructed packet and list of buffers
+ * @public
+ */
+function deconstructPacket(packet) {
+    const buffers = [];
+    const packetData = packet.data;
+    const pack = packet;
+    pack.data = _deconstructPacket(packetData, buffers);
+    pack.attachments = buffers.length; // number of binary 'attachments'
+    return { packet: pack, buffers: buffers };
+}
+exports.deconstructPacket = deconstructPacket;
+function _deconstructPacket(data, buffers) {
+    if (!data)
+        return data;
+    if (is_binary_1.isBinary(data)) {
+        const placeholder = { _placeholder: true, num: buffers.length };
+        buffers.push(data);
+        return placeholder;
+    }
+    else if (Array.isArray(data)) {
+        const newData = new Array(data.length);
+        for (let i = 0; i < data.length; i++) {
+            newData[i] = _deconstructPacket(data[i], buffers);
+        }
+        return newData;
+    }
+    else if (typeof data === "object" && !(data instanceof Date)) {
+        const newData = {};
+        for (const key in data) {
+            if (data.hasOwnProperty(key)) {
+                newData[key] = _deconstructPacket(data[key], buffers);
+            }
+        }
+        return newData;
+    }
+    return data;
+}
+/**
+ * Reconstructs a binary packet from its placeholder packet and buffers
+ *
+ * @param {Object} packet - event packet with placeholders
+ * @param {Array} buffers - binary buffers to put in placeholder positions
+ * @return {Object} reconstructed packet
+ * @public
+ */
+function reconstructPacket(packet, buffers) {
+    packet.data = _reconstructPacket(packet.data, buffers);
+    packet.attachments = undefined; // no longer useful
+    return packet;
+}
+exports.reconstructPacket = reconstructPacket;
+function _reconstructPacket(data, buffers) {
+    if (!data)
+        return data;
+    if (data && data._placeholder) {
+        return buffers[data.num]; // appropriate buffer (should be natural order anyway)
+    }
+    else if (Array.isArray(data)) {
+        for (let i = 0; i < data.length; i++) {
+            data[i] = _reconstructPacket(data[i], buffers);
+        }
+    }
+    else if (typeof data === "object") {
+        for (const key in data) {
+            if (data.hasOwnProperty(key)) {
+                data[key] = _reconstructPacket(data[key], buffers);
+            }
+        }
+    }
+    return data;
+}
+
+
+/***/ }),
+
+/***/ "./node_modules/socket.io-parser/dist/index.js":
+/*!*****************************************************!*\
+  !*** ./node_modules/socket.io-parser/dist/index.js ***!
+  \*****************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.Decoder = exports.Encoder = exports.PacketType = exports.protocol = void 0;
+const Emitter = __webpack_require__(/*! component-emitter */ "./node_modules/component-emitter/index.js");
+const binary_1 = __webpack_require__(/*! ./binary */ "./node_modules/socket.io-parser/dist/binary.js");
+const is_binary_1 = __webpack_require__(/*! ./is-binary */ "./node_modules/socket.io-parser/dist/is-binary.js");
+const debug = __webpack_require__(/*! debug */ "./node_modules/socket.io-parser/node_modules/debug/src/browser.js")("socket.io-parser");
+/**
+ * Protocol version.
+ *
+ * @public
+ */
+exports.protocol = 5;
+var PacketType;
+(function (PacketType) {
+    PacketType[PacketType["CONNECT"] = 0] = "CONNECT";
+    PacketType[PacketType["DISCONNECT"] = 1] = "DISCONNECT";
+    PacketType[PacketType["EVENT"] = 2] = "EVENT";
+    PacketType[PacketType["ACK"] = 3] = "ACK";
+    PacketType[PacketType["CONNECT_ERROR"] = 4] = "CONNECT_ERROR";
+    PacketType[PacketType["BINARY_EVENT"] = 5] = "BINARY_EVENT";
+    PacketType[PacketType["BINARY_ACK"] = 6] = "BINARY_ACK";
+})(PacketType = exports.PacketType || (exports.PacketType = {}));
+/**
+ * A socket.io Encoder instance
+ */
+class Encoder {
+    /**
+     * Encode a packet as a single string if non-binary, or as a
+     * buffer sequence, depending on packet type.
+     *
+     * @param {Object} obj - packet object
+     */
+    encode(obj) {
+        debug("encoding packet %j", obj);
+        if (obj.type === PacketType.EVENT || obj.type === PacketType.ACK) {
+            if (is_binary_1.hasBinary(obj)) {
+                obj.type =
+                    obj.type === PacketType.EVENT
+                        ? PacketType.BINARY_EVENT
+                        : PacketType.BINARY_ACK;
+                return this.encodeAsBinary(obj);
+            }
+        }
+        return [this.encodeAsString(obj)];
+    }
+    /**
+     * Encode packet as string.
+     */
+    encodeAsString(obj) {
+        // first is type
+        let str = "" + obj.type;
+        // attachments if we have them
+        if (obj.type === PacketType.BINARY_EVENT ||
+            obj.type === PacketType.BINARY_ACK) {
+            str += obj.attachments + "-";
+        }
+        // if we have a namespace other than `/`
+        // we append it followed by a comma `,`
+        if (obj.nsp && "/" !== obj.nsp) {
+            str += obj.nsp + ",";
+        }
+        // immediately followed by the id
+        if (null != obj.id) {
+            str += obj.id;
+        }
+        // json data
+        if (null != obj.data) {
+            str += JSON.stringify(obj.data);
+        }
+        debug("encoded %j as %s", obj, str);
+        return str;
+    }
+    /**
+     * Encode packet as 'buffer sequence' by removing blobs, and
+     * deconstructing packet into object with placeholders and
+     * a list of buffers.
+     */
+    encodeAsBinary(obj) {
+        const deconstruction = binary_1.deconstructPacket(obj);
+        const pack = this.encodeAsString(deconstruction.packet);
+        const buffers = deconstruction.buffers;
+        buffers.unshift(pack); // add packet info to beginning of data list
+        return buffers; // write all the buffers
+    }
+}
+exports.Encoder = Encoder;
+/**
+ * A socket.io Decoder instance
+ *
+ * @return {Object} decoder
+ */
+class Decoder extends Emitter {
+    constructor() {
+        super();
+    }
+    /**
+     * Decodes an encoded packet string into packet JSON.
+     *
+     * @param {String} obj - encoded packet
+     */
+    add(obj) {
+        let packet;
+        if (typeof obj === "string") {
+            packet = this.decodeString(obj);
+            if (packet.type === PacketType.BINARY_EVENT ||
+                packet.type === PacketType.BINARY_ACK) {
+                // binary packet's json
+                this.reconstructor = new BinaryReconstructor(packet);
+                // no attachments, labeled binary but no binary data to follow
+                if (packet.attachments === 0) {
+                    super.emit("decoded", packet);
+                }
+            }
+            else {
+                // non-binary full packet
+                super.emit("decoded", packet);
+            }
+        }
+        else if (is_binary_1.isBinary(obj) || obj.base64) {
+            // raw binary data
+            if (!this.reconstructor) {
+                throw new Error("got binary data when not reconstructing a packet");
+            }
+            else {
+                packet = this.reconstructor.takeBinaryData(obj);
+                if (packet) {
+                    // received final buffer
+                    this.reconstructor = null;
+                    super.emit("decoded", packet);
+                }
+            }
+        }
+        else {
+            throw new Error("Unknown type: " + obj);
+        }
+    }
+    /**
+     * Decode a packet String (JSON data)
+     *
+     * @param {String} str
+     * @return {Object} packet
+     */
+    decodeString(str) {
+        let i = 0;
+        // look up type
+        const p = {
+            type: Number(str.charAt(0)),
+        };
+        if (PacketType[p.type] === undefined) {
+            throw new Error("unknown packet type " + p.type);
+        }
+        // look up attachments if type binary
+        if (p.type === PacketType.BINARY_EVENT ||
+            p.type === PacketType.BINARY_ACK) {
+            const start = i + 1;
+            while (str.charAt(++i) !== "-" && i != str.length) { }
+            const buf = str.substring(start, i);
+            if (buf != Number(buf) || str.charAt(i) !== "-") {
+                throw new Error("Illegal attachments");
+            }
+            p.attachments = Number(buf);
+        }
+        // look up namespace (if any)
+        if ("/" === str.charAt(i + 1)) {
+            const start = i + 1;
+            while (++i) {
+                const c = str.charAt(i);
+                if ("," === c)
+                    break;
+                if (i === str.length)
+                    break;
+            }
+            p.nsp = str.substring(start, i);
+        }
+        else {
+            p.nsp = "/";
+        }
+        // look up id
+        const next = str.charAt(i + 1);
+        if ("" !== next && Number(next) == next) {
+            const start = i + 1;
+            while (++i) {
+                const c = str.charAt(i);
+                if (null == c || Number(c) != c) {
+                    --i;
+                    break;
+                }
+                if (i === str.length)
+                    break;
+            }
+            p.id = Number(str.substring(start, i + 1));
+        }
+        // look up json data
+        if (str.charAt(++i)) {
+            const payload = tryParse(str.substr(i));
+            if (Decoder.isPayloadValid(p.type, payload)) {
+                p.data = payload;
+            }
+            else {
+                throw new Error("invalid payload");
+            }
+        }
+        debug("decoded %s as %j", str, p);
+        return p;
+    }
+    static isPayloadValid(type, payload) {
+        switch (type) {
+            case PacketType.CONNECT:
+                return typeof payload === "object";
+            case PacketType.DISCONNECT:
+                return payload === undefined;
+            case PacketType.CONNECT_ERROR:
+                return typeof payload === "string" || typeof payload === "object";
+            case PacketType.EVENT:
+            case PacketType.BINARY_EVENT:
+                return Array.isArray(payload) && typeof payload[0] === "string";
+            case PacketType.ACK:
+            case PacketType.BINARY_ACK:
+                return Array.isArray(payload);
+        }
+    }
+    /**
+     * Deallocates a parser's resources
+     */
+    destroy() {
+        if (this.reconstructor) {
+            this.reconstructor.finishedReconstruction();
+        }
+    }
+}
+exports.Decoder = Decoder;
+function tryParse(str) {
+    try {
+        return JSON.parse(str);
+    }
+    catch (e) {
+        return false;
+    }
+}
+/**
+ * A manager of a binary event's 'buffer sequence'. Should
+ * be constructed whenever a packet of type BINARY_EVENT is
+ * decoded.
+ *
+ * @param {Object} packet
+ * @return {BinaryReconstructor} initialized reconstructor
+ */
+class BinaryReconstructor {
+    constructor(packet) {
+        this.packet = packet;
+        this.buffers = [];
+        this.reconPack = packet;
+    }
+    /**
+     * Method to be called when binary data received from connection
+     * after a BINARY_EVENT packet.
+     *
+     * @param {Buffer | ArrayBuffer} binData - the raw binary data received
+     * @return {null | Object} returns null if more binary data is expected or
+     *   a reconstructed packet object if all buffers have been received.
+     */
+    takeBinaryData(binData) {
+        this.buffers.push(binData);
+        if (this.buffers.length === this.reconPack.attachments) {
+            // done with buffer list
+            const packet = binary_1.reconstructPacket(this.reconPack, this.buffers);
+            this.finishedReconstruction();
+            return packet;
+        }
+        return null;
+    }
+    /**
+     * Cleans up binary packet reconstruction variables.
+     */
+    finishedReconstruction() {
+        this.reconPack = null;
+        this.buffers = [];
+    }
+}
+
+
+/***/ }),
+
+/***/ "./node_modules/socket.io-parser/dist/is-binary.js":
+/*!*********************************************************!*\
+  !*** ./node_modules/socket.io-parser/dist/is-binary.js ***!
+  \*********************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.hasBinary = exports.isBinary = void 0;
+const withNativeArrayBuffer = typeof ArrayBuffer === "function";
+const isView = (obj) => {
+    return typeof ArrayBuffer.isView === "function"
+        ? ArrayBuffer.isView(obj)
+        : obj.buffer instanceof ArrayBuffer;
+};
+const toString = Object.prototype.toString;
+const withNativeBlob = typeof Blob === "function" ||
+    (typeof Blob !== "undefined" &&
+        toString.call(Blob) === "[object BlobConstructor]");
+const withNativeFile = typeof File === "function" ||
+    (typeof File !== "undefined" &&
+        toString.call(File) === "[object FileConstructor]");
+/**
+ * Returns true if obj is a Buffer, an ArrayBuffer, a Blob or a File.
+ *
+ * @private
+ */
+function isBinary(obj) {
+    return ((withNativeArrayBuffer && (obj instanceof ArrayBuffer || isView(obj))) ||
+        (withNativeBlob && obj instanceof Blob) ||
+        (withNativeFile && obj instanceof File));
+}
+exports.isBinary = isBinary;
+function hasBinary(obj, toJSON) {
+    if (!obj || typeof obj !== "object") {
+        return false;
+    }
+    if (Array.isArray(obj)) {
+        for (let i = 0, l = obj.length; i < l; i++) {
+            if (hasBinary(obj[i])) {
+                return true;
+            }
+        }
+        return false;
+    }
+    if (isBinary(obj)) {
+        return true;
+    }
+    if (obj.toJSON &&
+        typeof obj.toJSON === "function" &&
+        arguments.length === 1) {
+        return hasBinary(obj.toJSON(), true);
+    }
+    for (const key in obj) {
+        if (Object.prototype.hasOwnProperty.call(obj, key) && hasBinary(obj[key])) {
+            return true;
+        }
+    }
+    return false;
+}
+exports.hasBinary = hasBinary;
+
+
+/***/ }),
+
+/***/ "./node_modules/socket.io-parser/node_modules/debug/src/browser.js":
+/*!*************************************************************************!*\
+  !*** ./node_modules/socket.io-parser/node_modules/debug/src/browser.js ***!
+  \*************************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+/* WEBPACK VAR INJECTION */(function(process) {/* eslint-env browser */
+
+/**
+ * This is the web browser implementation of `debug()`.
+ */
+
+exports.formatArgs = formatArgs;
+exports.save = save;
+exports.load = load;
+exports.useColors = useColors;
+exports.storage = localstorage();
+exports.destroy = (() => {
+	let warned = false;
+
+	return () => {
+		if (!warned) {
+			warned = true;
+			console.warn('Instance method `debug.destroy()` is deprecated and no longer does anything. It will be removed in the next major version of `debug`.');
+		}
+	};
+})();
+
+/**
+ * Colors.
+ */
+
+exports.colors = [
+	'#0000CC',
+	'#0000FF',
+	'#0033CC',
+	'#0033FF',
+	'#0066CC',
+	'#0066FF',
+	'#0099CC',
+	'#0099FF',
+	'#00CC00',
+	'#00CC33',
+	'#00CC66',
+	'#00CC99',
+	'#00CCCC',
+	'#00CCFF',
+	'#3300CC',
+	'#3300FF',
+	'#3333CC',
+	'#3333FF',
+	'#3366CC',
+	'#3366FF',
+	'#3399CC',
+	'#3399FF',
+	'#33CC00',
+	'#33CC33',
+	'#33CC66',
+	'#33CC99',
+	'#33CCCC',
+	'#33CCFF',
+	'#6600CC',
+	'#6600FF',
+	'#6633CC',
+	'#6633FF',
+	'#66CC00',
+	'#66CC33',
+	'#9900CC',
+	'#9900FF',
+	'#9933CC',
+	'#9933FF',
+	'#99CC00',
+	'#99CC33',
+	'#CC0000',
+	'#CC0033',
+	'#CC0066',
+	'#CC0099',
+	'#CC00CC',
+	'#CC00FF',
+	'#CC3300',
+	'#CC3333',
+	'#CC3366',
+	'#CC3399',
+	'#CC33CC',
+	'#CC33FF',
+	'#CC6600',
+	'#CC6633',
+	'#CC9900',
+	'#CC9933',
+	'#CCCC00',
+	'#CCCC33',
+	'#FF0000',
+	'#FF0033',
+	'#FF0066',
+	'#FF0099',
+	'#FF00CC',
+	'#FF00FF',
+	'#FF3300',
+	'#FF3333',
+	'#FF3366',
+	'#FF3399',
+	'#FF33CC',
+	'#FF33FF',
+	'#FF6600',
+	'#FF6633',
+	'#FF9900',
+	'#FF9933',
+	'#FFCC00',
+	'#FFCC33'
+];
+
+/**
+ * Currently only WebKit-based Web Inspectors, Firefox >= v31,
+ * and the Firebug extension (any Firefox version) are known
+ * to support "%c" CSS customizations.
+ *
+ * TODO: add a `localStorage` variable to explicitly enable/disable colors
+ */
+
+// eslint-disable-next-line complexity
+function useColors() {
+	// NB: In an Electron preload script, document will be defined but not fully
+	// initialized. Since we know we're in Chrome, we'll just detect this case
+	// explicitly
+	if (typeof window !== 'undefined' && window.process && (window.process.type === 'renderer' || window.process.__nwjs)) {
+		return true;
+	}
+
+	// Internet Explorer and Edge do not support colors.
+	if (typeof navigator !== 'undefined' && navigator.userAgent && navigator.userAgent.toLowerCase().match(/(edge|trident)\/(\d+)/)) {
+		return false;
+	}
+
+	// Is webkit? http://stackoverflow.com/a/16459606/376773
+	// document is undefined in react-native: https://github.com/facebook/react-native/pull/1632
+	return (typeof document !== 'undefined' && document.documentElement && document.documentElement.style && document.documentElement.style.WebkitAppearance) ||
+		// Is firebug? http://stackoverflow.com/a/398120/376773
+		(typeof window !== 'undefined' && window.console && (window.console.firebug || (window.console.exception && window.console.table))) ||
+		// Is firefox >= v31?
+		// https://developer.mozilla.org/en-US/docs/Tools/Web_Console#Styling_messages
+		(typeof navigator !== 'undefined' && navigator.userAgent && navigator.userAgent.toLowerCase().match(/firefox\/(\d+)/) && parseInt(RegExp.$1, 10) >= 31) ||
+		// Double check webkit in userAgent just in case we are in a worker
+		(typeof navigator !== 'undefined' && navigator.userAgent && navigator.userAgent.toLowerCase().match(/applewebkit\/(\d+)/));
+}
+
+/**
+ * Colorize log arguments if enabled.
+ *
+ * @api public
+ */
+
+function formatArgs(args) {
+	args[0] = (this.useColors ? '%c' : '') +
+		this.namespace +
+		(this.useColors ? ' %c' : ' ') +
+		args[0] +
+		(this.useColors ? '%c ' : ' ') +
+		'+' + module.exports.humanize(this.diff);
+
+	if (!this.useColors) {
+		return;
+	}
+
+	const c = 'color: ' + this.color;
+	args.splice(1, 0, c, 'color: inherit');
+
+	// The final "%c" is somewhat tricky, because there could be other
+	// arguments passed either before or after the %c, so we need to
+	// figure out the correct index to insert the CSS into
+	let index = 0;
+	let lastC = 0;
+	args[0].replace(/%[a-zA-Z%]/g, match => {
+		if (match === '%%') {
+			return;
+		}
+		index++;
+		if (match === '%c') {
+			// We only are interested in the *last* %c
+			// (the user may have provided their own)
+			lastC = index;
+		}
+	});
+
+	args.splice(lastC, 0, c);
+}
+
+/**
+ * Invokes `console.debug()` when available.
+ * No-op when `console.debug` is not a "function".
+ * If `console.debug` is not available, falls back
+ * to `console.log`.
+ *
+ * @api public
+ */
+exports.log = console.debug || console.log || (() => {});
+
+/**
+ * Save `namespaces`.
+ *
+ * @param {String} namespaces
+ * @api private
+ */
+function save(namespaces) {
+	try {
+		if (namespaces) {
+			exports.storage.setItem('debug', namespaces);
+		} else {
+			exports.storage.removeItem('debug');
+		}
+	} catch (error) {
+		// Swallow
+		// XXX (@Qix-) should we be logging these?
+	}
+}
+
+/**
+ * Load `namespaces`.
+ *
+ * @return {String} returns the previously persisted debug modes
+ * @api private
+ */
+function load() {
+	let r;
+	try {
+		r = exports.storage.getItem('debug');
+	} catch (error) {
+		// Swallow
+		// XXX (@Qix-) should we be logging these?
+	}
+
+	// If debug isn't set in LS, and we're in Electron, try to load $DEBUG
+	if (!r && typeof process !== 'undefined' && 'env' in process) {
+		r = process.env.DEBUG;
+	}
+
+	return r;
+}
+
+/**
+ * Localstorage attempts to return the localstorage.
+ *
+ * This is necessary because safari throws
+ * when a user disables cookies/localstorage
+ * and you attempt to access it.
+ *
+ * @return {LocalStorage}
+ * @api private
+ */
+
+function localstorage() {
+	try {
+		// TVMLKit (Apple TV JS Runtime) does not have a window object, just localStorage in the global context
+		// The Browser also has localStorage in the global context.
+		return localStorage;
+	} catch (error) {
+		// Swallow
+		// XXX (@Qix-) should we be logging these?
+	}
+}
+
+module.exports = __webpack_require__(/*! ./common */ "./node_modules/socket.io-parser/node_modules/debug/src/common.js")(exports);
+
+const {formatters} = module.exports;
+
+/**
+ * Map %j to `JSON.stringify()`, since no Web Inspectors do that by default.
+ */
+
+formatters.j = function (v) {
+	try {
+		return JSON.stringify(v);
+	} catch (error) {
+		return '[UnexpectedJSONParseError]: ' + error.message;
+	}
+};
+
+/* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(/*! ./../../../../process/browser.js */ "./node_modules/process/browser.js")))
+
+/***/ }),
+
+/***/ "./node_modules/socket.io-parser/node_modules/debug/src/common.js":
+/*!************************************************************************!*\
+  !*** ./node_modules/socket.io-parser/node_modules/debug/src/common.js ***!
+  \************************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+
+/**
+ * This is the common logic for both the Node.js and web browser
+ * implementations of `debug()`.
+ */
+
+function setup(env) {
+	createDebug.debug = createDebug;
+	createDebug.default = createDebug;
+	createDebug.coerce = coerce;
+	createDebug.disable = disable;
+	createDebug.enable = enable;
+	createDebug.enabled = enabled;
+	createDebug.humanize = __webpack_require__(/*! ms */ "./node_modules/ms/index.js");
+	createDebug.destroy = destroy;
+
+	Object.keys(env).forEach(key => {
+		createDebug[key] = env[key];
+	});
+
+	/**
+	* The currently active debug mode names, and names to skip.
+	*/
+
+	createDebug.names = [];
+	createDebug.skips = [];
+
+	/**
+	* Map of special "%n" handling functions, for the debug "format" argument.
+	*
+	* Valid key names are a single, lower or upper-case letter, i.e. "n" and "N".
+	*/
+	createDebug.formatters = {};
+
+	/**
+	* Selects a color for a debug namespace
+	* @param {String} namespace The namespace string for the for the debug instance to be colored
+	* @return {Number|String} An ANSI color code for the given namespace
+	* @api private
+	*/
+	function selectColor(namespace) {
+		let hash = 0;
+
+		for (let i = 0; i < namespace.length; i++) {
+			hash = ((hash << 5) - hash) + namespace.charCodeAt(i);
+			hash |= 0; // Convert to 32bit integer
+		}
+
+		return createDebug.colors[Math.abs(hash) % createDebug.colors.length];
+	}
+	createDebug.selectColor = selectColor;
+
+	/**
+	* Create a debugger with the given `namespace`.
+	*
+	* @param {String} namespace
+	* @return {Function}
+	* @api public
+	*/
+	function createDebug(namespace) {
+		let prevTime;
+		let enableOverride = null;
+
+		function debug(...args) {
+			// Disabled?
+			if (!debug.enabled) {
+				return;
+			}
+
+			const self = debug;
+
+			// Set `diff` timestamp
+			const curr = Number(new Date());
+			const ms = curr - (prevTime || curr);
+			self.diff = ms;
+			self.prev = prevTime;
+			self.curr = curr;
+			prevTime = curr;
+
+			args[0] = createDebug.coerce(args[0]);
+
+			if (typeof args[0] !== 'string') {
+				// Anything else let's inspect with %O
+				args.unshift('%O');
+			}
+
+			// Apply any `formatters` transformations
+			let index = 0;
+			args[0] = args[0].replace(/%([a-zA-Z%])/g, (match, format) => {
+				// If we encounter an escaped % then don't increase the array index
+				if (match === '%%') {
+					return '%';
+				}
+				index++;
+				const formatter = createDebug.formatters[format];
+				if (typeof formatter === 'function') {
+					const val = args[index];
+					match = formatter.call(self, val);
+
+					// Now we need to remove `args[index]` since it's inlined in the `format`
+					args.splice(index, 1);
+					index--;
+				}
+				return match;
+			});
+
+			// Apply env-specific formatting (colors, etc.)
+			createDebug.formatArgs.call(self, args);
+
+			const logFn = self.log || createDebug.log;
+			logFn.apply(self, args);
+		}
+
+		debug.namespace = namespace;
+		debug.useColors = createDebug.useColors();
+		debug.color = createDebug.selectColor(namespace);
+		debug.extend = extend;
+		debug.destroy = createDebug.destroy; // XXX Temporary. Will be removed in the next major release.
+
+		Object.defineProperty(debug, 'enabled', {
+			enumerable: true,
+			configurable: false,
+			get: () => enableOverride === null ? createDebug.enabled(namespace) : enableOverride,
+			set: v => {
+				enableOverride = v;
+			}
+		});
+
+		// Env-specific initialization logic for debug instances
+		if (typeof createDebug.init === 'function') {
+			createDebug.init(debug);
+		}
+
+		return debug;
+	}
+
+	function extend(namespace, delimiter) {
+		const newDebug = createDebug(this.namespace + (typeof delimiter === 'undefined' ? ':' : delimiter) + namespace);
+		newDebug.log = this.log;
+		return newDebug;
+	}
+
+	/**
+	* Enables a debug mode by namespaces. This can include modes
+	* separated by a colon and wildcards.
+	*
+	* @param {String} namespaces
+	* @api public
+	*/
+	function enable(namespaces) {
+		createDebug.save(namespaces);
+
+		createDebug.names = [];
+		createDebug.skips = [];
+
+		let i;
+		const split = (typeof namespaces === 'string' ? namespaces : '').split(/[\s,]+/);
+		const len = split.length;
+
+		for (i = 0; i < len; i++) {
+			if (!split[i]) {
+				// ignore empty strings
+				continue;
+			}
+
+			namespaces = split[i].replace(/\*/g, '.*?');
+
+			if (namespaces[0] === '-') {
+				createDebug.skips.push(new RegExp('^' + namespaces.substr(1) + '$'));
+			} else {
+				createDebug.names.push(new RegExp('^' + namespaces + '$'));
+			}
+		}
+	}
+
+	/**
+	* Disable debug output.
+	*
+	* @return {String} namespaces
+	* @api public
+	*/
+	function disable() {
+		const namespaces = [
+			...createDebug.names.map(toNamespace),
+			...createDebug.skips.map(toNamespace).map(namespace => '-' + namespace)
+		].join(',');
+		createDebug.enable('');
+		return namespaces;
+	}
+
+	/**
+	* Returns true if the given mode name is enabled, false otherwise.
+	*
+	* @param {String} name
+	* @return {Boolean}
+	* @api public
+	*/
+	function enabled(name) {
+		if (name[name.length - 1] === '*') {
+			return true;
+		}
+
+		let i;
+		let len;
+
+		for (i = 0, len = createDebug.skips.length; i < len; i++) {
+			if (createDebug.skips[i].test(name)) {
+				return false;
+			}
+		}
+
+		for (i = 0, len = createDebug.names.length; i < len; i++) {
+			if (createDebug.names[i].test(name)) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
+	* Convert regexp to namespace
+	*
+	* @param {RegExp} regxep
+	* @return {String} namespace
+	* @api private
+	*/
+	function toNamespace(regexp) {
+		return regexp.toString()
+			.substring(2, regexp.toString().length - 2)
+			.replace(/\.\*\?$/, '*');
+	}
+
+	/**
+	* Coerce `val`.
+	*
+	* @param {Mixed} val
+	* @return {Mixed}
+	* @api private
+	*/
+	function coerce(val) {
+		if (val instanceof Error) {
+			return val.stack || val.message;
+		}
+		return val;
+	}
+
+	/**
+	* XXX DO NOT USE. This is a temporary stub function.
+	* XXX It WILL be removed in the next major release.
+	*/
+	function destroy() {
+		console.warn('Instance method `debug.destroy()` is deprecated and no longer does anything. It will be removed in the next major version of `debug`.');
+	}
+
+	createDebug.enable(createDebug.load());
+
+	return createDebug;
+}
+
+module.exports = setup;
+
+
+/***/ }),
+
+/***/ "./node_modules/tslib/tslib.es6.js":
+/*!*****************************************!*\
+  !*** ./node_modules/tslib/tslib.es6.js ***!
+  \*****************************************/
+/*! exports provided: __extends, __assign, __rest, __decorate, __param, __metadata, __awaiter, __generator, __exportStar, __values, __read, __spread, __spreadArrays, __await, __asyncGenerator, __asyncDelegator, __asyncValues, __makeTemplateObject, __importStar, __importDefault, __classPrivateFieldGet, __classPrivateFieldSet */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "__extends", function() { return __extends; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "__assign", function() { return __assign; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "__rest", function() { return __rest; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "__decorate", function() { return __decorate; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "__param", function() { return __param; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "__metadata", function() { return __metadata; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "__awaiter", function() { return __awaiter; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "__generator", function() { return __generator; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "__exportStar", function() { return __exportStar; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "__values", function() { return __values; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "__read", function() { return __read; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "__spread", function() { return __spread; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "__spreadArrays", function() { return __spreadArrays; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "__await", function() { return __await; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "__asyncGenerator", function() { return __asyncGenerator; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "__asyncDelegator", function() { return __asyncDelegator; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "__asyncValues", function() { return __asyncValues; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "__makeTemplateObject", function() { return __makeTemplateObject; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "__importStar", function() { return __importStar; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "__importDefault", function() { return __importDefault; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "__classPrivateFieldGet", function() { return __classPrivateFieldGet; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "__classPrivateFieldSet", function() { return __classPrivateFieldSet; });
+/*! *****************************************************************************
+Copyright (c) Microsoft Corporation. All rights reserved.
+Licensed under the Apache License, Version 2.0 (the "License"); you may not use
+this file except in compliance with the License. You may obtain a copy of the
+License at http://www.apache.org/licenses/LICENSE-2.0
+
+THIS CODE IS PROVIDED ON AN *AS IS* BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, EITHER EXPRESS OR IMPLIED, INCLUDING WITHOUT LIMITATION ANY IMPLIED
+WARRANTIES OR CONDITIONS OF TITLE, FITNESS FOR A PARTICULAR PURPOSE,
+MERCHANTABLITY OR NON-INFRINGEMENT.
+
+See the Apache Version 2.0 License for specific language governing permissions
+and limitations under the License.
+***************************************************************************** */
+/* global Reflect, Promise */
+
+var extendStatics = function(d, b) {
+    extendStatics = Object.setPrototypeOf ||
+        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+    return extendStatics(d, b);
+};
+
+function __extends(d, b) {
+    extendStatics(d, b);
+    function __() { this.constructor = d; }
+    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+}
+
+var __assign = function() {
+    __assign = Object.assign || function __assign(t) {
+        for (var s, i = 1, n = arguments.length; i < n; i++) {
+            s = arguments[i];
+            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p)) t[p] = s[p];
+        }
+        return t;
+    }
+    return __assign.apply(this, arguments);
+}
+
+function __rest(s, e) {
+    var t = {};
+    for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p) && e.indexOf(p) < 0)
+        t[p] = s[p];
+    if (s != null && typeof Object.getOwnPropertySymbols === "function")
+        for (var i = 0, p = Object.getOwnPropertySymbols(s); i < p.length; i++) {
+            if (e.indexOf(p[i]) < 0 && Object.prototype.propertyIsEnumerable.call(s, p[i]))
+                t[p[i]] = s[p[i]];
+        }
+    return t;
+}
+
+function __decorate(decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+}
+
+function __param(paramIndex, decorator) {
+    return function (target, key) { decorator(target, key, paramIndex); }
+}
+
+function __metadata(metadataKey, metadataValue) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(metadataKey, metadataValue);
+}
+
+function __awaiter(thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+}
+
+function __generator(thisArg, body) {
+    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g;
+    return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
+    function verb(n) { return function (v) { return step([n, v]); }; }
+    function step(op) {
+        if (f) throw new TypeError("Generator is already executing.");
+        while (_) try {
+            if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
+            if (y = 0, t) op = [op[0] & 2, t.value];
+            switch (op[0]) {
+                case 0: case 1: t = op; break;
+                case 4: _.label++; return { value: op[1], done: false };
+                case 5: _.label++; y = op[1]; op = [0]; continue;
+                case 7: op = _.ops.pop(); _.trys.pop(); continue;
+                default:
+                    if (!(t = _.trys, t = t.length > 0 && t[t.length - 1]) && (op[0] === 6 || op[0] === 2)) { _ = 0; continue; }
+                    if (op[0] === 3 && (!t || (op[1] > t[0] && op[1] < t[3]))) { _.label = op[1]; break; }
+                    if (op[0] === 6 && _.label < t[1]) { _.label = t[1]; t = op; break; }
+                    if (t && _.label < t[2]) { _.label = t[2]; _.ops.push(op); break; }
+                    if (t[2]) _.ops.pop();
+                    _.trys.pop(); continue;
+            }
+            op = body.call(thisArg, _);
+        } catch (e) { op = [6, e]; y = 0; } finally { f = t = 0; }
+        if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
+    }
+}
+
+function __exportStar(m, exports) {
+    for (var p in m) if (!exports.hasOwnProperty(p)) exports[p] = m[p];
+}
+
+function __values(o) {
+    var s = typeof Symbol === "function" && Symbol.iterator, m = s && o[s], i = 0;
+    if (m) return m.call(o);
+    if (o && typeof o.length === "number") return {
+        next: function () {
+            if (o && i >= o.length) o = void 0;
+            return { value: o && o[i++], done: !o };
+        }
+    };
+    throw new TypeError(s ? "Object is not iterable." : "Symbol.iterator is not defined.");
+}
+
+function __read(o, n) {
+    var m = typeof Symbol === "function" && o[Symbol.iterator];
+    if (!m) return o;
+    var i = m.call(o), r, ar = [], e;
+    try {
+        while ((n === void 0 || n-- > 0) && !(r = i.next()).done) ar.push(r.value);
+    }
+    catch (error) { e = { error: error }; }
+    finally {
+        try {
+            if (r && !r.done && (m = i["return"])) m.call(i);
+        }
+        finally { if (e) throw e.error; }
+    }
+    return ar;
+}
+
+function __spread() {
+    for (var ar = [], i = 0; i < arguments.length; i++)
+        ar = ar.concat(__read(arguments[i]));
+    return ar;
+}
+
+function __spreadArrays() {
+    for (var s = 0, i = 0, il = arguments.length; i < il; i++) s += arguments[i].length;
+    for (var r = Array(s), k = 0, i = 0; i < il; i++)
+        for (var a = arguments[i], j = 0, jl = a.length; j < jl; j++, k++)
+            r[k] = a[j];
+    return r;
+};
+
+function __await(v) {
+    return this instanceof __await ? (this.v = v, this) : new __await(v);
+}
+
+function __asyncGenerator(thisArg, _arguments, generator) {
+    if (!Symbol.asyncIterator) throw new TypeError("Symbol.asyncIterator is not defined.");
+    var g = generator.apply(thisArg, _arguments || []), i, q = [];
+    return i = {}, verb("next"), verb("throw"), verb("return"), i[Symbol.asyncIterator] = function () { return this; }, i;
+    function verb(n) { if (g[n]) i[n] = function (v) { return new Promise(function (a, b) { q.push([n, v, a, b]) > 1 || resume(n, v); }); }; }
+    function resume(n, v) { try { step(g[n](v)); } catch (e) { settle(q[0][3], e); } }
+    function step(r) { r.value instanceof __await ? Promise.resolve(r.value.v).then(fulfill, reject) : settle(q[0][2], r); }
+    function fulfill(value) { resume("next", value); }
+    function reject(value) { resume("throw", value); }
+    function settle(f, v) { if (f(v), q.shift(), q.length) resume(q[0][0], q[0][1]); }
+}
+
+function __asyncDelegator(o) {
+    var i, p;
+    return i = {}, verb("next"), verb("throw", function (e) { throw e; }), verb("return"), i[Symbol.iterator] = function () { return this; }, i;
+    function verb(n, f) { i[n] = o[n] ? function (v) { return (p = !p) ? { value: __await(o[n](v)), done: n === "return" } : f ? f(v) : v; } : f; }
+}
+
+function __asyncValues(o) {
+    if (!Symbol.asyncIterator) throw new TypeError("Symbol.asyncIterator is not defined.");
+    var m = o[Symbol.asyncIterator], i;
+    return m ? m.call(o) : (o = typeof __values === "function" ? __values(o) : o[Symbol.iterator](), i = {}, verb("next"), verb("throw"), verb("return"), i[Symbol.asyncIterator] = function () { return this; }, i);
+    function verb(n) { i[n] = o[n] && function (v) { return new Promise(function (resolve, reject) { v = o[n](v), settle(resolve, reject, v.done, v.value); }); }; }
+    function settle(resolve, reject, d, v) { Promise.resolve(v).then(function(v) { resolve({ value: v, done: d }); }, reject); }
+}
+
+function __makeTemplateObject(cooked, raw) {
+    if (Object.defineProperty) { Object.defineProperty(cooked, "raw", { value: raw }); } else { cooked.raw = raw; }
+    return cooked;
+};
+
+function __importStar(mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (Object.hasOwnProperty.call(mod, k)) result[k] = mod[k];
+    result.default = mod;
+    return result;
+}
+
+function __importDefault(mod) {
+    return (mod && mod.__esModule) ? mod : { default: mod };
+}
+
+function __classPrivateFieldGet(receiver, privateMap) {
+    if (!privateMap.has(receiver)) {
+        throw new TypeError("attempted to get private field on non-instance");
+    }
+    return privateMap.get(receiver);
+}
+
+function __classPrivateFieldSet(receiver, privateMap, value) {
+    if (!privateMap.has(receiver)) {
+        throw new TypeError("attempted to set private field on non-instance");
+    }
+    privateMap.set(receiver, value);
+    return value;
+}
+
+
+/***/ }),
+
+/***/ "./node_modules/webpack/buildin/global.js":
+/*!***********************************!*\
+  !*** (webpack)/buildin/global.js ***!
+  \***********************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+var g;
+
+// This works in non-strict mode
+g = (function() {
+	return this;
+})();
+
+try {
+	// This works if eval is allowed (see CSP)
+	g = g || new Function("return this")();
+} catch (e) {
+	// This works if the window reference is available
+	if (typeof window === "object") g = window;
+}
+
+// g can still be undefined, but nothing to do about it...
+// We return undefined, instead of nothing here, so it's
+// easier to handle this case. if(!global) { ...}
+
+module.exports = g;
+
+
+/***/ }),
+
+/***/ "./node_modules/yeast/index.js":
+/*!*************************************!*\
+  !*** ./node_modules/yeast/index.js ***!
+  \*************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var alphabet = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-_'.split('')
+  , length = 64
+  , map = {}
+  , seed = 0
+  , i = 0
+  , prev;
+
+/**
+ * Return a string representing the specified number.
+ *
+ * @param {Number} num The number to convert.
+ * @returns {String} The string representation of the number.
+ * @api public
+ */
+function encode(num) {
+  var encoded = '';
+
+  do {
+    encoded = alphabet[num % length] + encoded;
+    num = Math.floor(num / length);
+  } while (num > 0);
+
+  return encoded;
+}
+
+/**
+ * Return the integer value specified by the given string.
+ *
+ * @param {String} str The string to convert.
+ * @returns {Number} The integer value represented by the string.
+ * @api public
+ */
+function decode(str) {
+  var decoded = 0;
+
+  for (i = 0; i < str.length; i++) {
+    decoded = decoded * length + map[str.charAt(i)];
+  }
+
+  return decoded;
+}
+
+/**
+ * Yeast: A tiny growing id generator.
+ *
+ * @returns {String} A unique id.
+ * @api public
+ */
+function yeast() {
+  var now = encode(+new Date());
+
+  if (now !== prev) return seed = 0, prev = now;
+  return now +'.'+ encode(seed++);
+}
+
+//
+// Map each character to its index.
+//
+for (; i < length; i++) map[alphabet[i]] = i;
+
+//
+// Expose the `yeast`, `encode` and `decode` functions.
+//
+yeast.encode = encode;
+yeast.decode = decode;
+module.exports = yeast;
+
+
+/***/ }),
+
+/***/ "./src/game/animations.ts":
+/*!********************************!*\
+  !*** ./src/game/animations.ts ***!
+  \********************************/
+/*! exports provided: Animations */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "Animations", function() { return Animations; });
+/* harmony import */ var playcanvas__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! playcanvas */ "./node_modules/playcanvas/build/playcanvas.js");
+/* harmony import */ var playcanvas__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(playcanvas__WEBPACK_IMPORTED_MODULE_0__);
+
+var Animations = /** @class */ (function () {
+    function Animations(app) {
+        this.app = app;
+    }
+    Animations.prototype.addInitAnimFallFromSky = function (entities, delay, resetPos) {
+        var cont = 0;
+        entities.forEach(function (entity) {
+            var pos = entity.getLocalPosition();
+            if (resetPos != null)
+                entity.setLocalPosition(pos.x, resetPos, pos.z);
+            entity.tween(pos)
+                .to({ x: pos.x, y: 0, z: pos.z }, 2.0, playcanvas__WEBPACK_IMPORTED_MODULE_0__["QuinticOut"])
+                .delay(delay + cont * 0.1)
+                .start();
+            cont++;
+        });
+    };
+    Animations.prototype.restartInitAnimation = function (event) {
+        if (event)
+            event.stopPropagation();
+        var initPosY = 15;
+        //Turbinas
+        var entities = (this.app.root.findByTag("turbina"));
+        this.addInitAnimFallFromSky(entities, 1, initPosY);
+        //Aerogeneradores
+        entities = (this.app.root.findByTag("wturbine"));
+        this.addInitAnimFallFromSky(entities, 0.6, initPosY);
+        //Depositos
+        entities = (this.app.root.findByTag("deposito"));
+        this.addInitAnimFallFromSky(entities, 3, initPosY);
+        //Bombas
+        entities = (this.app.root.findByTag("bomba"));
+        this.addInitAnimFallFromSky(entities, 2, initPosY);
+        //Edificios
+        entities = (this.app.root.findByTag("edificio1"));
+        this.addInitAnimFallFromSky(entities, 2, initPosY);
+        entities = (this.app.root.findByTag("edificio2"));
+        this.addInitAnimFallFromSky(entities, 2, initPosY);
+        //Others
+        entities = (this.app.root.findByTag("che"));
+        this.addInitAnimFallFromSky(entities, 4, initPosY);
+        //path
+        var paths = this.app.root.findByTag("path");
+        paths.forEach(function (path) { return path.enabled = false; });
+        var textos = this.app.root.findByTag("texto");
+        textos.forEach(function (texto) { return texto.enabled = false; });
+        var init = 0;
+        var tween = this.app.tween(init).to(1, 8, playcanvas__WEBPACK_IMPORTED_MODULE_0__["Linear"]);
+        tween.on('complete', function (dt) {
+            paths.forEach(function (path) { return path.enabled = true; });
+            textos.forEach(function (texto) { return texto.enabled = true; });
+        }).start();
+        this.animOrbitCamera();
+    };
+    Animations.prototype.animOrbitCamera = function () {
+        var camera = this.app.root.findByName("orbitCamera");
+        if (camera.enabled && camera.script) {
+            var orbitCamera_1 = camera.script.orbitCamera;
+            //Reset a posición inicial
+            this.cameras.resetOrbitCamera(-116.56, 0, 23.52);
+            //camera.script.orbitCamera.pitch = -55;
+            var color_1 = new playcanvas__WEBPACK_IMPORTED_MODULE_0__["Color"](0, 0, 0);
+            var oldValue_1 = 0;
+            var cont_1 = 0;
+            var tween = this.app.tween(color_1).to(new playcanvas__WEBPACK_IMPORTED_MODULE_0__["Color"](1, 0, 0), 6, playcanvas__WEBPACK_IMPORTED_MODULE_0__["SineInOut"]);
+            tween.on('update', function (dt) {
+                orbitCamera_1.yaw -= (color_1.r - oldValue_1) * dt * 17000;
+                orbitCamera_1.pitch -= dt * 4;
+                orbitCamera_1.distance -= dt * 2;
+                cont_1++;
+                oldValue_1 = color_1.r;
+            })
+                .on('complete', function () {
+                //orbitMirarA('ground');
+                console.log(orbitCamera_1.yaw, orbitCamera_1.pitch, orbitCamera_1.distance);
+            });
+            tween.start();
+        }
+    };
+    Animations.prototype.animObject = function (entity, animationName) {
+        var _this = this;
+        if (animationName == "jump") {
+            entity.setLocalEulerAngles(0, 0, 0);
+            var initial = entity.getLocalPosition().clone();
+            var to = entity.getLocalPosition().clone();
+            to.y += 1.0;
+            var initialScale = entity.getLocalScale().clone();
+            var scaleTo = entity.getLocalScale().clone();
+            scaleTo.y -= 0.2;
+            var pca = playcanvas__WEBPACK_IMPORTED_MODULE_0__;
+            var entitya = entity;
+            var tween = entitya.tween(entity.getLocalScale()).to(scaleTo, 0.4, pca.QuadraticOut)
+                .on('complete', function () { _this.entities.playSound("jump"); });
+            var tween2 = entitya.tween(entity.getLocalScale()).to(initialScale, 0.03, pca.QuinticOut);
+            var tween3 = entitya.tween(entity.getLocalPosition()).to(to, 0.6, pca.QuinticOut)
+                .on('complete', function () { _this.entities.playSound("chop"); });
+            var tween4 = entitya.tween(entity.getLocalEulerAngles()).rotate({ x: 0, y: 180, z: 0 }, 0.2, pca.QuinticIn);
+            var tween5 = entitya.tween(entity.getLocalEulerAngles()).rotate({ x: 0, y: 360, z: 0 }, 0.2, pca.QuinticOut);
+            var tween6 = entitya.tween(entity.getLocalPosition()).to(initial, 0.6, pca.BounceOut);
+            tween.start().chain(tween2, tween3, tween4, tween5, tween6).on('complete', function () {
+                entity.animar = false;
+            });
+        }
+    };
+    return Animations;
+}());
+
+
+
+/***/ }),
+
 /***/ "./src/game/app.ts":
 /*!*************************!*\
   !*** ./src/game/app.ts ***!
@@ -72666,14 +81499,92 @@
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "App", function() { return App; });
-/* harmony import */ var playcanvas__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! playcanvas */ "./node_modules/playcanvas/build/playcanvas.js");
-/* harmony import */ var playcanvas__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(playcanvas__WEBPACK_IMPORTED_MODULE_0__);
-/* harmony import */ var _assets_loader__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./assets-loader */ "./src/game/assets-loader.ts");
+/* harmony import */ var _entities__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./entities */ "./src/game/entities.ts");
+/* harmony import */ var _multiplayer__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./multiplayer */ "./src/game/multiplayer.ts");
+/* harmony import */ var _lights__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./lights */ "./src/game/lights.ts");
+/* harmony import */ var _shaders__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./shaders */ "./src/game/shaders.ts");
+/* harmony import */ var _xr__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./xr */ "./src/game/xr.ts");
+/* harmony import */ var _cameras__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./cameras */ "./src/game/cameras.ts");
+/* harmony import */ var _paths__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./paths */ "./src/game/paths.ts");
+/* harmony import */ var _animations__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./animations */ "./src/game/animations.ts");
+/* harmony import */ var playcanvas__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! playcanvas */ "./node_modules/playcanvas/build/playcanvas.js");
+/* harmony import */ var playcanvas__WEBPACK_IMPORTED_MODULE_8___default = /*#__PURE__*/__webpack_require__.n(playcanvas__WEBPACK_IMPORTED_MODULE_8__);
+/* harmony import */ var _assets_loader__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ./assets-loader */ "./src/game/assets-loader.ts");
 
 
+
+
+
+
+
+
+
+
+var VSHADER = "\n    attribute vec3 aPosition;\n    attribute vec2 aUv0;\n\n    uniform mat4 matrix_model;\n    uniform mat4 matrix_viewProjection;\n\n    varying vec2 vUv0;\n\n    void main(void)\n    {\n        vUv0 = aUv0;\n        gl_Position = matrix_viewProjection * matrix_model * vec4(aPosition, 1.0);\n    }\n";
+var FSHADER = "\n//Albedo\nprecision mediump float;\nvarying vec2 vUv0;\nuniform float uTime;\nuniform vec4 dashColor;\nuniform vec4 bgColor;\n\nvoid main(void)\n{\n    vec2 xy = vUv0;//fragCoord.xy; //We obtain our coordinates for the current pixel\n    bool sup = xy.y >= 0.5; //Cuadrante superior para rectas, inferior para curvas\n    bool left = xy.x <= 0.5; //Giro Izq o Derecha\n    vec4 retColor = vec4(0.0, 0.0, 0.0, 0.0); //This is actually transparent\n    bool sameColor = dashColor == bgColor;\n    vec2 grosorDash =vec2(0.40,0.60);\n    \n    if(sup){\n        xy.y = (xy.y - 0.5) * 2.0; //volvemos rango 0 -> 1\n        if(  xy.y > grosorDash.x && xy.y < grosorDash.y &&\n            (\n                xy.x > fract( uTime) \n                && \n                ( fract( uTime) > 0.5 || xy.x < fract( 0.5 + uTime))\n                ||\n                (  xy.x < fract( uTime +0.5)  && fract(uTime) > 0.5 )\n            )\n          )\n        {\n            retColor = dashColor; \n        }else \tif( xy.y > 0.2 && xy.y < 0.8){\n            retColor = bgColor;\n        }\n        gl_FragColor = retColor;\t\t\t\n    }else{\n        xy.y = xy.y  * 2.0; //volvemos rango 0 -> 1\n        xy.x = left ? xy.x * 2.0 : (xy.x - 0.5) * 2.0; //volvemos rango 0 -> 1\n        float len = length(xy);\n        float ang = degrees(atan(xy.x, xy.y))/90.0;\n        ang = left ? ang : (1.0 - ang); //Invertimos para girar en la otra direcci\u00F3n\n        if( (  ang > fract( uTime) \n                && \n                ( fract( uTime) > 0.5 || ang < fract( 0.5 + uTime))\n                ||\n                (  ang < fract( uTime +0.5)  && fract(uTime) > 0.5 )\n            )\n            && len < grosorDash.y && len > grosorDash.x){\n            retColor = dashColor; //vec4(1.0, 1.0, 0.0,1.0);\n        }else \tif( len < 0.8 && len > 0.2){\n            retColor = bgColor; // vec4(0.9, 0.9, 0.7,1.0);\n        }\n        \n        gl_FragColor = retColor;\t\t\t\n    }\n}\n";
+var FSHADERW = "\n    precision mediump float;\n    varying vec2 vUv0;\n    uniform float uTime;\n    uniform vec4 dashColor;\n    uniform vec4 bgColor;\n\n    void main(void)\n    {\n        vec2 xy = vUv0;//fragCoord.xy; //We obtain our coordinates for the current pixel\n        bool sup = xy.y >= 0.5; //Cuadrante superior para rectas, inferior para curvas\n        bool left = xy.x <= 0.5; //Giro Izq o Derecha\n        vec4 solidRed = vec4(0.2, 0.4, 0.2,0.0); //This is actually black right now\n        bool sameColor = dashColor == bgColor;\n        if(sup){\n            xy.y = (xy.y - 0.5) * 2.0; //Para volver al rango 0 -> 1\n            if( xy.y > 0.2 && xy.y < 0.8){\n                solidRed = bgColor; // vec4(0.9, 0.9, 0.7,1.0);\n            }\n            gl_FragColor = solidRed;\t\t\t\n        }else{\n            xy.y = xy.y  * 2.0; //Para volver al rango 0 -> 1\n            xy.x = left ? xy.x * 2.0 : (xy.x - 0.5) * 2.0; //Para volver al rango 0 -> 1\n            float len = length(xy);\n            float ang = degrees(atan(xy.x, xy.y))/90.0;\n            ang = left ? ang : (1.0 - ang); //Invertimos para girar en la otra direcci\u00F3n\n            if( len < 0.8 && len > 0.2){\n                solidRed = bgColor; // vec4(0.9, 0.9, 0.7,1.0);\n            }\n            gl_FragColor = solidRed;\t\t\t\n        }\n    }\n";
+var COLOR = { ground: '#454649',
+    energy: '#9b5e02',
+    energyDash: '#FFB33F',
+    bombWater: '#144377',
+    water: '#4186D3',
+    waterDash: '#4186D3'
+};
+var PCCOLOR = { ground: new playcanvas__WEBPACK_IMPORTED_MODULE_8__["Color"]().fromString(COLOR.ground),
+    energy: new playcanvas__WEBPACK_IMPORTED_MODULE_8__["Color"]().fromString(COLOR.energy),
+    energyDash: new playcanvas__WEBPACK_IMPORTED_MODULE_8__["Color"]().fromString(COLOR.energyDash),
+    bombWater: new playcanvas__WEBPACK_IMPORTED_MODULE_8__["Color"]().fromString(COLOR.bombWater),
+    water: new playcanvas__WEBPACK_IMPORTED_MODULE_8__["Color"]().fromString(COLOR.water),
+    waterDash: new playcanvas__WEBPACK_IMPORTED_MODULE_8__["Color"]().fromString(COLOR.waterDash),
+};
+function pcColor2Array(pccolor) {
+    return [pccolor.r, pccolor.g, pccolor.b, pccolor.a];
+}
+var SHCOLOR = { ground: pcColor2Array(PCCOLOR.ground),
+    energy: pcColor2Array(PCCOLOR.energy),
+    energyDash: pcColor2Array(PCCOLOR.energyDash),
+    water: pcColor2Array(PCCOLOR.water),
+    waterDash: pcColor2Array(PCCOLOR.waterDash),
+    bgColor: [0.6, 0.6, 0.1, 0.04]
+};
+var animated = false;
+var initialY = animated ? 15 : 0;
+var pTurbWind = new playcanvas__WEBPACK_IMPORTED_MODULE_8__["Vec3"](-1, initialY, 0);
+var pTurbinas = new playcanvas__WEBPACK_IMPORTED_MODULE_8__["Vec3"](5, initialY, 1);
+var pBombas = new playcanvas__WEBPACK_IMPORTED_MODULE_8__["Vec3"](7.5, initialY, 3.60);
+var pDepInf = new playcanvas__WEBPACK_IMPORTED_MODULE_8__["Vec3"](5, initialY, 3.4);
+var pDepSup = new playcanvas__WEBPACK_IMPORTED_MODULE_8__["Vec3"](8.3, initialY, 0);
+var pEdif1 = new playcanvas__WEBPACK_IMPORTED_MODULE_8__["Vec3"](-0.2, initialY, 5);
+var pEdif2 = new playcanvas__WEBPACK_IMPORTED_MODULE_8__["Vec3"](3.5, initialY, 5);
+var pCHE = new playcanvas__WEBPACK_IMPORTED_MODULE_8__["Vec3"](5, initialY, -0.5);
+var pathScale = 0.18;
+var dashColor = new playcanvas__WEBPACK_IMPORTED_MODULE_8__["Color"]().fromString(COLOR.energyDash); //[1.0, 0.85, 0.0, 1.0];
+var bgColor = [0.6, 0.6, 0.1, 0.04]; //[0.6, 0.6, 0.1 , 0.1];
+var turbDashColor = new playcanvas__WEBPACK_IMPORTED_MODULE_8__["Color"]().fromString(COLOR.waterDash); //[0.6, 0.6, 1.0, 1.0];
+var turbBgColor = [0.9, 0.9, 1.0, 0.02]; //[0.6, 0.6, 1.0 , 0.03];
+var turbinasDeViento = [{ speed1: 0, speed2: 120, rotInst: 0, x: 0 + pTurbWind.x, y: pTurbWind.y, z: pTurbWind.z, scale: 1, rx: 0, ry: 0, rz: 0,
+        id: "wturbine1", bbox: new playcanvas__WEBPACK_IMPORTED_MODULE_8__["Vec3"](0.1, 2, 0.1), animar: false },
+    { speed1: 20, speed2: 80, x: 1 + pTurbWind.x, y: pTurbWind.y, z: pTurbWind.z - 0.2, scale: 1, rx: 0, ry: 90, rz: 0,
+        id: "wturbine2", bbox: new playcanvas__WEBPACK_IMPORTED_MODULE_8__["Vec3"](0.1, 2, 0.1), animar: false },
+    { speed1: 0, speed2: 10, x: 2 + pTurbWind.x, y: pTurbWind.y, z: pTurbWind.z - 0.3, scale: 1, rx: 0, ry: 45, rz: 0,
+        id: "wturbine3", bbox: new playcanvas__WEBPACK_IMPORTED_MODULE_8__["Vec3"](0.1, 2, 0.1), animar: false },
+    { speed1: 0, speed2: 60, x: 3 + pTurbWind.x, y: pTurbWind.y, z: pTurbWind.z - 0.2, scale: 1, rx: 0, ry: 45, rz: 0,
+        id: "wturbine4", bbox: new playcanvas__WEBPACK_IMPORTED_MODULE_8__["Vec3"](0.1, 2, 0.1), animar: false },
+    { speed1: 30, speed2: 240, x: 4 + pTurbWind.x, y: pTurbWind.y, z: pTurbWind.z, scale: 1, rx: 0, ry: 45, rz: 0,
+        id: "wturbine5", bbox: new playcanvas__WEBPACK_IMPORTED_MODULE_8__["Vec3"](0.1, 2, 0.1), animar: false },
+];
+var TEXTOS_SUELO = [
+    { id: "teol", texto: "PARQUE EOLICO", pos: new playcanvas__WEBPACK_IMPORTED_MODULE_8__["Vec3"](pTurbWind.x + 2, 0.001, pTurbWind.z + 0.35), fontSize: 0.2 },
+    { id: "tbombas", texto: "BOMBAS", pos: new playcanvas__WEBPACK_IMPORTED_MODULE_8__["Vec3"](pBombas.x + 0.5, 0.001, pBombas.z - 2.4), fontSize: 0.2 },
+    { id: "tturbinas", texto: "TURBINAS", pos: new playcanvas__WEBPACK_IMPORTED_MODULE_8__["Vec3"](pTurbinas.x, 0.001, pTurbinas.z - 0.65), fontSize: 0.2 },
+    { id: "tscale", texto: "", pos: new playcanvas__WEBPACK_IMPORTED_MODULE_8__["Vec3"](-1.5, 0.001, 0.75), fontSize: 0.15 },
+];
 var App = /** @class */ (function () {
     function App() {
-        this.cubes = [];
+        this._lastTimestamp = 0;
+        this.entidades = [];
+        this.frameCount = 0;
+        this.dashSpeed = 1.0;
     }
     Object.defineProperty(App.prototype, "App", {
         get: function () {
@@ -72686,19 +81597,32 @@ var App = /** @class */ (function () {
     App.prototype.Awake = function () {
         var _this = this;
         this.initApp();
-        _assets_loader__WEBPACK_IMPORTED_MODULE_1__["AssetsLoader"].loadAssets(this.app, function () { return _this.assetsLoaded(); });
+        _assets_loader__WEBPACK_IMPORTED_MODULE_9__["AssetsLoader"].loadAssets(this.app, function () { return _this.assetsLoaded(); });
     };
     App.prototype.initApp = function () {
         var _this = this;
         this.canvas = this.createCanvas();
-        this.app = new playcanvas__WEBPACK_IMPORTED_MODULE_0__["Application"](this.canvas, {
-            mouse: new playcanvas__WEBPACK_IMPORTED_MODULE_0__["Mouse"](this.canvas),
-            touch: new playcanvas__WEBPACK_IMPORTED_MODULE_0__["TouchDevice"](this.canvas),
-            keyboard: new playcanvas__WEBPACK_IMPORTED_MODULE_0__["Keyboard"](window)
+        this.app = new playcanvas__WEBPACK_IMPORTED_MODULE_8__["Application"](this.canvas, {
+            mouse: new playcanvas__WEBPACK_IMPORTED_MODULE_8__["Mouse"](this.canvas),
+            touch: new playcanvas__WEBPACK_IMPORTED_MODULE_8__["TouchDevice"](this.canvas),
+            keyboard: new playcanvas__WEBPACK_IMPORTED_MODULE_8__["Keyboard"](window)
         });
+        this.app.addTweenManager();
+        this.animations = new _animations__WEBPACK_IMPORTED_MODULE_7__["Animations"](this.app);
+        this.entities = new _entities__WEBPACK_IMPORTED_MODULE_0__["Entities"](this.app, this.multiplayer, this.animations); //TODO
+        this.animations.entities = this.entities;
+        this.multiplayer = new _multiplayer__WEBPACK_IMPORTED_MODULE_1__["Multiplayer"](this.app, this.entities);
+        this.entities.multiplayer = this.multiplayer; //TODO
+        this.cameras = new _cameras__WEBPACK_IMPORTED_MODULE_5__["Cameras"](this, this.entities);
+        this.animations.cameras = this.cameras;
+        this.entities.setCameras(this.cameras);
+        this.shaders = new _shaders__WEBPACK_IMPORTED_MODULE_3__["Shaders"](this.app);
+        this.xr = new _xr__WEBPACK_IMPORTED_MODULE_4__["XR"](this.app, this.entities, this.multiplayer, this.cameras, this.shaders);
+        this.entities.xr = this.xr;
+        this.paths = new _paths__WEBPACK_IMPORTED_MODULE_6__["Paths"](this.app);
         this.app.start();
-        this.app.setCanvasFillMode(playcanvas__WEBPACK_IMPORTED_MODULE_0__["FILLMODE_FILL_WINDOW"]);
-        this.app.setCanvasResolution(playcanvas__WEBPACK_IMPORTED_MODULE_0__["RESOLUTION_AUTO"]);
+        this.app.setCanvasFillMode(playcanvas__WEBPACK_IMPORTED_MODULE_8__["FILLMODE_FILL_WINDOW"]);
+        this.app.setCanvasResolution(playcanvas__WEBPACK_IMPORTED_MODULE_8__["RESOLUTION_AUTO"]);
         window.addEventListener("resize", function () {
             _this.app.resizeCanvas(_this.canvas.width, _this.canvas.height);
         });
@@ -72706,60 +81630,49 @@ var App = /** @class */ (function () {
     };
     App.prototype.assetsLoaded = function () {
         console.log("ASSETS LOADED");
-        // create camera
-        var c = new playcanvas__WEBPACK_IMPORTED_MODULE_0__["Entity"]();
-        c.addComponent('camera', {
-            clearColor: new playcanvas__WEBPACK_IMPORTED_MODULE_0__["Color"](44 / 255, 62 / 255, 80 / 255),
-            farClip: 10000
-        });
-        this.app.root.addChild(c);
-        var l = new playcanvas__WEBPACK_IMPORTED_MODULE_0__["Entity"]();
-        l.addComponent("light", {
-            type: "spot",
-            range: 30
-        });
-        l.translate(0, 10, 0);
-        this.app.root.addChild(l);
-        var material = new playcanvas__WEBPACK_IMPORTED_MODULE_0__["StandardMaterial"]();
-        // create a grid of cubes
-        var SIZE = 4;
-        for (var x = 0; x <= SIZE; x++) {
-            for (var y = 0; y <= SIZE; y++) {
-                this.createCube(2 * x - SIZE, -1.5, 2 * y - SIZE, material);
-            }
-        }
-        // load a texture, create material and apply to box
-        var asset = this.app.assets.find("panel2");
-        material.diffuseMap = asset.resource;
-        material.update();
-        //TExto
-        this.addTexto(this.app);
+        //Ligths
+        _lights__WEBPACK_IMPORTED_MODULE_2__["Lights"].addAmbientLight(this.app);
+        _lights__WEBPACK_IMPORTED_MODULE_2__["Lights"].createSimpleDirectionalShadowLight(this.app, true);
+        //CHE
+        this.crearCHE();
         //Environmet
-        this.addSkyBox(this.app, 0, 'background');
+        _lights__WEBPACK_IMPORTED_MODULE_2__["Lights"].addSkyBox(this.app, 0, 'background');
+        //Ground
+        var ground = this.entities.createGround(new playcanvas__WEBPACK_IMPORTED_MODULE_8__["Color"]().fromString(COLOR.ground));
+        this.app.root.addChild(ground);
+        this.entities.createIntersectPoint(); //Debug
+        this.entities.createIntersectPointB(); //Debug
+        //ground sound
+        this.entities.addSoundEntity(ground, "click", "ui_select");
+        this.entities.addSoundEntity(ground, "jump", "jump");
+        this.entities.addSoundEntity(ground, "chop", "chop");
+        //Wturbines
+        var turbinas = this.entities.addEntity("wturbine", turbinasDeViento);
+        //Turbinas
+        this.crearTurbinas(pTurbinas, "#333333", COLOR.energy);
+        //Bombas
+        this.crearBombas(pBombas, "#333333", COLOR.bombWater);
+        //Edificios
+        this.crearEdificios(pEdif1, pEdif2, "#111213", "#111213"); //BC.sa5, BC.sa5);
+        //Textos
+        this.crearTextosSuelo(TEXTOS_SUELO, new playcanvas__WEBPACK_IMPORTED_MODULE_8__["Color"](0.9, 0.9, 0.9));
+        //depositos
+        this.crearDepositos(pDepInf, pDepSup, COLOR.water);
+        //Paths and Text
+        this.createPathsAndTexts();
+        this.entities.updatePathsState();
+        this.entities.orbitCamera = this.cameras.createOrbitCamera(ground, ground, true);
+        this.entities.createInfoBox(turbinas[0], false);
+        this.sceneReparentAll();
+        this.multiplayer.init();
+        this.xr.addSuportXR();
+        this.entities.addButtons(this.app.root.findByName("sceneParent"), PCCOLOR.ground);
     };
-    App.prototype.addSkyBox = function (app, mip, assetName) {
-        app.scene.skyboxMip = mip;
-        app.scene.skyboxIntensity = 1.0;
-        app.scene.toneMapping = playcanvas__WEBPACK_IMPORTED_MODULE_0__["TONEMAP_FILMIC"];
-        app.scene.exposure = 11;
-        app.scene.gammaCorrection = 2.2;
-        app.scene.setSkybox(app.assets.find(assetName).resources);
-        var r = new playcanvas__WEBPACK_IMPORTED_MODULE_0__["Quat"]();
-        r.setFromEulerAngles(0, 206, 0); //Para alinearlo con la shadowLight
-        app.scene.skyboxRotation = r;
+    App.prototype.crearCHE = function () {
+        var pCHE = new playcanvas__WEBPACK_IMPORTED_MODULE_8__["Vec3"](5, 0, -0.5);
+        return this.entities.addEntity("che", [{ speed1: 0, speed2: 0, x: pCHE.x, y: pCHE.y, z: pCHE.z, scale: 1.0, rx: 0, ry: 0, rz: 0,
+                id: "che", bbox: new playcanvas__WEBPACK_IMPORTED_MODULE_8__["Vec3"](0.80, 0.65, 0.20), animar: false, animationName: "jump", animSound: "jump" }]);
     };
-    App.prototype.createCube = function (x, y, z, material) {
-        var cube = new playcanvas__WEBPACK_IMPORTED_MODULE_0__["Entity"]();
-        cube.addComponent("model", {
-            type: "box",
-            material: material
-        });
-        cube.setLocalScale(1, 1, 1);
-        cube.translate(x, y, z);
-        this.app.root.addChild(cube);
-        this.cubes.push(cube);
-    };
-    ;
     App.prototype.createCanvas = function () {
         var canvas = document.createElement('canvas');
         canvas.setAttribute('width', '500px');
@@ -72767,30 +81680,533 @@ var App = /** @class */ (function () {
         document.body.appendChild(canvas);
         return canvas;
     };
-    App.prototype.addTexto = function (app) {
-        var asset = this.app.assets.find("font");
-        var texto = new playcanvas__WEBPACK_IMPORTED_MODULE_0__["Entity"]("texto");
-        texto.addComponent("element", {
-            anchor: [0.5, 0.5, 0.5, 0.5],
-            autoWidth: true,
-            autoHeigth: true,
-            fontSize: 0.2,
-            color: new playcanvas__WEBPACK_IMPORTED_MODULE_0__["Color"](0.9, 0.9, 0.9),
-            Alignment: [0, 1],
-            pivot: [0.5, 0.5],
-            //shadowColor: new pc.Color(0, 0, 0),
-            //shadowOffset: new pc.Vec2(0.25, -0.25),
-            text: "AYAYAYAYA",
-            type: playcanvas__WEBPACK_IMPORTED_MODULE_0__["ELEMENTTYPE_TEXT"]
+    App.prototype.crearTurbinas = function (pos, color, animColor) {
+        var scale = 0.6;
+        var bbox = new playcanvas__WEBPACK_IMPORTED_MODULE_8__["Vec3"](scale * 0.5, scale * 0.8, scale * 0.4);
+        var initY = pos.y;
+        var initX = pos.x - 1.1;
+        var initZ = pos.z + 0.8;
+        var sep = 0.70;
+        return this.entities.addEntity("turbina", [{ speed1: 0, speed2: 80, rotInst: 5, x: initX, y: initY, z: initZ, scale: scale, rx: 0, ry: 0, rz: 0,
+                id: "turbina1", bbox: bbox,
+                cmesh: "paletas", color: color, animColor: animColor, animMesh: "paletas", animar: false },
+            { speed1: 0, speed2: 80, rotInst: 5, x: initX + sep * 1, y: initY, z: initZ, scale: scale, rx: 0, ry: 90, rz: 0,
+                id: "turbina2", bbox: bbox,
+                cmesh: "paletas", color: color, animColor: animColor, animMesh: "paletas", animar: false },
+            { speed1: 0, speed2: 80, rotInst: 5, x: initX + sep * 2, y: initY, z: initZ, scale: scale, rx: 0, ry: 45, rz: 0,
+                id: "turbina3", bbox: bbox,
+                cmesh: "paletas", color: color, animColor: animColor, animMesh: "paletas", animar: false },
+            { speed1: 0, speed2: 80, rotInst: 5, x: initX + sep * 3, y: initY, z: initZ, scale: scale, rx: 0, ry: 45, rz: 0,
+                id: "turbina4", bbox: bbox,
+                cmesh: "paletas", color: color, animColor: animColor, animMesh: "paletas", animar: false }
+        ]);
+    };
+    App.prototype.crearBombas = function (pBombas, color, animColor) {
+        var initZ = pBombas.z - 0.1;
+        var posXs = 8.3;
+        var bigScale = 0.23;
+        var bboxB = new playcanvas__WEBPACK_IMPORTED_MODULE_8__["Vec3"](0.3, 0.45, 0.08);
+        var smallScale = 0.20;
+        var bboxS = new playcanvas__WEBPACK_IMPORTED_MODULE_8__["Vec3"](0.3, 0.4, 0.08);
+        var entities = this.entities.addEntity("bomba", [
+            { speed1: 0, speed2: 80, x: 8, y: pBombas.y, z: initZ - pathScale * 10, scale: bigScale, rx: 0, ry: 0, rz: 0,
+                id: "bombaBV1", bbox: bboxB,
+                cmesh: "interiorBomba", color: color, animColor: animColor, animMesh: "interiorBomba", animar: false },
+            { speed1: 0, speed2: 80, x: posXs, y: pBombas.y, z: initZ - pathScale * 7, scale: smallScale, rx: 0, ry: 0, rz: 0,
+                id: "bomba1", bbox: bboxS,
+                cmesh: "interiorBomba", color: color, animColor: animColor, animMesh: "interiorBomba", animar: false },
+            { speed1: 0, speed2: 80, x: posXs, y: pBombas.y, z: initZ - pathScale * 4, scale: smallScale, rx: 0, ry: 0, rz: 0,
+                id: "bomba2", bbox: bboxS,
+                cmesh: "interiorBomba", color: color, animColor: animColor, animMesh: "interiorBomba", animar: false },
+            { speed1: 0, speed2: 80, x: posXs, y: pBombas.y, z: initZ - pathScale * 1, scale: smallScale, rx: 0, ry: 0, rz: 0,
+                id: "bomba3", bbox: bboxS,
+                cmesh: "interiorBomba", color: color, animColor: animColor, animMesh: "interiorBomba", animar: false },
+            { speed1: 0, speed2: 80, x: posXs, y: pBombas.y, z: initZ + pathScale * 3, scale: smallScale, rx: 0, ry: 0, rz: 0,
+                id: "bomba4", bbox: bboxS,
+                cmesh: "interiorBomba", color: color, animColor: animColor, animMesh: "interiorBomba", animar: false },
+            { speed1: 0, speed2: 80, x: posXs, y: pBombas.y, z: initZ + pathScale * 6, scale: smallScale, rx: 0, ry: 0, rz: 0,
+                id: "bomba5", bbox: bboxS,
+                cmesh: "interiorBomba", color: color, animColor: animColor, animMesh: "interiorBomba", animar: false },
+            { speed1: 0, speed2: 80, x: posXs, y: pBombas.y, z: initZ + pathScale * 9, scale: smallScale, rx: 0, ry: 0, rz: 0,
+                id: "bomba6", bbox: bboxS,
+                cmesh: "interiorBomba", color: color, animColor: animColor, animMesh: "interiorBomba", animar: false },
+            { speed1: 0, speed2: 80, x: 8, y: pBombas.y, z: initZ + pathScale * 12, scale: bigScale, rx: 0, ry: 0, rz: 0,
+                id: "bombaBV2", bbox: bboxB,
+                cmesh: "interiorBomba", color: color, animColor: animColor, animMesh: "interiorBomba", animar: false }
+        ]);
+        entities.forEach(function (entity) { if (entity.model)
+            entity.model.receiveShadows = false; });
+        return entities;
+    };
+    App.prototype.crearEdificios = function (pEdif1, pEdif2, cEdif1, cEdif2) {
+        var e1 = this.entities.addEntity("edificio1", [{ speed1: 0, speed2: 0, x: pEdif1.x, y: pEdif1.y, z: pEdif1.z, scale: 0.5, rx: 0, ry: 0, rz: 0,
+                id: "edificio1", bbox: new playcanvas__WEBPACK_IMPORTED_MODULE_8__["Vec3"](1, 0.75, 0.47),
+                cmesh: "roof", color: cEdif1, animColor: cEdif1, animMesh: "roof",
+                animar: false }]);
+        var e2 = this.entities.addEntity("edificio2", [{ speed1: 0, speed2: 0, x: pEdif2.x, y: pEdif2.y, z: pEdif2.z, scale: 0.5, rx: 0, ry: 0, rz: 0,
+                id: "edificio2", bbox: new playcanvas__WEBPACK_IMPORTED_MODULE_8__["Vec3"](1, 0.8, 0.45),
+                cmesh: "tejado", color: cEdif2, animColor: cEdif2, animMesh: "tejado",
+                animar: false }]);
+        return [e1[0], e2[0]];
+    };
+    App.prototype.createPathsAndTexts = function () {
+        this.generateEnergyPaths(pTurbinas, pTurbWind, pBombas, pEdif1, pEdif2);
+        this.generateTurbinasPath(pTurbinas, pDepInf, pDepSup, true);
+        this.generateTurbinasPath(pTurbinas, pDepInf, pDepSup, false);
+        this.generateBombasPath(pBombas, pDepInf, pDepSup, true);
+        this.generateBombasPath(pBombas, pDepInf, pDepSup, false);
+        this.crearTextosSuelo(TEXTOS_SUELO, new playcanvas__WEBPACK_IMPORTED_MODULE_8__["Color"](0.9, 0.9, 0.9));
+    };
+    App.prototype.sceneReparentAll = function () {
+        var sceneParent = this.app.root.findByName("sceneParent");
+        if (!sceneParent) {
+            sceneParent = new playcanvas__WEBPACK_IMPORTED_MODULE_8__["Entity"]("sceneParent");
+            this.app.root.addChild(sceneParent);
+            var entities = this.app.root.findByTag('scalable');
+            entities.forEach(function (elem) {
+                elem.reparent(sceneParent);
+            });
+        }
+    };
+    App.prototype.crearTextosSuelo = function (textos, color) {
+        // Load a font
+        var fontAsset = this.app.assets.find("font");
+        this.crearTextosSuelosConAssets(fontAsset, TEXTOS_SUELO, color);
+    };
+    App.prototype.crearTextosSuelosConAssets = function (fontAsset, textos, color) {
+        var _this = this;
+        textos.forEach(function (data, index, array) {
+            var texto = new playcanvas__WEBPACK_IMPORTED_MODULE_8__["Entity"](data.id);
+            texto.addComponent("element", {
+                anchor: [0.5, 0.5, 0.5, 0.5],
+                autoWidth: true,
+                autoHeigth: true,
+                fontSize: data.fontSize,
+                color: color,
+                Alignment: [0, 1],
+                pivot: [0.5, 0.5],
+                //shadowColor: new pc.Color(0, 0, 0),
+                //shadowOffset: new pc.Vec2(0.25, -0.25),
+                text: data.texto,
+                type: playcanvas__WEBPACK_IMPORTED_MODULE_8__["ELEMENTTYPE_TEXT"]
+            });
+            if (texto.element) {
+                texto.element.fontAsset = fontAsset.id;
+                texto.tags.add("texto");
+                texto.tags.add("scalable");
+                texto.setLocalPosition(data.pos.x, data.pos.y, data.pos.z);
+                //texto.setLocalRotation(-40*pc.math.DEG_TO_RAD, 0, 0, 1);
+                texto.setLocalEulerAngles(-90, 0, 0);
+                _this.app.root.addChild(texto);
+            }
         });
-        if (texto.element)
-            texto.element.fontAsset = asset.id;
-        texto.tags.add("texto");
-        texto.tags.add("scalable");
-        texto.setLocalPosition(0.4, 0.6, -2);
-        texto.setLocalEulerAngles(75, 0, 0);
-        app.root.addChild(texto);
-        console.log("texto creado");
+    };
+    App.prototype.crearDepositos = function (pDepInf, pDepSup, color) {
+        var _this = this;
+        var asset = this.app.assets.find("cube");
+        var innerScale = 1.3;
+        var depositoInf = this.entities.createBoxTransparent(asset, { id: "depositoInf", tag: ["deposito", "scalable"], color: color,
+            animar: false, percent: 100, animarDesde: 100,
+            x: pDepInf.x, y: pDepInf.y, z: pDepInf.z, scale: 0.6 });
+        this.app.root.addChild(depositoInf);
+        //addWireframeEntity(app, depositoInf);
+        this.percentDeposito(depositoInf, 100, 0.6);
+        var depositoSup = this.entities.createBoxTransparent(asset, { id: "depositoSup", tag: ["deposito", "scalable"], color: color,
+            animar: false, percent: 100, animarDesde: 100,
+            x: pDepSup.x, y: pDepInf.y, z: pDepSup.z, scale: 0.9 });
+        this.app.root.addChild(depositoSup);
+        //addWireframeEntity(app, depositoSup);		
+        this.percentDeposito(depositoSup, 100, 0.9);
+        this.app.on("update", function (dt) {
+            if (depositoInf.animar) {
+                depositoInf.dato.percent = Math.random() * 100;
+                depositoInf.animar = false;
+            }
+            if (depositoInf.dato.percent && depositoInf.dato.animarDesde) {
+                var diff = depositoInf.dato.percent - depositoInf.dato.animarDesde;
+                if (Math.abs(diff) > 1) {
+                    depositoInf.dato.animarDesde += 0.3 * Math.sign(diff);
+                    _this.percentDeposito(depositoInf, depositoInf.dato.animarDesde, 0.6);
+                }
+            }
+            if (depositoSup.animar) {
+                depositoSup.dato.percent = Math.random() * 100;
+                depositoSup.animar = false;
+            }
+            if (depositoSup.dato.percent && depositoSup.dato.animarDesde) {
+                var diff2 = depositoSup.dato.percent - depositoSup.dato.animarDesde;
+                if (Math.abs(diff2) > 1) {
+                    depositoSup.dato.animarDesde += 0.3 * Math.sign(diff2);
+                    _this.percentDeposito(depositoSup, depositoSup.dato.animarDesde, 0.9);
+                }
+            }
+        });
+        return [depositoInf, depositoSup];
+    };
+    App.prototype.percentDeposito = function (deposito, percent, scale) {
+        deposito.setLocalScale(1 * scale, 0.5 * scale * percent / 100, 0.15 * scale);
+    };
+    App.prototype.generateEnergyPaths = function (posT, posW, posB, posEdif1, posEdif2) {
+        console.log("generateEnergyPaths");
+        var initZ = posT.z + 0.8;
+        var path = this.paths.pathGeneration({ id: "TC2_BOMBAS", type: "path",
+            dir: -90,
+            path: [{ type: "L", num: 3 },
+                { type: "G", turn: "right" },
+                { type: "L", num: (posB.x - posEdif1.x) / pathScale }],
+            scale: pathScale });
+        path.setPosition(posEdif1.x, 0, posEdif1.z - 0.2);
+        console.log("path  model", path.model);
+        if (path.model) {
+            console.log("path with model");
+            this.addShaderMaterialModelEnergy(path, path.model.model, VSHADER, FSHADER);
+        }
+        path = this.paths.pathGeneration({ id: "TC1", type: "path",
+            dir: 180,
+            path: [{ type: "L", num: (posEdif2.x - posEdif1.x) / pathScale }],
+            scale: pathScale });
+        path.setPosition(posEdif2.x, 0, posEdif2.z + 0.2);
+        if (path.model)
+            this.addShaderMaterialModelEnergy(path, path.model.model, VSHADER, FSHADER);
+        path = this.paths.pathGeneration({ id: "TC2", type: "path",
+            dir: 0,
+            path: [{ type: "L", num: (posEdif2.x - posEdif1.x) / pathScale }],
+            scale: pathScale });
+        path.setPosition(posEdif1.x, 0, posEdif1.z - 0.2);
+        if (path.model)
+            this.addShaderMaterialModelEnergy(path, path.model.model, VSHADER, FSHADER);
+        path = this.paths.pathGeneration({ id: "TURBINAS_TC", type: "path",
+            dir: 180,
+            path: [{ type: "L", num: (posT.x - posEdif1.x - 1) / pathScale },
+                { type: "G", turn: "left" },
+                { type: "L", num: (posEdif1.z - posT.z - 1) / pathScale }],
+            scale: pathScale });
+        path.setPosition(posT.x - 1.5, 0, posT.z + 0.7);
+        if (path.model)
+            this.addShaderMaterialModelEnergy(path, path.model.model, VSHADER, FSHADER);
+        //Molinos TC
+        path = this.paths.pathGeneration({ id: "MOLINOS_TC", type: "path",
+            dir: 90,
+            path: [
+                { type: "L", num: (posEdif1.z - posW.z) / pathScale },
+            ],
+            scale: pathScale });
+        path.setPosition(posW.x, 0, posW.z + 0.2);
+        if (path.model)
+            this.addShaderMaterialModelEnergy(path, path.model.model, VSHADER, FSHADER);
+    };
+    App.prototype.getShadderPath = function (isPath) {
+        return isPath ? FSHADERW : FSHADER;
+    };
+    App.prototype.addShaderMaterialModelWaterStatic = function (path, model, vshader, fshader, inverse) {
+        var shader = this.createShader(vshader, fshader);
+        var material = this.createUTimeMaterial(shader);
+        material.setParameter('bgColor', turbBgColor);
+        material.setParameter('dashColor', turbBgColor);
+        material.setParameter('uTime', 0);
+        material.depthWrite = false;
+        model.meshInstances.forEach(function (mi) {
+            mi.material = material;
+            //mi.castShadow = false;
+        });
+    };
+    App.prototype.addShaderMaterialModelWater = function (path, model, vshader, fshader, inverse) {
+        var _this = this;
+        var shader = this.createShader(vshader, fshader);
+        var material = this.createUTimeMaterial(shader);
+        material.setParameter('bgColor', turbBgColor);
+        material.depthWrite = false;
+        var time = 0;
+        model.meshInstances.forEach(function (mi) {
+            mi.material = material;
+            //mi.castShadow = false;
+        });
+        var entity = path;
+        this.app.on("update", function (dt) {
+            if (entity.animar) {
+                time += _this.dashSpeed * dt;
+                var t = inverse ? 1.0 - time % 1 : time % 1;
+                material.setParameter('uTime', t);
+                material.setParameter('dashColor', [turbDashColor.r, turbDashColor.g, turbDashColor.b, turbDashColor.a]);
+            }
+            else {
+                material.setParameter('dashColor', turbBgColor);
+            }
+            ;
+        });
+    };
+    App.prototype.generateTurbinasPath = function (pTurbinas, pDepInf, pDepSup, isPath) {
+        var vspace = 6; //Espacio entre entrada desde depSup y salida a depInf
+        var posY = isPath ? 0.00 : 0.001;
+        var inc = isPath ? 0.0000 : 0.0000;
+        var sufijo = isPath ? 'P' : '';
+        var path = this.paths.pathGeneration({ id: "pTurbinasina1" + sufijo, type: "path",
+            dir: 180,
+            path: [
+                { type: "L", num: 6 },
+                { type: "G", turn: "left" },
+                { type: "L", num: vspace },
+                { type: "G", turn: "left" },
+                { type: "L", num: 6 }
+            ],
+            scale: pathScale });
+        path.setPosition(pTurbinas.x, posY, pTurbinas.z);
+        if (path.model)
+            this.addShaderMaterialModelWater(path, path.model.model, VSHADER, this.getShadderPath(isPath));
+        posY += inc;
+        path = this.paths.pathGeneration({ id: "pTurbinasina2" + sufijo, type: "path",
+            dir: 180,
+            path: [
+                { type: "L", num: 2 },
+                { type: "G", turn: "left" },
+                { type: "L", num: vspace },
+                { type: "G", turn: "left" },
+                { type: "L", num: 2 }
+            ],
+            scale: pathScale });
+        path.setPosition(pTurbinas.x, posY, pTurbinas.z);
+        if (path.model)
+            this.addShaderMaterialModelWater(path, path.model.model, VSHADER, this.getShadderPath(isPath));
+        posY += inc;
+        path = this.paths.pathGeneration({ id: "pTurbinasina3" + sufijo, type: "path",
+            dir: 0,
+            path: [
+                { type: "L", num: 1 },
+                { type: "G", turn: "right" },
+                { type: "L", num: vspace },
+                { type: "G", turn: "right" },
+                { type: "L", num: 1 }
+            ],
+            scale: pathScale });
+        path.setPosition(pTurbinas.x, posY, pTurbinas.z);
+        if (path.model)
+            this.addShaderMaterialModelWater(path, path.model.model, VSHADER, this.getShadderPath(isPath));
+        posY += inc;
+        path = this.paths.pathGeneration({ id: "pTurbinasina4" + sufijo, type: "path",
+            dir: 0,
+            path: [
+                { type: "L", num: 5 },
+                { type: "G", turn: "right" },
+                { type: "L", num: vspace },
+                { type: "G", turn: "right" },
+                { type: "L", num: 5 }
+            ],
+            scale: pathScale });
+        path.setPosition(pTurbinas.x, posY, pTurbinas.z);
+        if (path.model)
+            this.addShaderMaterialModelWater(path, path.model.model, VSHADER, this.getShadderPath(isPath));
+        posY += inc;
+        path = this.paths.pathGeneration({ id: "depSup_turbinas" + sufijo, type: "path",
+            dir: -90,
+            path: [
+                { type: "L", num: 1 },
+                { type: "G", turn: "right" },
+                { type: "L", num: (pDepSup.x - pTurbinas.x) / pathScale },
+                { type: "G", turn: "left" },
+                { type: "L", num: (pTurbinas.z - pDepSup.z - pathScale * 2) / pathScale }
+            ],
+            scale: pathScale });
+        path.setPosition(pTurbinas.x, posY, pTurbinas.z);
+        if (path.model)
+            this.addShaderMaterialModelWater(path, path.model.model, VSHADER, this.getShadderPath(isPath), true);
+        posY += inc;
+        path = this.paths.pathGeneration({ id: "turbinas_dep2" + sufijo, type: "path",
+            dir: 90,
+            path: [
+                { type: "L", num: (pDepInf.z - pTurbinas.z - pathScale * vspace) / pathScale }
+            ],
+            scale: pathScale });
+        path.setPosition(pTurbinas.x, posY, pTurbinas.z + pathScale * 7);
+        if (path.model)
+            this.addShaderMaterialModelWater(path, path.model.model, VSHADER, this.getShadderPath(isPath), false);
+        posY += inc;
+    };
+    App.prototype.generateBombasPath = function (pBombas, pDepInf, pDepSup, isPath) {
+        var posY = isPath ? 0.000 : 0.001;
+        var inc = isPath ? 0.0 : 0.0;
+        var sufijo = isPath ? 'P' : '';
+        var path = this.paths.pathGeneration({ id: "depInf_bombas" + sufijo, type: "path",
+            dir: 90,
+            path: [
+                { type: "L", num: 2 },
+                { type: "G", turn: "left" },
+                { type: "L", num: (pBombas.x - pDepInf.x) / pathScale }
+            ],
+            scale: pathScale });
+        path.setPosition(pDepInf.x, posY, pDepInf.z);
+        if (path.model)
+            this.addShaderMaterialModelWater(path, path.model.model, VSHADER, this.getShadderPath(isPath));
+        posY += inc;
+        path = this.paths.pathGeneration({ id: "bombas_depSup" + sufijo, type: "path",
+            dir: 0,
+            path: [
+                { type: "L", num: 1 },
+                { type: "G", turn: "left" },
+                { type: "L", num: (pBombas.z - pDepSup.z) / pathScale }
+            ],
+            scale: pathScale });
+        path.setPosition(pBombas.x + 7 * pathScale, posY, pBombas.z);
+        if (path.model)
+            this.addShaderMaterialModelWater(path, path.model.model, VSHADER, this.getShadderPath(isPath));
+        posY += inc;
+        path = this.paths.pathGeneration({ id: "pbombaBV1" + sufijo, type: "path",
+            dir: -90,
+            path: [
+                { type: "L", num: 10 },
+                { type: "G", turn: "right" },
+                { type: "L", num: 6 },
+                { type: "G", turn: "right" },
+                { type: "L", num: 10 }
+            ],
+            scale: pathScale });
+        path.setPosition(pBombas.x, posY, pBombas.z);
+        if (path.model)
+            this.addShaderMaterialModelWater(path, path.model.model, VSHADER, this.getShadderPath(isPath));
+        posY += inc;
+        path = this.paths.pathGeneration({ id: "pbomba1" + sufijo, type: "path",
+            dir: -90,
+            path: [
+                { type: "L", num: 7 },
+                { type: "G", turn: "right" },
+                { type: "L", num: 6 },
+                { type: "G", turn: "right" },
+                { type: "L", num: 7 }
+            ],
+            scale: pathScale });
+        path.setPosition(pBombas.x, posY, pBombas.z);
+        if (path.model)
+            this.addShaderMaterialModelWater(path, path.model.model, VSHADER, this.getShadderPath(isPath));
+        posY += inc;
+        path = this.paths.pathGeneration({ id: "pbomba2" + sufijo, type: "path",
+            dir: -90,
+            path: [
+                { type: "L", num: 4 },
+                { type: "G", turn: "right" },
+                { type: "L", num: 6 },
+                { type: "G", turn: "right" },
+                { type: "L", num: 4 }
+            ],
+            scale: pathScale });
+        path.setPosition(pBombas.x, posY, pBombas.z);
+        if (path.model)
+            this.addShaderMaterialModelWater(path, path.model.model, VSHADER, this.getShadderPath(isPath));
+        posY += inc;
+        path = this.paths.pathGeneration({ id: "pbomba3" + sufijo, type: "path",
+            dir: -90,
+            path: [
+                { type: "L", num: 1 },
+                { type: "G", turn: "right" },
+                { type: "L", num: 6 },
+                { type: "G", turn: "right" },
+                { type: "L", num: 1 }
+            ],
+            scale: pathScale });
+        path.setPosition(pBombas.x, posY, pBombas.z);
+        if (path.model)
+            this.addShaderMaterialModelWater(path, path.model.model, VSHADER, this.getShadderPath(isPath));
+        posY += inc;
+        path = this.paths.pathGeneration({ id: "pbomba4" + sufijo, type: "path",
+            dir: 90,
+            path: [
+                { type: "L", num: 2 },
+                { type: "G", turn: "left" },
+                { type: "L", num: 6 },
+                { type: "G", turn: "left" },
+                { type: "L", num: 2 }
+            ],
+            scale: pathScale });
+        path.setPosition(pBombas.x, posY, pBombas.z);
+        if (path.model)
+            this.addShaderMaterialModelWater(path, path.model.model, VSHADER, this.getShadderPath(isPath));
+        posY += inc;
+        path = this.paths.pathGeneration({ id: "pbomba5" + sufijo, type: "path",
+            dir: 90,
+            path: [
+                { type: "L", num: 5 },
+                { type: "G", turn: "left" },
+                { type: "L", num: 6 },
+                { type: "G", turn: "left" },
+                { type: "L", num: 5 }
+            ],
+            scale: pathScale });
+        path.setPosition(pBombas.x, posY, pBombas.z);
+        if (path.model)
+            this.addShaderMaterialModelWater(path, path.model.model, VSHADER, this.getShadderPath(isPath));
+        posY += inc;
+        path = this.paths.pathGeneration({ id: "pbomba6" + sufijo, type: "path",
+            dir: 90,
+            path: [
+                { type: "L", num: 8 },
+                { type: "G", turn: "left" },
+                { type: "L", num: 6 },
+                { type: "G", turn: "left" },
+                { type: "L", num: 8 }
+            ],
+            scale: pathScale });
+        path.setPosition(pBombas.x, posY, pBombas.z);
+        if (path.model)
+            this.addShaderMaterialModelWater(path, path.model.model, VSHADER, this.getShadderPath(isPath));
+        posY += inc;
+        path = this.paths.pathGeneration({ id: "pbombaBV2" + sufijo, type: "path",
+            dir: 90,
+            path: [
+                { type: "L", num: 11 },
+                { type: "G", turn: "left" },
+                { type: "L", num: 6 },
+                { type: "G", turn: "left" },
+                { type: "L", num: 11 }
+            ],
+            scale: pathScale });
+        path.setPosition(pBombas.x, posY, pBombas.z);
+        if (path.model)
+            this.addShaderMaterialModelWater(path, path.model.model, VSHADER, this.getShadderPath(isPath));
+    };
+    App.prototype.addShaderMaterialModelEnergy = function (path, model, vshader, fshader) {
+        var _this = this;
+        console.log("addShaderMaterialModelEnergy");
+        var shader = this.createShader(vshader, fshader);
+        var material = this.createUTimeMaterial(shader);
+        material.setParameter('bgColor', SHCOLOR.bgColor);
+        var time = 0;
+        model.meshInstances.forEach(function (mi) {
+            mi.material = material;
+            mi.castShadow = false;
+            mi.depthWrite = false;
+        });
+        var entity = path;
+        this.app.on("update", function (dt) {
+            if (entity.animar) {
+                time += _this.dashSpeed * dt;
+                var t = time % 1;
+                material.setParameter('uTime', t);
+                material.setParameter('dashColor', SHCOLOR.energyDash);
+            }
+            else {
+                material.setParameter('dashColor', SHCOLOR.bgColor);
+            }
+            ;
+        });
+    };
+    App.prototype.createShader = function (vshader, fshader) {
+        var gd = this.app.graphicsDevice;
+        gd.setBlending(true);
+        var shaderDefinition = {
+            attributes: {
+                aPosition: playcanvas__WEBPACK_IMPORTED_MODULE_8__["SEMANTIC_POSITION"],
+                aUv0: playcanvas__WEBPACK_IMPORTED_MODULE_8__["SEMANTIC_TEXCOORD0"]
+            },
+            vshader: vshader,
+            fshader: fshader
+        };
+        return new playcanvas__WEBPACK_IMPORTED_MODULE_8__["Shader"](gd, shaderDefinition);
+    };
+    App.prototype.createUTimeMaterial = function (shader) {
+        var material = new playcanvas__WEBPACK_IMPORTED_MODULE_8__["Material"]();
+        material.shader = shader;
+        material.depthWrite = false;
+        material.blendType = playcanvas__WEBPACK_IMPORTED_MODULE_8__["BLEND_NORMAL"]; //Para soportar transparencia pc.BLEND_NORMAL
+        material.setParameter('uTime', 0);
+        return material;
     };
     return App;
 }());
@@ -72821,14 +82237,23 @@ var AssetDesc = /** @class */ (function () {
 }());
 var assetsDesc = [
     //Models
+    { id: "che", type: "container", url: "./objects/che.glb", tag: "init" },
+    { id: "jump", type: "audio", url: "./objects/jump.mp3", tag: "init" },
+    { id: "chop", type: "audio", url: "./objects/chop.mp3", tag: "init" },
+    { id: "ui_select", type: "audio", url: "./objects/ui_select.mp3", tag: "init" },
+    { id: "orbitCamera", type: "script", url: "./cameras/orbit-camera.js", tag: "init" },
     { id: "background", type: "cubemap", url: "./images/helipad.dds", tag: "init", options: { type: playcanvas__WEBPACK_IMPORTED_MODULE_0__["TEXTURETYPE_RGBM"] } },
+    { id: "wturbine", type: "container", url: "./objects/windTurbine.glb", tag: "init" },
+    { id: "bomba", type: "container", url: "./objects/bomba.glb", tag: "init" },
+    { id: "turbina", type: "container", url: "./objects/turbina.glb", tag: "init" },
+    { id: "edificio1", type: "container", url: "./objects/edificio1.glb", tag: "init" },
+    { id: "edificio2", type: "container", url: "./objects/edificio2.glb", tag: "init" },
+    { id: "avatar", type: "container", url: "./objects/avatar.glb", tag: "init" },
     { id: "font", type: "font", url: "./fonts/arial.json", tag: "init" },
     { id: "panel", type: "texture", url: "./images/panel.png", tag: "init" },
-    { id: "panel2", type: "texture", url: "./images/panel2.png", tag: "init" }
-    /*
-        { id:"clouds", type:"texture", url:"./images/clouds.jpg", tag:"init"},
-        { id:"grass", type:"texture", url:"./images/Grass.png", tag:"init"},
-        { id:"flyCamera", type:"script", url:"./cameras/fly-camera.js", tag:"init"},*/
+    { id: "panel2", type: "texture", url: "./images/panel2.png", tag: "init" },
+    { id: "bilboard", type: "script", url: "./cameras/billboard.js", tag: "init" },
+    { id: "cube", type: "container", url: "./objects/cube.glb", tag: "init" },
 ];
 var AssetsLoader = /** @class */ (function () {
     function AssetsLoader() {
@@ -72870,6 +82295,924 @@ var AssetsLoader = /** @class */ (function () {
 
 /***/ }),
 
+/***/ "./src/game/cameras.ts":
+/*!*****************************!*\
+  !*** ./src/game/cameras.ts ***!
+  \*****************************/
+/*! exports provided: Cameras */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "Cameras", function() { return Cameras; });
+/* harmony import */ var _entity__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./entity */ "./src/game/entity.ts");
+
+var Cameras = /** @class */ (function () {
+    function Cameras(app, entities) {
+        this.enableOrbitChange = false;
+        this.app = app;
+        this.entities = entities;
+        /*
+        try {
+            this.enableOrbitChange = localStorage.getItem('enableOrbitChange') ?
+                localStorage.getItem('enableOrbitChange') =="true" : true
+        } catch (error) {
+            console.log("PROBLEM:",error)
+        }*/
+    }
+    Cameras.prototype.createOrbitCamera = function (lookatEntity, defaultLookatEntity, enabled) {
+        var camera = new _entity__WEBPACK_IMPORTED_MODULE_0__["Entity"]("orbitCamera");
+        camera.tags.add("camera");
+        camera.addComponent("camera", {
+            clearColor: new pc.Color(0.4, 0.45, 0.5)
+        });
+        camera.enabled = enabled;
+        camera.addComponent("script");
+        if (camera.script) {
+            console.log("-->createOrbitCAmera script");
+            this.orbitCameraS = camera.script.create("orbitCamera", {
+                attributes: {
+                    inertiaFactor: 0.2,
+                    focusEntity: lookatEntity,
+                    defaultEntity: defaultLookatEntity,
+                    entities: this.entities,
+                    cameras: this
+                }
+            });
+            this.orbitCameraSM = camera.script.create("orbitCameraInputMouse", {
+                attributes: {
+                    app: this.app
+                }
+            });
+            this.orbitCameraST = camera.script.create("orbitCameraInputTouch", {
+                attributes: {
+                    app: this.app
+                }
+            });
+            console.log("cameraScript", camera.script);
+        }
+        this.app.app.root.addChild(camera);
+        return camera;
+    };
+    Cameras.prototype.resetOrbitCamera = function (yaw, pitch, distance) {
+        var _a;
+        var ground = this.app.app.root.findByName("ground");
+        var camera = (this.app.app.root.findByName("orbitCamera"));
+        var orbitCyaw = null;
+        var orbitCpitch = null;
+        var orbitCdistance = null;
+        /*
+        try {
+             orbitCyaw = localStorage.getItem('orbitCyaw');
+             orbitCpitch = localStorage.getItem('orbitCpitch');
+             orbitCdistance = localStorage.getItem('orbitCdistance');
+        } catch (error) {
+            console.log("PROBLEM:",error)
+        }
+*/
+        var orbitCamera = (_a = camera.script) === null || _a === void 0 ? void 0 : _a.get('orbitCamera');
+        orbitCamera.pivotPoint = ground.getLocalPosition().clone(); //new pc.Vec3();
+        orbitCamera.yaw = yaw || (orbitCyaw ? parseFloat(orbitCyaw) : 5.22);
+        orbitCamera.pitch = pitch || (orbitCpitch ? parseFloat(orbitCpitch) : -38.5);
+        orbitCamera.distance = distance || (orbitCdistance ? parseFloat(orbitCdistance) : 11.76);
+    };
+    return Cameras;
+}());
+
+
+
+/***/ }),
+
+/***/ "./src/game/entities.ts":
+/*!******************************!*\
+  !*** ./src/game/entities.ts ***!
+  \******************************/
+/*! exports provided: Entities */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "Entities", function() { return Entities; });
+/* harmony import */ var playcanvas__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! playcanvas */ "./node_modules/playcanvas/build/playcanvas.js");
+/* harmony import */ var playcanvas__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(playcanvas__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var _entity__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./entity */ "./src/game/entity.ts");
+
+
+var Entities = /** @class */ (function () {
+    function Entities(app, multiplayer, animations) {
+        this.mainScale = 1.0;
+        this.mainScaleOld = 1.0;
+        this.cont = 0;
+        this.players = new Map();
+        this.app = app;
+        this.multiplayer = multiplayer;
+        this.animations = animations;
+    }
+    Entities.prototype.setCameras = function (cameras) {
+        console.log("setCameras", cameras);
+        this.cameras = cameras;
+    };
+    Entities.prototype.addEntity = function (assetId, datos) {
+        var _this = this;
+        var asset = this.app.assets.find(assetId);
+        var entities = [];
+        datos.forEach(function (dato) {
+            var _a, _b;
+            var entity = new _entity__WEBPACK_IMPORTED_MODULE_1__["Entity"](dato.id);
+            entity.addComponent("model", {
+                type: "asset",
+                asset: asset.resource.model,
+                castShadows: true
+            });
+            entity.tags.add(asset.tags.list());
+            entity.tags.add(dato.id);
+            entity.tags.add("scalable");
+            entity.setLocalScale(dato.scale, dato.scale, dato.scale);
+            entity.setLocalPosition(dato.x, dato.y, dato.z);
+            console.log(dato.id, " meshed: ", (_a = entity.model) === null || _a === void 0 ? void 0 : _a.model.meshInstances[0].node.name);
+            entities.push(entity);
+            entity.dato = dato;
+            entity.id = dato.id;
+            entity.animar = dato.animar;
+            entity.animationName = dato.animationName;
+            entity.animSound = dato.animSound;
+            entity.acfactor = 0.0;
+            //RIGIDBODY no lo necesitamos
+            //entity.addComponent("rigidbody", {	type: "static"});
+            entity.addComponent("collision", { type: "box", halfExtents: dato.bbox });
+            //Add to app
+            _this.app.root.addChild(entity);
+            //ground.addChild(entity);
+            //Update Color
+            if (dato.cmesh && dato.color) {
+                var color = new playcanvas__WEBPACK_IMPORTED_MODULE_0__["Color"]().fromString(dato.animar ? dato.animColor : dato.color);
+                if ((_b = entity.model) === null || _b === void 0 ? void 0 : _b.meshInstances.length) {
+                    for (var i = 0; i < entity.model.meshInstances.length; i++) {
+                        if (entity.model.meshInstances[i].node.name == dato.cmesh)
+                            entity.model.meshInstances[i].setParameter('material_diffuse', [color.r, color.g, color.b]);
+                    }
+                }
+            }
+            //Add "update" event function
+            _this.app.on("update", function (dt) {
+                var _a, _b;
+                if (entity && (entity.animar || entity.acfactor > 0)) {
+                    entity.acfactor = entity.animar ?
+                        Math.min(1.0, entity.acfactor + 0.005) :
+                        Math.max(0.0, entity.acfactor - 0.005);
+                    entity.rotate(0, dato.speed1 * dt * entity.acfactor, 0);
+                    if ((_b = (_a = entity.model) === null || _a === void 0 ? void 0 : _a.model) === null || _b === void 0 ? void 0 : _b.meshInstances) {
+                        var mesh = entity.model.model.meshInstances[dato.rotInst ? dato.rotInst : 0];
+                        if (mesh && dato.speed2) {
+                            mesh.node.rotateLocal(0, dt * dato.speed2 * entity.acfactor, 0);
+                            //mesh = entity.model.model.meshInstances[1];
+                            //mesh.node.rotateLocal(0,0,dt*speed); //rotateLocal
+                        }
+                    }
+                }
+            });
+        });
+        return entities;
+    };
+    Entities.prototype.createGround = function (color) {
+        var halfExtents = new playcanvas__WEBPACK_IMPORTED_MODULE_0__["Vec3"](6, 0.11, 4);
+        var factor = 1;
+        // Create an Entity for the ground
+        var ground = new _entity__WEBPACK_IMPORTED_MODULE_1__["Entity"]("ground");
+        ground.addComponent("model", {
+            type: "box",
+            castShadows: false
+        });
+        ground.name = "ground";
+        ground.tags.add("init");
+        ground.tags.add("scalable");
+        ground.addComponent("rigidbody", {
+            type: "static",
+            restitution: 0.5
+        });
+        // add a collision component
+        ground.addComponent("collision", {
+            type: "box",
+            halfExtents: halfExtents
+        });
+        ground.setLocalScale(12 * factor, 0.22, 8 * factor);
+        ground.setLocalPosition(4, -0.11, 2);
+        ground.dato = { bbox: halfExtents };
+        // add a rigidbody component so that other objects collide with it
+        var material = this.createMaterial(color, color);
+        material;
+        if (ground.model) {
+            ground.model.material = material;
+            //  ground.model.model.meshInstances[0].castShadow = false; //Optimización
+        }
+        return ground;
+    };
+    Entities.prototype.createMaterial = function (ambient, diffuse, blend, opacity) {
+        var material = new playcanvas__WEBPACK_IMPORTED_MODULE_0__["StandardMaterial"]();
+        material.diffuse = diffuse;
+        material.ambient = ambient;
+        if (opacity)
+            material.opacity = opacity;
+        if (blend)
+            material.blendType = playcanvas__WEBPACK_IMPORTED_MODULE_0__["BLEND_ADDITIVE"];
+        material.update();
+        return material;
+    };
+    Entities.prototype.animate = function (val) {
+        console.log("animate called with value: ", val);
+        if (val == "all" || val == "animAll")
+            this.animations.restartInitAnimation();
+        if (val == "che") {
+            var che = this.app.root.findByName("che");
+            if (che)
+                this.activateEntity(che, false);
+        }
+        if (val == "turbines") {
+            this.stopStartEntities("wturbine", true);
+        }
+        if (val == "close") {
+            this.xr.xrpanel.enabled = false;
+        }
+    };
+    Entities.prototype.stopStartEntities = function (tag, random, e) {
+        var assets = this.app.root.findByTag(tag);
+        assets.forEach(function (elem) {
+            if (!random || Math.random() > 0.5) {
+                elem.animar = !elem.animar;
+            }
+        });
+        if (e)
+            e.stopPropagation();
+    };
+    Entities.prototype.execSelectEntity = function (entity, fromServer) {
+        //document.getElementById("selected")
+        //	.innerHTML = entity.name;
+        //if(true || event.altKey)
+        //if(result)
+        //	this.intersectPoint.setLocalPosition(result.point);
+        console.log("execSelectEntity", entity.name, entity.tags.has("button"), entity.callFunc, entity.callVal);
+        if (entity.tags.has("button")) {
+            if (!fromServer && entity.callFunc && entity.callVal) {
+                console.log("button select:", entity.callFunc, entity.callVal);
+                if (entity.callFunc == "reescalar")
+                    this.reescalar(entity.callVal, fromServer);
+                if (entity.callFunc == "teletransport")
+                    this.teletransport(entity.callVal);
+                if (entity.callFunc == "anim")
+                    this.animate(entity.callVal);
+            }
+        }
+        else if (entity && this.selEntityName != entity.name) {
+            this.selEntityName = entity.name;
+            console.log("call createInfoBox from execSelectEntity");
+            this.createInfoBox(entity, entity.name == "ground" ? true : false);
+            this.lastTimeSelected = new Date().getTime();
+        }
+        else if (new Date().getTime() - this.lastTimeSelected < 400) {
+            //DoubleClick
+            //this.activateEntity(entity, null);
+            this.lastTimeSelected = 0;
+        }
+        else {
+            this.lastTimeSelected = new Date().getTime();
+        }
+        this.playSound("click");
+    };
+    Entities.prototype.selectEntity = function (entity, result) {
+        console.log("selectEntity", result);
+        this.execSelectEntity(entity, false);
+        this.multiplayer.selectEntity(entity);
+    };
+    Entities.prototype.activateEntity = function (entity, result) {
+        //if(result)
+        //	this.intersectPoint.setLocalPosition(result.point);
+        if (entity.tags.has("button")) {
+            this.selectEntity(entity, false);
+        }
+        else {
+            entity.animar = !entity.animar;
+            if (result)
+                this.multiplayer.updateObjects([{ id: entity.name, animar: entity.animar }]);
+            this.updatePathsState();
+            if (entity.name != "ground") {
+                this.updateColors(entity);
+            }
+            console.log("activateEntity:", entity);
+            if (entity.animar && entity.animationName) {
+                console.log("call animation: ", entity.id, entity.animationName);
+                this.animations.animObject(entity, entity.animationName); //TODO
+                if (!entity.animSound) //sin animSound
+                    this.playSound("click");
+            }
+            else {
+                this.playSound("click"); //Sonido por defecto
+            }
+        }
+    };
+    Entities.prototype.getActiveNoActiveGroup = function (entities) {
+        var result = false;
+        entities.forEach(function (entity) { return result = result || entity.animar; });
+        return result;
+    };
+    Entities.prototype.updatePathsState = function () {
+        var _this = this;
+        //Molinos
+        var molinos = this.app.root.findByTag('wturbine');
+        var MOLINOS_TC = this.app.root.findByName('MOLINOS_TC');
+        MOLINOS_TC.animar = this.getActiveNoActiveGroup(molinos);
+        //Turbinas
+        var turbinas = this.app.root.findByTag('turbina');
+        var TURBINAS_TC = this.app.root.findByName('TURBINAS_TC');
+        var depSup_turbinas = this.app.root.findByName('depSup_turbinas');
+        var turbinas_dep2 = this.app.root.findByName('turbinas_dep2');
+        var turbinasActivas = this.getActiveNoActiveGroup(turbinas);
+        TURBINAS_TC.animar = turbinasActivas;
+        depSup_turbinas.animar = turbinasActivas;
+        turbinas_dep2.animar = turbinasActivas;
+        turbinas.forEach(function (turbina) {
+            _this.app.root.findByName('pTurbinasina' +
+                turbina.name.slice(-1)).animar = turbina.animar;
+        });
+        //BOMBAS
+        var bombas = this.app.root.findByTag('bomba');
+        var TC2_BOMBAS = this.app.root.findByName('TC2_BOMBAS');
+        var depInf_bombas = this.app.root.findByName('depInf_bombas');
+        var bombas_depSup = this.app.root.findByName('bombas_depSup');
+        var bombasAnimar = this.getActiveNoActiveGroup(bombas);
+        TC2_BOMBAS.animar = bombasAnimar;
+        depInf_bombas.animar = bombasAnimar;
+        bombas_depSup.animar = bombasAnimar;
+        bombas.forEach(function (bomba) {
+            var path = _this.app.root.findByName('p' +
+                bomba.name);
+            if (path)
+                path.animar = bomba.animar;
+        });
+        //Edificios
+        var TC1 = this.app.root.findByName('TC1');
+        TC1.animar = this.app.root.findByName('edificio1').animar;
+        var TC2 = this.app.root.findByName('TC2');
+        TC2.animar = this.app.root.findByName('edificio2').animar;
+    };
+    Entities.prototype.updateColors = function (entity) {
+        var _a, _b;
+        if (entity.dato && entity.dato.animMesh && entity.model) {
+            for (var i = 0; i < ((_a = entity.model) === null || _a === void 0 ? void 0 : _a.meshInstances.length); i++) {
+                if (entity.dato.animMesh == ((_b = entity.model) === null || _b === void 0 ? void 0 : _b.meshInstances[i].node.name)) {
+                    var idColor = (entity.animar ? entity.dato.animColor : entity.dato.color) || '#eeaa00';
+                    var color = new playcanvas__WEBPACK_IMPORTED_MODULE_0__["Color"]().fromString(idColor);
+                    entity.model.meshInstances[i].setParameter('material_diffuse', [color.r, color.g, color.b]);
+                }
+            }
+        }
+    };
+    Entities.prototype.playSound = function (soundName) {
+        var _a;
+        var ground = (this.app.root.findByName('ground'));
+        (_a = ground.sound) === null || _a === void 0 ? void 0 : _a.play(soundName);
+    };
+    Entities.prototype.addSoundEntity = function (entity, name, assetId) {
+        var _a;
+        entity.addComponent('sound');
+        var asset = this.app.assets.find(assetId);
+        // add footsteps slot
+        (_a = entity.sound) === null || _a === void 0 ? void 0 : _a.addSlot(name, {
+            asset: asset.id,
+            pitch: 1.7,
+            loop: false,
+            autoPlay: false
+        });
+    };
+    Entities.prototype.createInfoBox = function (entity, ocultar) {
+        if (this.billboard)
+            console.log("createInfoBox Billboard", ocultar, ' x: ', this.billboard.camera.getPosition().x, ' y: ', this.billboard.camera.getPosition().y, ' z: ', this.billboard.camera.getPosition().z, this.billboard);
+        var modelsAabb = new playcanvas__WEBPACK_IMPORTED_MODULE_0__["BoundingBox"]();
+        this.buildAabb(entity, modelsAabb, 0);
+        var scale = modelsAabb.halfExtents.clone();
+        if (this.titleBox == null) {
+            console.log("createInfoBox titleBox");
+            var datos = { id: "cbox",
+                scale: new playcanvas__WEBPACK_IMPORTED_MODULE_0__["Vec3"](0.8, 0.2, 0.02),
+                x: 0,
+                y: 0,
+                z: 0,
+                color: '#FF4040',
+                tag: 'bbox'
+            };
+            this.titleBox = new playcanvas__WEBPACK_IMPORTED_MODULE_0__["Entity"]("titleBoxBase");
+            var box = this.createContentBox(datos);
+            this.titleBox.addChild(box);
+            this.app.root.addChild(this.titleBox);
+            console.log("TODO billboard titleBox");
+            //Billboard
+            this.addTextoSurroundBox();
+            this.titleBox.addComponent("script");
+            if (this.titleBox.script) {
+                this.billboard = this.titleBox.script.create("billboard");
+                this.billboard.addCamera(this.orbitCamera);
+            }
+        }
+        if (this.titleTex && this.titleTex.element && this.titleTex.element.text) {
+            console.log("createInfoBox setLocalPosition ", modelsAabb.center.x, scale.y, this.mainScale, modelsAabb.center.y + scale.y + 0.13 * this.mainScale, modelsAabb.center.z);
+            this.titleTex.element.text = entity.name;
+        }
+        this.titleBox.setLocalPosition(modelsAabb.center.x, modelsAabb.center.y + scale.y + 0.13 * this.mainScale, modelsAabb.center.z);
+        this.titleBox.setLocalScale(0, 0, 0);
+        if (!ocultar)
+            this.titleBox.tween(this.titleBox.getLocalScale())
+                .to({ x: this.mainScale, y: this.mainScale, z: this.mainScale }, 0.8, playcanvas__WEBPACK_IMPORTED_MODULE_0__["ElasticOut"])
+                .start();
+    };
+    Entities.prototype.buildAabb = function (entity, modelsAabb, modelsAdded) {
+        var i = 0;
+        if (entity.model) {
+            var mi = entity.model.meshInstances;
+            for (i = 0; i < mi.length; i++) {
+                if (modelsAdded === 0) {
+                    modelsAabb.copy(mi[i].aabb);
+                }
+                else {
+                    modelsAabb.add(mi[i].aabb);
+                }
+                modelsAdded += 1;
+            }
+        }
+        for (var i_1 = 0; i_1 < entity.children.length; ++i_1) {
+            modelsAdded += this.buildAabb((entity.children[i_1]), modelsAabb, modelsAdded);
+        }
+        return modelsAdded;
+    };
+    Entities.prototype.addTextoSurroundBox = function () {
+        var fontAsset = this.app.assets.find("font");
+        console.log("addTExtoSurroudnBox: ", fontAsset);
+        this.titleTex = new playcanvas__WEBPACK_IMPORTED_MODULE_0__["Entity"]("titleText");
+        this.titleTex.addComponent("element", {
+            anchor: [0.5, 0.5, 0.5, 0.5],
+            autoWidth: true,
+            autoHeigth: true,
+            fontSize: 0.13,
+            color: "grey",
+            Alignment: [0, 1],
+            pivot: [0.5, 0.5],
+            text: "titleText",
+            type: playcanvas__WEBPACK_IMPORTED_MODULE_0__["ELEMENTTYPE_TEXT"]
+        });
+        if (this.titleTex.element) {
+            console.log("titleTExt fontAsset");
+            this.titleTex.element.fontAsset = fontAsset.id;
+            this.titleBox.addChild(this.titleTex);
+            this.titleTex.setLocalPosition(0.0, 0.0, -0.011);
+            this.titleBox.setLocalEulerAngles(0, 180, 0);
+        }
+    };
+    Entities.prototype.createContentBox = function (dato) {
+        var box = new _entity__WEBPACK_IMPORTED_MODULE_1__["Entity"]();
+        box.addComponent("model", {
+            type: "box"
+        });
+        box.dato = dato;
+        box.setLocalScale(dato.scale.x, dato.scale.y, dato.scale.z);
+        box.setLocalPosition(dato.x, dato.y, dato.z);
+        return box;
+    };
+    Entities.prototype.createBoxTransparent = function (asset, dato) {
+        var halfExtents = new playcanvas__WEBPACK_IMPORTED_MODULE_0__["Vec3"](1 * dato.scale, 1 * dato.scale, 0.15 * dato.scale);
+        var box = new _entity__WEBPACK_IMPORTED_MODULE_1__["Entity"](dato.id);
+        box.dato = dato;
+        box.dato.bbox = halfExtents;
+        box.animar = dato.animar;
+        console.log("craete box asset", asset);
+        box.addComponent("model", {
+            type: "asset",
+            asset: asset.resource.model,
+            castShadows: true
+        });
+        box.addComponent("collision", { type: "box", halfExtents: halfExtents });
+        box.name = dato.id;
+        box.tags.add(dato.id);
+        box.tags.add(dato.tag);
+        box.setLocalScale(1 * dato.scale, 0.5 * dato.scale, 0.15 * dato.scale);
+        box.setLocalPosition(dato.x, dato.y, dato.z);
+        var material = this.createMaterial(new playcanvas__WEBPACK_IMPORTED_MODULE_0__["Color"]().fromString(dato.color), //(0.2, 0.2, 0.8),
+        new playcanvas__WEBPACK_IMPORTED_MODULE_0__["Color"]().fromString(dato.color), true, 0.1);
+        if (box.model) {
+            box.model.meshInstances[0].material = material;
+            box.model.meshInstances[0].setParameter("material_opacity", 0.9);
+            material.blendType = playcanvas__WEBPACK_IMPORTED_MODULE_0__["BLEND_NORMAL"]; //Para soportar transparencia
+        }
+        return box;
+    };
+    Entities.prototype.setColorMesh = function (entity, color, meshName) {
+        if (entity.model)
+            for (var i = 0; i < entity.model.meshInstances.length; i++) {
+                if (meshName == entity.model.meshInstances[i].node.name) {
+                    console.log("--> meshInstances:", color, entity.model.meshInstances[i].node.name);
+                    var pcolor = new playcanvas__WEBPACK_IMPORTED_MODULE_0__["Color"]().fromString(color);
+                    entity.model.meshInstances[i].setParameter('material_diffuse', [pcolor.r, pcolor.g, pcolor.b]);
+                }
+            }
+    };
+    Entities.prototype.updateEntity = function (entity) {
+        if (entity.name != "ground") {
+            this.updateColors(entity);
+        }
+        if (entity.animar && entity.dato && entity.animationName) {
+            console.log("TODO call animation: ", entity.id, entity.animation);
+            this.animations.animObject(entity, entity.animationName);
+            if (!entity.dato.animSound) //sin animSound
+                this.playSound("click");
+        }
+    };
+    //////////////// MULTIPLAYER //////////////////
+    Entities.prototype.createOrUpdatePlayer = function (player) {
+        this.cont++;
+        if (!this.players.get(player.id)) {
+            console.log("creando player", player.color, player.id);
+            var asset = this.app.assets.find('avatar');
+            //Creamos objeto player
+            var newplayer = new playcanvas__WEBPACK_IMPORTED_MODULE_0__["Entity"](player.id);
+            newplayer.addComponent("model", {
+                type: "asset",
+                asset: asset.resource.model,
+                castShadows: true
+            });
+            this.setColorMesh(newplayer, player.color, 'avatar');
+            newplayer.setLocalScale(2.5, 2.5, 2.5);
+            this.app.root.addChild(newplayer);
+            if (player.c1)
+                this.createHand(player, "_c1");
+            if (player.c2)
+                this.createHand(player, "_c2");
+        }
+        this.players.set(player.id, player);
+        //Update position
+        var entity = this.app.root.findByName(player.id);
+        if (entity) {
+            entity.setLocalPosition(player.pos.x, player.pos.y, player.pos.z);
+            if (player.angles)
+                entity.setEulerAngles(player.angles.x, player.angles.y, player.angles.z);
+        }
+        if (player.c1 || player.c2) {
+            var c1 = this.app.root.findByName(player.id + "_c1");
+            var c2 = this.app.root.findByName(player.id + "_c2");
+            c1.setPosition(player.c1.x, player.c1.y, player.c1.z);
+            c2.setPosition(player.c2.x, player.c2.y, player.c2.z);
+        }
+    };
+    Entities.prototype.createHand = function (player, pos) {
+        var hand = new playcanvas__WEBPACK_IMPORTED_MODULE_0__["Entity"](player.id + pos);
+        var material = new playcanvas__WEBPACK_IMPORTED_MODULE_0__["StandardMaterial"]();
+        var color = new playcanvas__WEBPACK_IMPORTED_MODULE_0__["Color"]().fromString(player.color);
+        material.diffuse.set(color.r, color.g, color.b);
+        material.update();
+        hand.addComponent('model', {
+            type: 'sphere',
+            castShadows: true,
+            material: material
+        });
+        hand.setLocalScale(0.1, 0.1, 0.1);
+        hand.setPosition(1, 1, 1);
+        this.app.root.addChild(hand);
+    };
+    Entities.prototype.createOrUpdatePlayerOld = function (player) {
+        if (!this.players.get(player.id)) {
+            console.log("creando player", player.color, player.id);
+            //Creamos objeto player
+            var newplayer = new playcanvas__WEBPACK_IMPORTED_MODULE_0__["Entity"](player.id);
+            var material = new playcanvas__WEBPACK_IMPORTED_MODULE_0__["StandardMaterial"]();
+            var color = new playcanvas__WEBPACK_IMPORTED_MODULE_0__["Color"]().fromString(player.color);
+            material.diffuse.set(color.r, color.g, color.b);
+            material.update();
+            newplayer.addComponent('model', {
+                type: 'sphere',
+                castShadows: true,
+                material: material
+            });
+            newplayer.setLocalScale(0.2, 0.2, 0.2);
+            this.app.root.addChild(newplayer);
+        }
+        this.players.set(player.id, player);
+        //Update position
+        var entity = this.app.root.findByName(player.id);
+        if (entity)
+            entity.setLocalPosition(player.x, player.y, player.z);
+    };
+    Entities.prototype.removeOldPlayers = function () {
+        var _this = this;
+        //console.log("---> removing old players",this.players.keys());
+        var limitNoEventTime = new Date().getTime() - 10000;
+        this.players.forEach(function (valor, id) {
+            if (valor.time < limitNoEventTime) {
+                _this.players.delete(id);
+                var entity = _this.app.root.findByName(id);
+                var c1 = _this.app.root.findByName(id + "_c1");
+                var c2 = _this.app.root.findByName(id + "_c2");
+                if (entity)
+                    entity.destroy();
+                if (c1)
+                    c1.destroy();
+                if (c2)
+                    c2.destroy();
+            }
+        });
+    };
+    Entities.prototype.createIntersectPoint = function () {
+        this.intersectPoint = new playcanvas__WEBPACK_IMPORTED_MODULE_0__["Entity"]("intersectionPoint");
+        var material = new playcanvas__WEBPACK_IMPORTED_MODULE_0__["StandardMaterial"]();
+        material.diffuse.set(1, 0, 0);
+        material.update();
+        this.intersectPoint.addComponent('model', {
+            type: 'sphere',
+            castShadows: false,
+            material: material
+        });
+        this.intersectPoint.setLocalScale(0.02, 0.02, 0.02);
+        this.app.root.addChild(this.intersectPoint);
+    };
+    Entities.prototype.createIntersectPointB = function () {
+        this.intersectPointB = new playcanvas__WEBPACK_IMPORTED_MODULE_0__["Entity"]("intersectionPoint");
+        var material = new playcanvas__WEBPACK_IMPORTED_MODULE_0__["StandardMaterial"]();
+        material.diffuse.set(0, 1, 0);
+        material.update();
+        this.intersectPointB.addComponent('model', {
+            type: 'sphere',
+            castShadows: false,
+            material: material
+        });
+        this.intersectPointB.setLocalScale(0.02, 0.02, 0.02);
+        this.app.root.addChild(this.intersectPointB);
+    };
+    Entities.prototype.reescalar = function (scale, noEmit) {
+        if (this.mainScale === Number(scale))
+            return;
+        console.log("--->reescalar ", noEmit, "scale:", scale, "mainScale:", this.mainScale);
+        this.mainScaleOld = this.mainScale;
+        var tscale = this.app.root.findByName("tscale");
+        var pscaleLabel = this.app.root.findByName("pscaleLabel");
+        if (scale == '+')
+            this.mainScale = (this.mainScale < 1) ? this.mainScale * 2 : this.mainScale + 1.0;
+        else if (scale == '-')
+            this.mainScale = (this.mainScale <= 1) ? this.mainScale / 2 : this.mainScale - 1.0;
+        else
+            this.mainScale = Number(scale);
+        var nval = Number(this.mainScale);
+        if (!noEmit) {
+            this.multiplayer.updateObjects([{ id: 'sceneParent', val: nval }]);
+        }
+        var scaleText = '' + Math.round((this.mainScale + Number.EPSILON) * 100) / 100;
+        console.log("scaleText", scaleText);
+        if (tscale && tscale.element)
+            tscale.element.text = scaleText;
+        if (pscaleLabel && pscaleLabel.element) {
+            pscaleLabel.element.text = scaleText;
+        }
+        //Update pointers scale
+        this.intersectPoint.setLocalScale(playcanvas__WEBPACK_IMPORTED_MODULE_0__["Vec3"].ONE.clone().scale(0.02 * this.mainScale));
+        this.intersectPointB.setLocalScale(playcanvas__WEBPACK_IMPORTED_MODULE_0__["Vec3"].ONE.clone().scale(0.02 * this.mainScale));
+        //Update CameraPos
+        var cameraParent = this.app.root.findByName("cameraParent");
+        var xrpanel = this.app.root.findByName("xrpanel");
+        if (cameraParent) {
+            var prop = this.mainScale / this.mainScaleOld;
+            var oldPos = cameraParent.getLocalPosition().clone();
+            cameraParent.setLocalPosition(oldPos.x * prop, oldPos.y, oldPos.z * prop);
+            if (xrpanel && xrpanel.enabled && xrpanel.parent === this.app.root) {
+                var newPos = cameraParent.getLocalPosition().clone();
+                var oldPosPanel = xrpanel.getLocalPosition().clone();
+                newPos.sub(oldPos);
+                oldPosPanel.add(newPos);
+                console.log("--->moving xrpanel");
+                xrpanel.setLocalPosition(oldPosPanel.x, oldPosPanel.y, oldPosPanel.z);
+            }
+        }
+        var sceneParent = this.app.root.findByName("sceneParent");
+        sceneParent.setLocalScale(nval, nval, nval);
+        //Recalculamos Colision Element de todos los elementos scalados
+        //Podriamos buscar por childs!
+        var entities = this.app.root.findByTag('scalable');
+        entities.forEach(function (elem) {
+            if (elem.collision && elem.collision && elem.dato && elem.dato.bbox) {
+                elem.collision.halfExtents = elem.dato.bbox.clone().scale(nval);
+            }
+        });
+        //Actualizamos TitleBox por el scalado
+        var titleBox = this.app.root.findByName("titleBoxBase");
+        var titleText = this.app.root.findByName("titleText");
+        titleText.setLocalPosition(0.0, 0.0, -0.011 * (nval < 1.0 ? 1.0 : nval));
+        titleBox.setLocalScale(nval, nval, nval);
+        var selEntityName = this.app.root.findByName(this.selEntityName);
+        this.createInfoBox(this.app.root.findByName("ground"), false);
+        if (selEntityName) {
+            console.log("call createInfoBox from reescalar2");
+            this.createInfoBox(selEntityName, false);
+        }
+    };
+    Entities.prototype.createPlaneButton = function (father, dato) {
+        if (!dato.noButton) {
+            var button = new _entity__WEBPACK_IMPORTED_MODULE_1__["Entity"](dato.id);
+            button.addComponent("model", {
+                type: "plane"
+            });
+            var material = new playcanvas__WEBPACK_IMPORTED_MODULE_0__["StandardMaterial"]();
+            var asset = this.app.assets.find('panel');
+            material.diffuse.set(dato.bgcolor.r, dato.bgcolor.g, dato.bgcolor.b);
+            material.emissive.set(dato.bgcolor.r, dato.bgcolor.g, dato.bgcolor.b);
+            material.emissiveIntensity = 0.3;
+            material.opacityMap = asset.resource;
+            material.alphaTest = 0.3;
+            material.cull = playcanvas__WEBPACK_IMPORTED_MODULE_0__["CULLFACE_NONE"];
+            material.update();
+            if (button.model)
+                button.model.material = material;
+            button.addComponent("collision", { type: "box", halfExtents: dato.bbox });
+            button.callFunc = dato.callFunc;
+            button.callVal = dato.callVal;
+            button.setLocalScale(dato.scale);
+            button.setLocalPosition(dato.pos);
+            button.tags.add("button");
+            father.addChild(button);
+        }
+        // Create a label for the button
+        var fontAsset = this.app.assets.find("font");
+        var label = new playcanvas__WEBPACK_IMPORTED_MODULE_0__["Entity"](dato.id + "Label");
+        label.addComponent("element", {
+            anchor: [0.5, 0.5, 0.2, 0.5],
+            color: dato.color,
+            fontSize: 0.02,
+            autoWidth: true,
+            autoHeigth: true,
+            pivot: [0.5, 0.5],
+            text: dato.text,
+            type: playcanvas__WEBPACK_IMPORTED_MODULE_0__["ELEMENTTYPE_TEXT"],
+            fontAsset: fontAsset
+        });
+        label.rotateLocal(-90, 0, 0);
+        label.setLocalPosition(dato.pos.x, 0.0012, dato.pos.z);
+        father.addChild(label);
+    };
+    Entities.prototype.teletransport = function (entityName) {
+        var entity = this.app.root.findByName(entityName);
+        var cameraParent = this.app.root.findByName("cameraParent");
+        var oldPos = cameraParent.getLocalPosition().clone();
+        if (entity && cameraParent && entityName == "ground") {
+            cameraParent.setLocalPosition(-1.5, 0.4, 0.3);
+        }
+        else {
+            var modelsAabb = new playcanvas__WEBPACK_IMPORTED_MODULE_0__["BoundingBox"]();
+            this.buildAabb(entity, modelsAabb, 0);
+            var scale = modelsAabb.halfExtents.clone();
+            var scale2 = entityName.startsWith("wt") ? 0.5 : 1.0;
+            cameraParent.setLocalPosition(modelsAabb.center.x, modelsAabb.center.y + scale2 * scale.y + 0.10 * this.mainScale, modelsAabb.center.z);
+        }
+        var xrpanel = this.app.root.findByName("xrpanel");
+        if (xrpanel && xrpanel.enabled && xrpanel.parent === this.app.root) {
+            var newPos = cameraParent.getLocalPosition().clone();
+            var oldPosPanel = xrpanel.getLocalPosition().clone();
+            newPos.sub(oldPos);
+            oldPosPanel.add(newPos);
+            console.log("--->moving xrpanel");
+            xrpanel.setLocalPosition(oldPosPanel.x, oldPosPanel.y, oldPosPanel.z);
+        }
+    };
+    Entities.prototype.disableEnableCameras = function (disable) {
+        console.log("---ENABLE DISABLE CAMERAS---");
+        var orbitC = this.app.root.findByName('orbitCamera');
+        //let flyC = this.app.app.root.findByName('flyCamera');
+        var titleBoxBase = this.app.root.findByName('titleBoxBase');
+        var cameraParent = this.app.root.findByName('xrCamera');
+        if (disable) {
+            console.log("--->DISABLING orbitCamera");
+            orbitC.enabled = false;
+            this.cameras.orbitCameraSM.removeEventsMouse();
+            /*flyC.enabled = false;
+            if(orbitC.script){
+                ((orbitC.script.scripts)as any).orbitCameraInputMouse.removeEventsMouse();
+            }*/
+            //this.flyCamera.removeEventsMouse();
+            console.log("----->", titleBoxBase, " xrCamera:", cameraParent);
+            if (this.billboard) {
+                this.billboard.addCamera(cameraParent);
+            }
+            return orbitC.getLocalPosition().clone();
+        }
+        else {
+            console.log("--->ENABLING");
+            orbitC.enabled = true;
+            this.cameras.orbitCameraSM.addEventsMouse();
+            if (this.billboard) {
+                this.billboard.addCamera(orbitC);
+            }
+            //(this.orbitCameraS as any).resetAndLookAtEntity(this.flyCamera.getPosition(), this.ground );
+            if (orbitC.script)
+                (orbitC.script.scripts).orbitCameraInputMouse.addEventsMouse();
+            //this.orbitCamera.resetAndLookAtEntity(this.flyCamera.getPosition(), this.ground );
+        }
+    };
+    Entities.prototype.addButtons = function (parent, color) {
+        var values = [{ f: 'reescalar', id: 'gx05', text: 'x0.5', v: 0.5 },
+            { f: 'reescalar', id: 'gx1', text: 'x1', v: 1 },
+            { f: 'reescalar', id: 'gx2', text: 'x2', v: 2 },
+            { f: 'reescalar', id: 'gx3', text: 'x3', v: 3 },
+            { f: 'reescalar', id: 'gmas', text: '+', v: '+' },
+            { f: 'reescalar', id: 'gmenos', text: '-', v: '-' },
+            { f: 'anim', id: 'animAll', text: 'anim', v: 'all', animationName: 'all' }];
+        for (var i = 0; i < values.length; i++) {
+            this.createButton(parent, true, { scale: new playcanvas__WEBPACK_IMPORTED_MODULE_0__["Vec3"](0.3, 0.2, 0.01),
+                pos: new playcanvas__WEBPACK_IMPORTED_MODULE_0__["Vec3"](-1.5, 0.002, 1 + i * 0.24),
+                rot: new playcanvas__WEBPACK_IMPORTED_MODULE_0__["Vec3"](-90, 0, 0),
+                id: values[i].id,
+                bbox: new playcanvas__WEBPACK_IMPORTED_MODULE_0__["Vec3"](0.15, 0.1, 0.005),
+                text: values[i].text,
+                tipo: "button",
+                callFunc: values[i].f,
+                callVal: values[i].v,
+                animationName: values[i].animationName,
+                bgcolor: color,
+                color: new playcanvas__WEBPACK_IMPORTED_MODULE_0__["Color"]().fromString("#eeeeee") });
+        }
+    };
+    Entities.prototype.createButton = function (father, scalable, dato) {
+        var button = new _entity__WEBPACK_IMPORTED_MODULE_1__["Entity"](dato.id);
+        button.addComponent("model", {
+            type: "box"
+        });
+        var material = this.createMaterial(dato.bgcolor, dato.bgcolor);
+        if (button.model)
+            button.model.material = material;
+        button.addComponent("collision", { type: "box", halfExtents: dato.bbox });
+        button.callFunc = dato.callFunc;
+        button.callVal = dato.callVal;
+        button.animationName = dato.animationName;
+        button.acfactor = 0.0;
+        button.setLocalScale(dato.scale);
+        button.setLocalPosition(dato.pos);
+        button.setLocalEulerAngles(dato.rot);
+        button.tags.add("button");
+        if (scalable)
+            button.tags.add("scalable");
+        father.addChild(button);
+        // Create a label for the button
+        var fontAsset = this.app.assets.find("font");
+        var label = new playcanvas__WEBPACK_IMPORTED_MODULE_0__["Entity"]();
+        label.addComponent("element", {
+            anchor: [0.5, 0.5, 0.5, 0.5],
+            color: dato.color,
+            fontSize: 0.38,
+            autoWidth: true,
+            autoHeigth: true,
+            pivot: [0.5, 0.5],
+            text: dato.text,
+            type: playcanvas__WEBPACK_IMPORTED_MODULE_0__["ELEMENTTYPE_TEXT"],
+            wrapLines: true,
+            fontAsset: fontAsset
+        });
+        label.setLocalPosition(0.0, 0.0, 1.42);
+        button.addChild(label);
+        return button;
+    };
+    return Entities;
+}());
+
+
+
+/***/ }),
+
+/***/ "./src/game/entity.ts":
+/*!****************************!*\
+  !*** ./src/game/entity.ts ***!
+  \****************************/
+/*! exports provided: EDato, Entity */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "EDato", function() { return EDato; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "Entity", function() { return Entity; });
+/* harmony import */ var tslib__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! tslib */ "./node_modules/tslib/tslib.es6.js");
+/* harmony import */ var playcanvas__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! playcanvas */ "./node_modules/playcanvas/build/playcanvas.js");
+/* harmony import */ var playcanvas__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(playcanvas__WEBPACK_IMPORTED_MODULE_1__);
+
+
+var EDato = /** @class */ (function () {
+    function EDato() {
+    }
+    return EDato;
+}());
+
+var Entity = /** @class */ (function (_super) {
+    Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__extends"])(Entity, _super);
+    function Entity() {
+        var _this = _super !== null && _super.apply(this, arguments) || this;
+        _this.acfactor = 0.0;
+        return _this;
+    }
+    return Entity;
+}(playcanvas__WEBPACK_IMPORTED_MODULE_1__["Entity"]));
+
+
+
+/***/ }),
+
 /***/ "./src/game/helpers.ts":
 /*!*****************************!*\
   !*** ./src/game/helpers.ts ***!
@@ -72906,6 +83249,1003 @@ __webpack_require__.r(__webpack_exports__);
 
 /***/ }),
 
+/***/ "./src/game/lights.ts":
+/*!****************************!*\
+  !*** ./src/game/lights.ts ***!
+  \****************************/
+/*! exports provided: Lights */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "Lights", function() { return Lights; });
+/* harmony import */ var playcanvas__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! playcanvas */ "./node_modules/playcanvas/build/playcanvas.js");
+/* harmony import */ var playcanvas__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(playcanvas__WEBPACK_IMPORTED_MODULE_0__);
+
+var Lights = /** @class */ (function () {
+    function Lights() {
+    }
+    Lights.addAmbientLight = function (app) {
+        app.scene.ambientLight = new playcanvas__WEBPACK_IMPORTED_MODULE_0__["Color"](0.2, 0.2, 0.2);
+    };
+    Lights.createSimpleDirectionalShadowLight = function (app, castShadow) {
+        // Create an entity with a directional light component
+        var light = new playcanvas__WEBPACK_IMPORTED_MODULE_0__["Entity"]();
+        light.addComponent("light", {
+            type: "directional",
+            castShadows: castShadow,
+            range: 16,
+            shadowBias: 0.2,
+            normalOffsetBias: 0.05,
+            shadowResolution: 4096,
+            //shadowUpdateMode:pc.SHADOWUPDATE_THISFRAME,
+            shadowType: playcanvas__WEBPACK_IMPORTED_MODULE_0__["SHADOW_PCF5"]
+        });
+        light.lookAt(new playcanvas__WEBPACK_IMPORTED_MODULE_0__["Vec3"](-5, 6, -5));
+        //light.setLocalPosition(5, 6, 5);
+        app.root.addChild(light);
+    };
+    Lights.addSkyBox = function (app, mip, assetName) {
+        app.scene.skyboxMip = mip;
+        app.scene.skyboxIntensity = 1.0;
+        app.scene.toneMapping = playcanvas__WEBPACK_IMPORTED_MODULE_0__["TONEMAP_FILMIC"];
+        app.scene.exposure = 11;
+        app.scene.gammaCorrection = 2.2;
+        app.scene.setSkybox(app.assets.find(assetName).resources);
+        var r = new playcanvas__WEBPACK_IMPORTED_MODULE_0__["Quat"]();
+        r.setFromEulerAngles(0, 206, 0); //Para alinearlo con la shadowLight
+        app.scene.skyboxRotation = r;
+    };
+    return Lights;
+}());
+
+
+
+/***/ }),
+
+/***/ "./src/game/multiplayer.ts":
+/*!*********************************!*\
+  !*** ./src/game/multiplayer.ts ***!
+  \*********************************/
+/*! exports provided: Multiplayer */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "Multiplayer", function() { return Multiplayer; });
+/* harmony import */ var socket_io_client__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! socket.io-client */ "./node_modules/socket.io-client/build/index.js");
+/* harmony import */ var socket_io_client__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(socket_io_client__WEBPACK_IMPORTED_MODULE_0__);
+
+var Multiplayer = /** @class */ (function () {
+    function Multiplayer(app, entities) {
+        this.movement = { pos: { x: 1.8, y: 0.5, z: 1.8 },
+            angles: { x: 0, y: 0, z: 0 },
+            c1: { x: 0, y: 0, z: 0 },
+            c2: { x: 0, y: 0, z: 0 },
+            id: "",
+            color: "#" + Math.floor(Math.random() * 16777215).toString(16) };
+        this.entities = entities;
+        this.app = app;
+        console.log("color:", this.movement.color);
+    }
+    Multiplayer.prototype.init = function () {
+        var _this = this;
+        this.socket = Object(socket_io_client__WEBPACK_IMPORTED_MODULE_0__["io"])('https://iosocket-server.glitch.me/', {
+            extraHeaders: {
+                Authorization: "Basic YWE6YWE="
+            }
+        });
+        this.socket.on("connect", function () {
+            _this.movement.id = _this.socket.id;
+            _this.socket.emit('new player', _this.movement);
+            console.log("---> socket id:", _this.socket.id);
+            console.log("---> connected");
+        });
+        this.socket.on('state', function (players) {
+            for (var id in players) {
+                if (id != _this.socket.id) {
+                    _this.entities.createOrUpdatePlayer(players[id]);
+                }
+                if (_this.cont % 1000 == 0) {
+                    //console.log("players:",this.socket.id ,players);
+                    //console.log("movement:",this.movement);
+                }
+                _this.cont++;
+            }
+        });
+        this.socket.on('objects', function (objects) {
+            if (objects.id == _this.socket.id)
+                return;
+            console.log("multiplayer objects received");
+            console.log("objects", objects.ac, objects.objs, _this.socket.id, objects.id);
+            var entity;
+            objects.objs.forEach(function (obj) {
+                entity = _this.app.root.findByName(obj.id);
+                if (entity) {
+                    console.log("multi: entity.id:", entity.name, entity.animationName);
+                    if (objects.ac == 's') {
+                        _this.entities.execSelectEntity(entity, true);
+                    }
+                    else if (objects.ac == 'a') {
+                        if (obj.id == 'sceneParent') {
+                            console.log("reescalando sceneParent:", obj.val);
+                            _this.entities.reescalar(obj.val, true);
+                        }
+                        else if (entity.animationName) {
+                            console.log("multiplayer call entitie.animate", entity.animationName);
+                            _this.entities.animate(entity.name);
+                        }
+                        else {
+                            console.log("mult", entity);
+                            entity.animar = obj.animar;
+                            console.log("multiplayer animar", entity.name, entity.animationName);
+                            _this.entities.updateEntity(entity);
+                        }
+                    }
+                    else if (objects.ac == 'scale') {
+                        console.log("reescalando scale:", obj.val);
+                        _this.entities.reescalar(obj.val, true);
+                    }
+                }
+            });
+            _this.entities.updatePathsState();
+        });
+        setInterval(function () {
+            _this.entities.removeOldPlayers();
+        }, 5000);
+        setInterval(function () {
+            _this.socket.emit('movement', _this.movement);
+        }, 1000 / 60);
+    };
+    Multiplayer.prototype.updateMovement = function (camera, controllers) {
+        this.cont2++;
+        this.movement.pos = camera.getPosition();
+        this.movement.angles = camera.getEulerAngles();
+        if (controllers && controllers.length >= 1) {
+            //if(this.cont2%100 === 0)
+            //	console.log("-->updateMovement:",controllers[0].getPosition());
+            this.movement.c1 = controllers[0].getPosition();
+            if (controllers.length == 2)
+                this.movement.c2 = controllers[1].getPosition();
+        }
+    };
+    Multiplayer.prototype.updateObjects = function (objects) {
+        this.socket.emit('objects', { id: this.socket.id, ac: 'a',
+            objs: objects });
+    };
+    Multiplayer.prototype.selectEntity = function (entity) {
+        console.log("multiplayer emit select", entity);
+        this.socket.emit('objects', { id: this.socket.id, ac: 's',
+            objs: [{ id: entity.name }] });
+    };
+    return Multiplayer;
+}());
+
+
+
+/***/ }),
+
+/***/ "./src/game/paths.ts":
+/*!***************************!*\
+  !*** ./src/game/paths.ts ***!
+  \***************************/
+/*! exports provided: PathElem, DatosPath, Paths */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "PathElem", function() { return PathElem; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "DatosPath", function() { return DatosPath; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "Paths", function() { return Paths; });
+/* harmony import */ var _entity__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./entity */ "./src/game/entity.ts");
+
+var ang2Rad = Math.PI / 180;
+var PathLine = /** @class */ (function () {
+    function PathLine() {
+    }
+    return PathLine;
+}());
+var Point = /** @class */ (function () {
+    function Point() {
+    }
+    return Point;
+}());
+var Dpl = /** @class */ (function () {
+    function Dpl() {
+    }
+    return Dpl;
+}());
+var PathElem = /** @class */ (function () {
+    function PathElem() {
+    }
+    return PathElem;
+}());
+
+var DatosPath = /** @class */ (function () {
+    function DatosPath() {
+    }
+    return DatosPath;
+}());
+
+var Paths = /** @class */ (function () {
+    function Paths(app) {
+        this.app = app;
+    }
+    Paths.prototype.calcPathLine = function (dir, p) {
+        return {
+            x0: p.x + Math.cos(dir - 90 * ang2Rad) * 0.5,
+            y0: p.y,
+            z0: p.z + Math.sin(dir - 90 * ang2Rad) * 0.5,
+            x1: p.x + Math.cos(dir + 90 * ang2Rad) * 0.5,
+            y1: p.y,
+            z1: p.z + Math.sin(dir + 90 * ang2Rad) * 0.5
+        };
+    };
+    Paths.prototype.calcPathPNext = function (dir, p) {
+        return {
+            x: p.x + Math.cos(dir),
+            y: p.y,
+            z: p.z + Math.sin(dir)
+        };
+    };
+    Paths.prototype.calcSizePath = function (path) {
+        var size = 0;
+        for (var i = 0; i < path.length; i++) {
+            if (path[i].num)
+                size += this.pathFloorNum(path[i].num);
+            else
+                size += 2;
+        }
+        //console.log("size path: " +  size);
+        return size;
+    };
+    Paths.prototype.genLinePath = function (num, dir, dpl, positions, uvs, indices, cont) {
+        for (var j = 0; j < num; j++) {
+            var baseZ = 12 * (j + cont);
+            positions[baseZ + 0] = dpl.orig.x0;
+            positions[baseZ + 1] = dpl.orig.y0;
+            positions[baseZ + 2] = dpl.orig.z0;
+            positions[baseZ + 3] = dpl.orig.x1;
+            positions[baseZ + 4] = dpl.orig.y1;
+            positions[baseZ + 5] = dpl.orig.z1;
+            positions[baseZ + 6] = dpl.next.x1;
+            positions[baseZ + 7] = dpl.next.y1;
+            positions[baseZ + 8] = dpl.next.z1;
+            positions[baseZ + 9] = dpl.next.x0;
+            positions[baseZ + 10] = dpl.next.y0;
+            positions[baseZ + 11] = dpl.next.z0;
+            var baseUV = 8 * (j + cont);
+            uvs[baseUV + 0] = 0;
+            uvs[baseUV + 1] = 0.5;
+            uvs[baseUV + 2] = 0;
+            uvs[baseUV + 3] = 1;
+            uvs[baseUV + 4] = 1;
+            uvs[baseUV + 5] = 1;
+            uvs[baseUV + 6] = 1;
+            uvs[baseUV + 7] = 0.5;
+            var baseI = 4 * (j + cont);
+            indices.push(baseI + 0);
+            indices.push(baseI + 1);
+            indices.push(baseI + 2);
+            indices.push(baseI + 2);
+            indices.push(baseI + 3);
+            indices.push(baseI + 0);
+            dpl.pIni = dpl.pNext;
+            dpl.orig = dpl.next;
+            dpl.pNext = this.calcPathPNext(dir, dpl.pIni);
+            dpl.next = this.calcPathLine(dir, dpl.pNext);
+        }
+    };
+    Paths.prototype.genGiroPath = function (dir, dpl, positions, uvs, indices, cont, turn) {
+        var ang2Rad = Math.PI / 180;
+        var newDir = dir + ang2Rad * (turn == 'left' ? -90 : 90);
+        var baseZ = 12 * cont;
+        positions[baseZ + 0] = dpl.orig.x0;
+        positions[baseZ + 1] = dpl.orig.y0;
+        positions[baseZ + 2] = dpl.orig.z0;
+        positions[baseZ + 3] = dpl.orig.x1;
+        positions[baseZ + 4] = dpl.orig.y1;
+        positions[baseZ + 5] = dpl.orig.z1;
+        positions[baseZ + 6] = dpl.next.x1;
+        positions[baseZ + 7] = dpl.next.y1;
+        positions[baseZ + 8] = dpl.next.z1;
+        positions[baseZ + 9] = dpl.next.x0;
+        positions[baseZ + 10] = dpl.next.y0;
+        positions[baseZ + 11] = dpl.next.z0;
+        var baseUV = 8 * cont;
+        if (turn == 'left') { //left
+            uvs[baseUV + 0] = 0;
+            uvs[baseUV + 1] = 0;
+            uvs[baseUV + 2] = 0;
+            uvs[baseUV + 3] = 0.5;
+            uvs[baseUV + 4] = 0.5;
+            uvs[baseUV + 5] = 0.5;
+            uvs[baseUV + 6] = 0.5;
+            uvs[baseUV + 7] = 0;
+        }
+        else { //right
+            uvs[baseUV + 0] = 1;
+            uvs[baseUV + 1] = 0;
+            uvs[baseUV + 2] = 0.5;
+            uvs[baseUV + 3] = 0;
+            uvs[baseUV + 4] = 0.5;
+            uvs[baseUV + 5] = 0.5;
+            uvs[baseUV + 6] = 1;
+            uvs[baseUV + 7] = 0.5;
+        }
+        var baseI = 4 * cont;
+        indices.push(baseI + 0);
+        indices.push(baseI + 1);
+        indices.push(baseI + 2);
+        indices.push(baseI + 2);
+        indices.push(baseI + 3);
+        indices.push(baseI + 0);
+        var pIni = { y: dpl.next.y0,
+            x: (dpl.orig.x0 + dpl.orig.x1 + dpl.next.x0 + dpl.next.x1) / 4,
+            z: (dpl.orig.z0 + dpl.orig.z1 + dpl.next.z0 + dpl.next.z1) / 4
+        };
+        pIni.x += Math.cos(newDir) * 0.5;
+        pIni.z += Math.sin(newDir) * 0.5;
+        dpl.pIni = pIni;
+        dpl.orig = this.calcPathLine(newDir, pIni);
+        dpl.pNext = this.calcPathPNext(newDir, dpl.pIni);
+        dpl.next = this.calcPathLine(newDir, dpl.pNext);
+    };
+    Paths.prototype.pathFloorNum = function (num) {
+        var result = Math.floor(num);
+        return result == 0 ? 1 : result;
+    };
+    Paths.prototype.pathGeneration = function (datos) {
+        var dir = ang2Rad * datos.dir;
+        var posY = .01;
+        var mesh = new pc.Mesh(this.app.graphicsDevice);
+        mesh.clear(true, false);
+        //ARRAYS
+        var size = this.calcSizePath(datos.path);
+        var positions = new Array(12 * size); //new Float32Array(12 * size);
+        var uvs = new Array(8 * size); //new Float32Array(8 * size);
+        var indices = [];
+        //POINTS
+        var pIni = new pc.Vec3(0, posY, 0);
+        var pNext = this.calcPathPNext(dir, pIni);
+        var dpl = {
+            pIni: pIni,
+            orig: this.calcPathLine(dir, pIni),
+            pNext: pNext,
+            next: this.calcPathLine(dir, pNext)
+        };
+        //console.log(pIni.x, pNext.x, dpl.orig.x0, dpl.orig.x1);
+        var cont = 0;
+        for (var i = 0; i < datos.path.length; i++) {
+            var dato = datos.path[i];
+            if (dato.type == "G") {
+                //console.log("Giro");
+                this.genGiroPath(dir, dpl, positions, uvs, indices, cont, dato.turn ? dato.turn : 'right');
+                dir += ang2Rad * (dato.turn == 'left' ? -90 : 90);
+                cont += 2;
+            }
+            if (dato.type == "L" && dato.num) {
+                //console.log("Linea: " + dato.num + " cont: " + cont);
+                this.genLinePath(this.pathFloorNum(dato.num), dir, dpl, positions, uvs, indices, cont);
+                cont += this.pathFloorNum(dato.num);
+            }
+        }
+        for (var i = 0; i < positions.length; i++)
+            positions[i] = positions[i] * datos.scale;
+        mesh.setPositions(positions);
+        mesh.setNormals(pc.calculateNormals(positions, indices));
+        mesh.setUvs(0, uvs);
+        mesh.setIndices(indices);
+        mesh.update(pc.PRIMITIVE_TRIANGLES);
+        // Create the mesh instance
+        var node = new pc.GraphNode();
+        var material = new pc.StandardMaterial();
+        var meshInstance = new pc.MeshInstance(node, mesh, material);
+        // Create a model and add the mesh instance to it
+        var model = new pc.Model();
+        model.graph = node;
+        model.meshInstances = [meshInstance];
+        // Create Entity and add it to the scene
+        var entity = new _entity__WEBPACK_IMPORTED_MODULE_0__["Entity"](datos.id);
+        entity.tags.add(datos.type);
+        entity.tags.add("scalable");
+        entity.animar = true;
+        this.app.root.addChild(entity);
+        /* Add a model component
+        if(this.app.systems)
+            this.app.systems.model.addComponent(entity, {
+                type: 'asset',
+                castShadows: false
+            });
+**/
+        //if(entity.model) entity.model.model = model;
+        //entity.model = model;
+        entity.addComponent("model", {
+            type: "asset",
+            castShadows: false
+        });
+        if (entity.model)
+            entity.model.model = model;
+        return entity;
+    };
+    return Paths;
+}());
+
+
+
+/***/ }),
+
+/***/ "./src/game/shaders.ts":
+/*!*****************************!*\
+  !*** ./src/game/shaders.ts ***!
+  \*****************************/
+/*! exports provided: Shaders */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "Shaders", function() { return Shaders; });
+var VSHADER = "\n    attribute vec3 aPosition;\n    attribute vec2 aUv0;\n\n    uniform mat4 matrix_model;\n    uniform mat4 matrix_viewProjection;\n\n    varying vec2 vUv0;\n\n    void main(void)\n    {\n        vUv0 = aUv0;\n        gl_Position = matrix_viewProjection * matrix_model * vec4(aPosition, 1.0);\n    }\n";
+var POINTERSHADER = "\nprecision mediump float;\nvarying vec2 vUv0;\nuniform float uTime;\n\nvoid main(void)\n{\n    vec2 xy = vUv0;\n    // Time varying pixel color\n    //vec3 col = 0.5 + 0.5*cos(uTime + xy.yxy + vec3(0.0,2.0,4.0));\n    float y = vUv0.y;\n    // Output to screen\n    gl_FragColor = vec4(1.0,1.0,1.0,y);\n}    \n";
+var Shaders = /** @class */ (function () {
+    function Shaders(app) {
+        this.dashSpeed = 1.0;
+        this.app = app;
+    }
+    Shaders.prototype.createUTimeMaterial = function (shader) {
+        var material = new pc.Material();
+        material.shader = shader;
+        material.depthWrite = false;
+        material.blendType = pc.BLEND_NORMAL; //Para soportar transparencia pc.BLEND_NORMAL
+        material.setParameter('uTime', 0);
+        return material;
+    };
+    Shaders.prototype.createShader = function (vshader, fshader) {
+        var gd = this.app.graphicsDevice;
+        gd.setBlending(true);
+        var shaderDefinition = {
+            attributes: {
+                aPosition: pc.SEMANTIC_POSITION,
+                aUv0: pc.SEMANTIC_TEXCOORD0
+            },
+            vshader: vshader,
+            fshader: fshader
+        };
+        return new pc.Shader(gd, shaderDefinition);
+    };
+    Shaders.prototype.addRayoShaderMaterialEntity = function (entity) {
+        this.addShaderMaterialEntity(entity, VSHADER, POINTERSHADER);
+    };
+    Shaders.prototype.addShaderMaterialEntity = function (entity, vshader, fshader) {
+        var _this = this;
+        var shader = this.createShader(vshader, fshader);
+        console.log("created shader");
+        var material = this.createUTimeMaterial(shader);
+        console.log("created createUTimeMaterial");
+        if (entity.model)
+            entity.model.meshInstances.forEach(function (meshInstance) {
+                meshInstance.material = material;
+            });
+        console.log("created meshInstance");
+        var time = 0;
+        this.app.on("update", function (dt) {
+            if (entity.animar) {
+                time += _this.dashSpeed * dt;
+                var t = time % 1;
+                material.setParameter('uTime', t);
+            }
+        });
+    };
+    Shaders.prototype.pcColorToArray = function (color) {
+        return [color.r, color.g, color.b, color.a];
+    };
+    return Shaders;
+}());
+
+
+
+/***/ }),
+
+/***/ "./src/game/xr.ts":
+/*!************************!*\
+  !*** ./src/game/xr.ts ***!
+  \************************/
+/*! exports provided: XR */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "XR", function() { return XR; });
+/* harmony import */ var playcanvas__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! playcanvas */ "./node_modules/playcanvas/build/playcanvas.js");
+/* harmony import */ var playcanvas__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(playcanvas__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var _entity__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./entity */ "./src/game/entity.ts");
+
+
+var XR = /** @class */ (function () {
+    function XR(app, entities, multiplayer, cameras, shaders) {
+        this.controllers = [];
+        this.xrpanelMaintain = false;
+        this.rayos = [];
+        this.posPositionTrans = 0;
+        this.scaleRayos = 1;
+        this.incTime = 0;
+        this.movementSpeed = 1.5; // 1.5 m/s
+        this.rotateSpeed = 45;
+        this.rotateThreshold = 0.5;
+        this.rotateResetThreshold = 0.5;
+        this.lastRotateValue = 0;
+        this.tmpVec2A = new playcanvas__WEBPACK_IMPORTED_MODULE_0__["Vec2"]();
+        this.tmpVec2B = new playcanvas__WEBPACK_IMPORTED_MODULE_0__["Vec2"]();
+        this.tmpVec3A = new playcanvas__WEBPACK_IMPORTED_MODULE_0__["Vec3"]();
+        this.tmpVec3B = new playcanvas__WEBPACK_IMPORTED_MODULE_0__["Vec3"]();
+        this.lineColor = new playcanvas__WEBPACK_IMPORTED_MODULE_0__["Color"](1, 1, 1);
+        this.ray = new playcanvas__WEBPACK_IMPORTED_MODULE_0__["Ray"]();
+        this.app = app;
+        this.entities = entities;
+        this.multiplayer = multiplayer;
+        this.cameras = cameras;
+        this.shaders = shaders;
+    }
+    XR.prototype.createController = function (inputSource) {
+        //Controlador un CUBO
+        console.log("creando controlador");
+        var entity = new _entity__WEBPACK_IMPORTED_MODULE_1__["Entity"]();
+        var material = new playcanvas__WEBPACK_IMPORTED_MODULE_0__["StandardMaterial"]();
+        material.blendType = playcanvas__WEBPACK_IMPORTED_MODULE_0__["BLEND_NORMAL"];
+        //material['blend'] = true;
+        material.opacity = 0.99;
+        entity.addComponent('model', {
+            type: 'box',
+            castShadows: false,
+            material: material
+        });
+        entity.setLocalScale(0.05, 0.05, 0.05);
+        this.cameraParent.addChild(entity);
+        entity.inputSource = inputSource;
+        this.controllers.push(entity);
+        //rayo
+        var rayo = this.createRayo();
+        entity.rayo = rayo;
+        this.app.root.addChild(rayo);
+        this.rayos.push(rayo);
+        // destroy input source related entity
+        // when input source is removed
+        var self = this;
+        inputSource.on('remove', function () {
+            self.controllers.splice(self.controllers.indexOf(entity), 1);
+            entity.destroy();
+            self.rayos.splice(self.rayos.indexOf(rayo), 1);
+            rayo.destroy();
+        });
+    };
+    XR.prototype.closePanel = function () {
+        this.xrpanelMaintain = false;
+        this.xrpanel.enabled = false;
+    };
+    XR.prototype.createPanel = function () {
+        var asset = this.app.assets.find('panel');
+        var asset2 = this.app.assets.find('panel2');
+        var asset3 = this.app.assets.find('background');
+        console.log("createPanel", asset, asset2, asset3);
+        var material = new playcanvas__WEBPACK_IMPORTED_MODULE_0__["StandardMaterial"]();
+        material.diffuseMap = asset2.resource;
+        material.emissive.set(0.1, 0.1, 0.1);
+        material.emissiveIntensity = 0.2;
+        material.opacityMap = asset.resource;
+        material.alphaTest = 0.3;
+        material.cull = playcanvas__WEBPACK_IMPORTED_MODULE_0__["CULLFACE_NONE"];
+        material.update();
+        this.xrpanel = new playcanvas__WEBPACK_IMPORTED_MODULE_0__["Entity"]("xrpanel");
+        this.cameraParent.addChild(this.xrpanel);
+        this.xrpanelp = new playcanvas__WEBPACK_IMPORTED_MODULE_0__["Entity"]("xrpanelp");
+        this.xrpanelp.addComponent('model', {
+            type: 'plane',
+            castShadows: false,
+            material: material
+        });
+        this.xrpanelp.setLocalScale(0.5, 0.3, 0.3);
+        this.xrpanel.addChild(this.xrpanelp);
+        this.addButtonsPanel(this.xrpanel);
+        this.xrpanel.enabled = false;
+    };
+    XR.prototype.addButtonsPanel = function (panel) {
+        var py = 2.1;
+        var factor = 0.5;
+        var values = [{ f: 'reescalar', id: "pscale", text: '1', v: '1', px: 0, py: 0 + py, w: 1, noButton: true },
+            { f: 'reescalar', id: "pmas", text: '+', v: '+', px: 0.75, py: 0 + py, w: 0.5 },
+            { f: 'reescalar', id: "pmenos", text: "-", v: "-", px: 1.25, py: 0 + py, w: 0.5 },
+            { f: 'anim', id: "pclose", text: "close", v: "close", px: 2, py: 0 + py, w: 1, bgcolor: new playcanvas__WEBPACK_IMPORTED_MODULE_0__["Color"](0.6, 0.3, 0.3, 1) },
+            { f: 'anim', id: "panim1", text: 'animate all', v: "all", px: 0, py: 1 + py, w: 1 },
+            { f: 'anim', id: "panim2", text: 'anim. che', v: "che", px: 1, py: 1 + py, w: 1 },
+            { f: 'anim', id: "panim3", text: 'anim. wt', v: "turbines", px: 2, py: 1 + py, w: 1 },
+            { f: 'teletransport', id: "wt1", text: 'wturbine1', v: "wturbine1", px: 0, py: 2 + py, w: 1 },
+            { f: 'teletransport', id: "pground", text: 'ground', v: "ground", px: 1, py: 2 + py, w: 1 },
+            { f: 'teletransport', id: "pground", text: 'edificio1', v: "edificio1", px: 2, py: 2 + py, w: 1 }];
+        for (var i = 0; i < values.length; i++) {
+            this.entities.createPlaneButton(panel, { scale: new playcanvas__WEBPACK_IMPORTED_MODULE_0__["Vec3"](0.15 * values[i].w, 0.08, 0.05),
+                pos: new playcanvas__WEBPACK_IMPORTED_MODULE_0__["Vec3"]((values[i].px * 0.32 - 0.32) * factor, 0.001, (values[i].py * 0.13 - 0.35) * factor),
+                rot: new playcanvas__WEBPACK_IMPORTED_MODULE_0__["Vec3"](0, 0, 0),
+                bbox: new playcanvas__WEBPACK_IMPORTED_MODULE_0__["Vec3"](0.075 * values[i].w, 0.001, 0.02),
+                text: values[i].text,
+                id: values[i].id,
+                tipo: "button",
+                callFunc: values[i].f,
+                callVal: values[i].v,
+                noButton: values[i].noButton ? values[i].noButton : false,
+                bgcolor: values[i].bgcolor || new playcanvas__WEBPACK_IMPORTED_MODULE_0__["Color"](0.3, 0.3, 0.3, 1),
+                color: new playcanvas__WEBPACK_IMPORTED_MODULE_0__["Color"]().fromString("#ffffff") });
+        }
+    };
+    XR.prototype.createRayo = function () {
+        var _a;
+        var rayo = new _entity__WEBPACK_IMPORTED_MODULE_1__["Entity"]();
+        rayo.animar = true;
+        rayo.addComponent('model', {
+            type: 'box',
+            castShadows: true,
+            material: new playcanvas__WEBPACK_IMPORTED_MODULE_0__["StandardMaterial"]()
+        });
+        console.log("model", (_a = rayo.model) === null || _a === void 0 ? void 0 : _a.meshInstances);
+        this.shaders.addRayoShaderMaterialEntity(rayo);
+        rayo.setLocalScale(0.005, this.scaleRayos, 0.005);
+        return rayo;
+    };
+    XR.prototype.addSuportXR = function () {
+        var _this = this;
+        this.cameraParent = new playcanvas__WEBPACK_IMPORTED_MODULE_0__["Entity"]("cameraParent");
+        this.app.root.addChild(this.cameraParent);
+        // create camera
+        this.xrCamera = this.initXRCamera();
+        this.cameraParent.addChild(this.xrCamera);
+        this.cameraParent.setLocalPosition(-1.5, 0.4, 0.3);
+        this.cameraParent.rotateLocal(0, -100, 0);
+        this.createPanel();
+        if (this.app.xr.supported) {
+            var activate = function () {
+                console.log("activate XR");
+                if (_this.app.xr.isAvailable(playcanvas__WEBPACK_IMPORTED_MODULE_0__["XRTYPE_VR"])) {
+                    _this.changeCameraXR();
+                    if (_this.xrCamera.camera)
+                        _this.xrCamera.camera.startXr(playcanvas__WEBPACK_IMPORTED_MODULE_0__["XRTYPE_VR"], playcanvas__WEBPACK_IMPORTED_MODULE_0__["XRSPACE_LOCAL"], {
+                            callback: function (err) {
+                                if (err) {
+                                    //message("WebXR Immersive VR failed to start: " + err.message);
+                                    console.error("ERRRRR:", err);
+                                    _this.changeCameraXR();
+                                }
+                            }
+                        });
+                }
+                else {
+                    //message("Immersive VR is not available");
+                    console.log("Immersive VR is not available");
+                }
+            };
+            //MOUSE
+            this.app.mouse.on("mousedown", function () {
+                if (!_this.app.xr.active)
+                    activate();
+            });
+            //TOUCH
+            if (this.app.touch) {
+                this.app.touch.on("touchend", function (evt) {
+                    if (!_this.app.xr.active) {
+                        // if not in VR, activate
+                        activate();
+                    }
+                    else {
+                        // otherwise reset camera
+                        if (_this.xrCamera.camera)
+                            _this.xrCamera.camera.endXr();
+                        _this.changeCameraXR();
+                    }
+                    evt.event.preventDefault();
+                    evt.event.stopPropagation();
+                });
+            }
+            // CONTROLLERS
+            this.app.xr.input.on('add', function (inputSource) {
+                _this.createController(inputSource);
+            });
+            // end session by keyboard ESC
+            this.app.keyboard.on('keydown', function (evt) {
+                if (evt.key === playcanvas__WEBPACK_IMPORTED_MODULE_0__["KEY_ESCAPE"] && _this.app.xr.active) {
+                    _this.app.xr.end();
+                    _this.changeCameraXR();
+                }
+                if (evt.key === playcanvas__WEBPACK_IMPORTED_MODULE_0__["KEY_SUBTRACT"] && _this.app.xr.active) {
+                    _this.entities.reescalar("-", false);
+                }
+                if (evt.key === playcanvas__WEBPACK_IMPORTED_MODULE_0__["KEY_ADD"] && _this.app.xr.active) {
+                    console.log("reeescalar key");
+                    _this.entities.reescalar("+", false);
+                }
+                if (evt.key === playcanvas__WEBPACK_IMPORTED_MODULE_0__["KEY_C"] && _this.app.xr.active) {
+                    _this.xrpanel.enabled = false;
+                }
+                if (evt.key === playcanvas__WEBPACK_IMPORTED_MODULE_0__["KEY_RIGHT"] && _this.app.xr.active) {
+                    _this.posPositionTrans++;
+                    _this.entities.teletransport(_this.positionsTrans[_this.posPositionTrans % _this.positionsTrans.length]);
+                }
+            });
+            this.app.xr.on('start', function () {
+                //message("Immersive VR session has started");
+            });
+            this.app.xr.on('end', function () {
+                //message("Immersive VR session has ended");
+            });
+            this.app.xr.on('available:' + playcanvas__WEBPACK_IMPORTED_MODULE_0__["XRTYPE_VR"], function (available) {
+                //message("Immersive VR is " + (available ? 'available' : 'unavailable'));
+            });
+            if (!this.app.xr.isAvailable(playcanvas__WEBPACK_IMPORTED_MODULE_0__["XRTYPE_VR"])) {
+                //message("Immersive VR is not available");
+            }
+            this.app.xr.input.on('select', function (inputSource) {
+                console.log("XR SELECT");
+                var candidate = null;
+                var candidateDist = Infinity;
+                var to = inputSource.getDirection().clone().scale(100).add(inputSource.getOrigin());
+                var result = _this.app.systems ? (_this.app.systems).rigidbody.raycastFirst(inputSource.getOrigin(), to) : null;
+                console.log("result raycast:", result);
+                if (result && result.entity) {
+                    if (inputSource.handedness === playcanvas__WEBPACK_IMPORTED_MODULE_0__["XRHAND_RIGHT"]) {
+                        if (inputSource.gamepad.buttons[4].pressed)
+                            _this.entities.activateEntity(result.entity, result);
+                        else
+                            _this.entities.selectEntity(result.entity, result);
+                    }
+                    else
+                        _this.entities.activateEntity(result.entity, result);
+                }
+            });
+            this.app.xr.input.on('devicechange', function (inputSource) {
+                console.log("XR devicechange");
+            });
+            this.app.xr.input.on('selectstart', function (inputSource) {
+                console.log("XR selectstart");
+                var now = new Date().getTime();
+                if (inputSource.handedness === playcanvas__WEBPACK_IMPORTED_MODULE_0__["XRHAND_LEFT"])
+                    _this.startPressL = now;
+                else
+                    _this.startPressR = now;
+            });
+            this.app.xr.input.on('selectend', function (inputSource) {
+                console.log("XR selectend");
+                if (inputSource.handedness === playcanvas__WEBPACK_IMPORTED_MODULE_0__["XRHAND_LEFT"])
+                    _this.startPressL = undefined;
+                else
+                    _this.startPressR = undefined;
+            });
+            this.app.xr.input.on('squeeze', function (inputSource) {
+                console.log("XR squeeze");
+            });
+            this.app.xr.input.on('squeezestart', function (inputSource) {
+                console.log("XR squeezestart");
+                if (inputSource.handedness === playcanvas__WEBPACK_IMPORTED_MODULE_0__["XRHAND_LEFT"]) {
+                    for (var i = 0; i < _this.controllers.length; i++) {
+                        if (_this.controllers[i].inputSource == inputSource) {
+                            _this.controllers[i].model.hide(); //.enabled = false;
+                            _this.controllers[i].rayo.model.enabled = false;
+                        }
+                    }
+                    ;
+                    _this.xrpanel.enabled = true;
+                    _this.xrpanel.reparent(_this.cameraParent);
+                    /*
+                    if(self.xrpanelMaintain){
+                        console.log("reparent to CameraParent");
+                    }
+                    self.xrpanelMaintain = !self.xrpanelMaintain;
+                    */
+                }
+            });
+            this.app.xr.input.on('squeezeend', function (inputSource) {
+                console.log("XR squeezeend: ", _this.xrpanelMaintain);
+                if (inputSource.handedness === playcanvas__WEBPACK_IMPORTED_MODULE_0__["XRHAND_LEFT"]) {
+                    for (var i = 0; i < _this.controllers.length; i++) {
+                        if (_this.controllers[i].inputSource == inputSource) {
+                            _this.controllers[i].model.show(); //enabled = true;
+                            _this.controllers[i].rayo.model.enabled = true;
+                        }
+                    }
+                    ;
+                    if (false) //!self.xrpanelMaintain)
+                        {}
+                    else {
+                        console.log("--->Fijando a Root");
+                        var pos = _this.xrpanel.getPosition().clone();
+                        var rot = _this.xrpanel.getRotation().clone();
+                        console.log("xrpanel  localPosition: ", _this.xrpanel.getLocalPosition().clone());
+                        console.log("xrpanelp localPosition: ", _this.xrpanelp.getLocalPosition().clone());
+                        _this.xrpanel.reparent(_this.app.root);
+                        _this.xrpanel.setPosition(pos);
+                        _this.xrpanel.setRotation(rot);
+                    }
+                }
+            });
+            this.app.xr.input.on('click', function (inputSource) {
+                console.log("XR click");
+            });
+            // update position and rotation for each controller
+            this.app.on('update', function (dt) {
+                var i, inputSource;
+                var resetRound = false;
+                _this.incTime++;
+                //Actualizamos la posición de nuestro avatar
+                _this.multiplayer.updateMovement(_this.xrCamera, _this.controllers);
+                // fist we update movement
+                for (i = 0; i < _this.controllers.length; i++) {
+                    inputSource = _this.controllers[i].inputSource;
+                    // should have gamepad
+                    if (!inputSource.gamepad)
+                        continue;
+                    // left controller - for movement
+                    if (inputSource.handedness === playcanvas__WEBPACK_IMPORTED_MODULE_0__["XRHAND_LEFT"] || inputSource.gamepad.buttons[1].pressed) {
+                        _this.cameraHorizontalMovement(inputSource, dt);
+                        // right controller - for rotation
+                    }
+                    else if (inputSource.handedness === playcanvas__WEBPACK_IMPORTED_MODULE_0__["XRHAND_RIGHT"] && !inputSource.gamepad.buttons[1].pressed) {
+                        _this.cameraVerticalMovement(inputSource);
+                    }
+                    var now = new Date().getTime();
+                    if (inputSource.handedness === playcanvas__WEBPACK_IMPORTED_MODULE_0__["XRHAND_LEFT"]) {
+                        if (inputSource.gamepad.buttons[1].pressed) { //1 Oculus 0 Emulator
+                            _this.mostrarPanel(inputSource, i);
+                        }
+                        else {
+                            _this.mostrarControlador(inputSource, i);
+                        }
+                        if (_this.startPressL && (now - _this.startPressL) > 500) {
+                            var to = inputSource.getDirection().clone().scale(100).add(inputSource.getOrigin());
+                            var result = (_this.app.systems).rigidbody.raycastFirst(inputSource.getOrigin(), to);
+                            if (result && result.entity)
+                                _this.entities.intersectPointB.setLocalPosition(result.point);
+                            else
+                                _this.entities.intersectPointB.setLocalPosition(new playcanvas__WEBPACK_IMPORTED_MODULE_0__["Vec3"](0, -0.1, 0));
+                        }
+                        else {
+                            _this.entities.intersectPointB.setLocalPosition(new playcanvas__WEBPACK_IMPORTED_MODULE_0__["Vec3"](0, -0.1, 0));
+                        }
+                    }
+                    else if (inputSource.handedness === playcanvas__WEBPACK_IMPORTED_MODULE_0__["XRHAND_RIGHT"]) {
+                        _this.mostrarControlador(inputSource, i);
+                        if (_this.startPressR && (now - _this.startPressR) > 500) {
+                            var to = inputSource.getDirection().clone().scale(100).add(inputSource.getOrigin());
+                            var result = (_this.app.systems).rigidbody.raycastFirst(inputSource.getOrigin(), to);
+                            if (result && result.entity)
+                                _this.entities.intersectPoint.setLocalPosition(result.point);
+                            else
+                                _this.entities.intersectPoint.setLocalPosition(new playcanvas__WEBPACK_IMPORTED_MODULE_0__["Vec3"](0, -0.1, 0));
+                        }
+                        else {
+                            _this.entities.intersectPoint.setLocalPosition(new playcanvas__WEBPACK_IMPORTED_MODULE_0__["Vec3"](0, -0.1, 0));
+                        }
+                    }
+                }
+            });
+        }
+        else {
+            //message("WebXR is not supported");
+        }
+    };
+    XR.prototype.mostrarPanel = function (inputSource, pos) {
+        console.log("mostrarPanel");
+        this.xrpanel.setLocalPosition(inputSource.getLocalPosition());
+        this.xrpanel.lookAt(this.xrCamera.getPosition());
+        this.xrpanel.rotateLocal(-90, 0, 180);
+        this.xrpanel.translateLocal(0, -0.35, 0);
+        //this.xrpanel.setLocalRotation(inputSource.getLocalRotation());
+        if (inputSource.grip) {
+            // some controllers can be gripped
+            this.controllers[pos].model.enabled = true;
+            this.controllers[pos].setLocalPosition(inputSource.getLocalPosition());
+        }
+    };
+    XR.prototype.mostrarControlador = function (inputSource, pos) {
+        this.tmpVec3A.copy(inputSource.getOrigin());
+        this.tmpVec3B.copy(inputSource.getDirection());
+        this.tmpVec3B.scale(100).add(this.tmpVec3A);
+        var r = new playcanvas__WEBPACK_IMPORTED_MODULE_0__["Vec3"]();
+        r.sub2(this.tmpVec3B, this.tmpVec3A).normalize();
+        r.scale(this.scaleRayos / 2);
+        this.rayos[pos].setLocalPosition(r.add2(r, this.tmpVec3A));
+        this.rayos[pos].lookAt(this.tmpVec3B);
+        this.rayos[pos].rotateLocal(90, 0, 0);
+        // render controller
+        if (inputSource.grip) {
+            // some controllers can be gripped
+            this.controllers[pos].model.enabled = true;
+            this.controllers[pos].setLocalPosition(inputSource.getLocalPosition());
+            this.controllers[pos].setLocalRotation(inputSource.getLocalRotation());
+        }
+        else {
+            // some controllers cannot be gripped
+            this.controllers[pos].model.enabled = false;
+        }
+    };
+    XR.prototype.cameraVerticalMovement = function (inputSource) {
+        //UP DOWN
+        var updown = inputSource.gamepad.axes[3];
+        if (Math.abs(updown) > 0.4) {
+            this.cameraParent.translate(0, -(Math.abs(updown) - 0.4) * Math.sign(updown) * 0.02, 0);
+        }
+        // get rotation from thumbsitck
+        var rotate = -inputSource.gamepad.axes[2];
+        // each rotate should be done by moving thumbstick to the side enough
+        // then thumbstick should be moved back close to neutral position
+        // before it can be used again to rotate
+        if (this.lastRotateValue > 0 && rotate < this.rotateResetThreshold) {
+            this.lastRotateValue = 0;
+        }
+        else if (this.lastRotateValue < 0 && rotate > -this.rotateResetThreshold) {
+            this.lastRotateValue = 0;
+        }
+        // if thumbstick is reset and moved enough to the side
+        if (this.lastRotateValue === 0 && Math.abs(rotate) > this.rotateThreshold) {
+            this.lastRotateValue = Math.sign(rotate);
+            console.log("XR: Rotating");
+            // we want to rotate relative to camera position
+            this.tmpVec3A.copy(this.xrCamera.getLocalPosition());
+            this.cameraParent.translateLocal(this.tmpVec3A);
+            this.cameraParent.rotateLocal(0, Math.sign(rotate) * this.rotateSpeed, 0);
+            this.cameraParent.translateLocal(this.tmpVec3A.scale(-1));
+        }
+    };
+    XR.prototype.cameraHorizontalMovement = function (inputSource, dt) {
+        // set vector based on gamepad thumbstick axes values
+        this.tmpVec2A.set(inputSource.gamepad.axes[2], inputSource.gamepad.axes[3]);
+        // if there is input
+        if (this.tmpVec2A.length()) {
+            //this.tmpVec2A.normalize(); //Que responda a los impulsos del gamepad
+            // we need to take in account camera facing
+            // so we figure out Yaw of camera
+            this.tmpVec2B.x = this.xrCamera.forward.x;
+            this.tmpVec2B.y = this.xrCamera.forward.z;
+            this.tmpVec2B.normalize();
+            var rad = Math.atan2(this.tmpVec2B.x, this.tmpVec2B.y) - (Math.PI / 2);
+            // and rotate our movement vector based on camera yaw
+            var t = this.tmpVec2A.x * Math.sin(rad) - this.tmpVec2A.y * Math.cos(rad);
+            this.tmpVec2A.y = this.tmpVec2A.y * Math.sin(rad) + this.tmpVec2A.x * Math.cos(rad);
+            this.tmpVec2A.x = t;
+            // set movement speed
+            this.tmpVec2A.scale(this.movementSpeed * dt);
+            // move camera parent based on calculated movement vector
+            this.cameraParent.translate(this.tmpVec2A.x, 0, this.tmpVec2A.y);
+        }
+    };
+    XR.prototype.initXRCamera = function () {
+        var camera = new playcanvas__WEBPACK_IMPORTED_MODULE_0__["Entity"]("xrCamera");
+        camera.addComponent('camera', {
+            clearColor: new playcanvas__WEBPACK_IMPORTED_MODULE_0__["Color"](44 / 255, 62 / 255, 80 / 255),
+            farClip: 10000
+        });
+        camera.setLocalPosition(3, 3, 3);
+        camera.enabled = false;
+        console.log("XRCamera: ", camera);
+        return camera;
+    };
+    //ChangeCamera
+    XR.prototype.changeCameraXR = function () {
+        var xrC = this.app.root.findByName('xrCamera');
+        console.log("changeCameraXR xrc enabled: ", xrC.enabled);
+        if (xrC.enabled) {
+            xrC.enabled = false;
+            this.entities.disableEnableCameras(false);
+        }
+        else {
+            xrC.enabled = true;
+            var position = this.entities.disableEnableCameras(true);
+            if (position)
+                xrC.translate(position);
+        }
+    };
+    return XR;
+}());
+
+
+
+/***/ }),
+
 /***/ "./src/main.ts":
 /*!*********************!*\
   !*** ./src/main.ts ***!
@@ -72937,4 +84277,4 @@ else {
 /***/ })
 
 /******/ });
-//# sourceMappingURL=app.2e4eac69fc2d1748f607.js.map
+//# sourceMappingURL=app.96b7ec118f605ff899d9.js.map
