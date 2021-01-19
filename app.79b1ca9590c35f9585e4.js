@@ -63,7 +63,7 @@
 /******/
 /******/ 	var hotApplyOnUpdate = true;
 /******/ 	// eslint-disable-next-line no-unused-vars
-/******/ 	var hotCurrentHash = "ec9abe8a88afe8c5338e";
+/******/ 	var hotCurrentHash = "2e4eac69fc2d1748f607";
 /******/ 	var hotRequestTimeout = 10000;
 /******/ 	var hotCurrentModuleData = {};
 /******/ 	var hotCurrentChildModule;
@@ -72734,6 +72734,19 @@ var App = /** @class */ (function () {
         material.update();
         //TExto
         this.addTexto(this.app);
+        //Environmet
+        this.addSkyBox(this.app, 0, 'background');
+    };
+    App.prototype.addSkyBox = function (app, mip, assetName) {
+        app.scene.skyboxMip = mip;
+        app.scene.skyboxIntensity = 1.0;
+        app.scene.toneMapping = playcanvas__WEBPACK_IMPORTED_MODULE_0__["TONEMAP_FILMIC"];
+        app.scene.exposure = 11;
+        app.scene.gammaCorrection = 2.2;
+        app.scene.setSkybox(app.assets.find(assetName).resources);
+        var r = new playcanvas__WEBPACK_IMPORTED_MODULE_0__["Quat"]();
+        r.setFromEulerAngles(0, 206, 0); //Para alinearlo con la shadowLight
+        app.scene.skyboxRotation = r;
     };
     App.prototype.createCube = function (x, y, z, material) {
         var cube = new playcanvas__WEBPACK_IMPORTED_MODULE_0__["Entity"]();
@@ -72767,7 +72780,7 @@ var App = /** @class */ (function () {
             pivot: [0.5, 0.5],
             //shadowColor: new pc.Color(0, 0, 0),
             //shadowOffset: new pc.Vec2(0.25, -0.25),
-            text: "AoAoAoAoAo",
+            text: "AAAAAAAAA",
             type: playcanvas__WEBPACK_IMPORTED_MODULE_0__["ELEMENTTYPE_TEXT"]
         });
         if (texto.element)
@@ -72924,4 +72937,4 @@ else {
 /***/ })
 
 /******/ });
-//# sourceMappingURL=app.ec9abe8a88afe8c5338e.js.map
+//# sourceMappingURL=app.2e4eac69fc2d1748f607.js.map
