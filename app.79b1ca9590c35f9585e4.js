@@ -63,7 +63,7 @@
 /******/
 /******/ 	var hotApplyOnUpdate = true;
 /******/ 	// eslint-disable-next-line no-unused-vars
-/******/ 	var hotCurrentHash = "c2cb2f4d7dd2511d7910";
+/******/ 	var hotCurrentHash = "90b594b767128af537b9";
 /******/ 	var hotRequestTimeout = 10000;
 /******/ 	var hotCurrentModuleData = {};
 /******/ 	var hotCurrentChildModule;
@@ -83260,7 +83260,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "getAssetPath", function() { return getAssetPath; });
 function getAssetPath(assetPath) {
     // @ts-ignore: path variable injected at build time
-    return (undefined ? undefined : '/static/') + assetPath;
+    return (undefined ? undefined : './static/') + assetPath;
 }
 
 
@@ -84363,4 +84363,4 @@ else {
 /***/ })
 
 /******/ });
-//# sourceMappingURL=app.c2cb2f4d7dd2511d7910.js.map
+//# sourceMappingURL=app.90b594b767128af537b9.js.map
