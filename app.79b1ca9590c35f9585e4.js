@@ -63,7 +63,7 @@
 /******/
 /******/ 	var hotApplyOnUpdate = true;
 /******/ 	// eslint-disable-next-line no-unused-vars
-/******/ 	var hotCurrentHash = "96b7ec118f605ff899d9";
+/******/ 	var hotCurrentHash = "c2cb2f4d7dd2511d7910";
 /******/ 	var hotRequestTimeout = 10000;
 /******/ 	var hotCurrentModuleData = {};
 /******/ 	var hotCurrentChildModule;
@@ -4969,7 +4969,12 @@ class WS extends Transport {
           "ca",
           "ciphers",
           "rejectUnauthorized",
-          "localAddress"
+          "localAddress",
+          "protocolVersion",
+          "origin",
+          "maxPayload",
+          "family",
+          "checkServerIdentity"
         );
 
     if (this.opts.extraHeaders) {
@@ -5177,7 +5182,9 @@ module.exports = WS;
 
 module.exports.pick = (obj, ...attr) => {
   return attr.reduce((acc, k) => {
-    acc[k] = obj[k];
+    if (obj.hasOwnProperty(k)) {
+      acc[k] = obj[k];
+    }
     return acc;
   }, {});
 };
@@ -6448,7 +6455,7 @@ function queryKey(uri, query) {
 
 /**
  * @license
- * PlayCanvas Engine v1.38.0 revision 98cb89ec5
+ * PlayCanvas Engine v1.38.3 revision a9cf16e58
  * Copyright 2011-2021 PlayCanvas Ltd. All rights reserved.
  */
 (function (global, factory) {
@@ -6988,8 +6995,8 @@ function queryKey(uri, query) {
 		return result;
 	}();
 
-	var version = "1.38.0";
-	var revision = "98cb89ec5";
+	var version = "1.38.3";
+	var revision = "a9cf16e58";
 	var config = {};
 	var common = {};
 	var apps = {};
@@ -21230,8 +21237,8 @@ function queryKey(uri, query) {
 	var viewPosL = new Vec3();
 	var viewPosR = new Vec3();
 	var projL, projR;
-	var viewMat3L = new Mat4();
-	var viewMat3R = new Mat4();
+	var viewMat3L = new Mat3();
+	var viewMat3R = new Mat3();
 	var viewProjMatL = new Mat4();
 	var viewProjMatR = new Mat4();
 	var worldMatX$1 = new Vec3();
@@ -29225,89 +29232,80 @@ function queryKey(uri, query) {
 		return AnimTrack;
 	}();
 
+	var AnimBinder = function () {
+		function AnimBinder() {}
+
+		AnimBinder.joinPath = function joinPath(pathSegments, character) {
+			character = character || '.';
+
+			var escape = function escape(string) {
+				return string.replace(/\\/g, '\\\\').replace(new RegExp('\\' + character, 'g'), '\\' + character);
+			};
+
+			return pathSegments.map(escape).join(character);
+		};
+
+		AnimBinder.splitPath = function splitPath(path, character) {
+			character = character || '.';
+			var result = [];
+			var curr = "";
+			var i = 0;
+
+			while (i < path.length) {
+				var c = path[i++];
+
+				if (c === '\\' && i < path.length) {
+					c = path[i++];
+
+					if (c === '\\' || c === character) {
+						curr += c;
+					} else {
+						curr += '\\' + c;
+					}
+				} else if (c === character) {
+					result.push(curr);
+					curr = '';
+				} else {
+					curr += c;
+				}
+			}
+
+			if (curr.length > 0) {
+				result.push(curr);
+			}
+
+			return result;
+		};
+
+		AnimBinder.encode = function encode(locator) {
+			return AnimBinder.joinPath([AnimBinder.joinPath(Array.isArray(locator.entityPath) ? locator.entityPath : [locator.entityPath]), locator.component, AnimBinder.joinPath(Array.isArray(locator.propertyPath) ? locator.propertyPath : [locator.propertyPath])], '/');
+		};
+
+		AnimBinder.decode = function decode(locator) {
+			var locatorSections = AnimBinder.splitPath(locator, '/');
+			return {
+				entityPath: AnimBinder.splitPath(locatorSections[0]),
+				component: locatorSections[1],
+				propertyPath: AnimBinder.splitPath(locatorSections[2])
+			};
+		};
+
+		var _proto = AnimBinder.prototype;
+
+		_proto.resolve = function resolve(path) {
+			return null;
+		};
+
+		_proto.unresolve = function unresolve(path) {};
+
+		_proto.update = function update(deltaTime) {};
+
+		return AnimBinder;
+	}();
+
 	var INTERPOLATION_STEP = 0;
 	var INTERPOLATION_LINEAR = 1;
 	var INTERPOLATION_CUBIC = 2;
-
-	var I18nParser = function () {
-		function I18nParser() {}
-
-		var _proto = I18nParser.prototype;
-
-		_proto._validate = function _validate(data) {
-			if (!data.header) {
-				throw new Error('pc.I18n#addData: Missing "header" field');
-			}
-
-			if (!data.header.version) {
-				throw new Error('pc.I18n#addData: Missing "header.version" field');
-			}
-
-			if (data.header.version !== 1) {
-				throw new Error('pc.I18n#addData: Invalid "header.version" field');
-			}
-
-			if (!data.data) {
-				throw new Error('pc.I18n#addData: Missing "data" field');
-			} else if (!Array.isArray(data.data)) {
-				throw new Error('pc.I18n#addData: "data" field must be an array');
-			}
-
-			for (var i = 0, len = data.data.length; i < len; i++) {
-				var entry = data.data[i];
-
-				if (!entry.info) {
-					throw new Error('pc.I18n#addData: missing "data[' + i + '].info" field');
-				}
-
-				if (!entry.info.locale) {
-					throw new Error('pc.I18n#addData: missing "data[' + i + '].info.locale" field');
-				}
-
-				if (typeof entry.info.locale !== 'string') {
-					throw new Error('pc.I18n#addData: "data[' + i + '].info.locale" must be a string');
-				}
-
-				if (!entry.messages) {
-					throw new Error('pc.I18n#addData: missing "data[' + i + '].messages" field');
-				}
-			}
-		};
-
-		_proto.parse = function parse(data) {
-			return data.data;
-		};
-
-		return I18nParser;
-	}();
-
-	var PLURALS = {};
-
-	var definePluralFn = function definePluralFn(locales, fn) {
-		for (var i = 0, len = locales.length; i < len; i++) {
-			PLURALS[locales[i]] = fn;
-		}
-	};
-
-	var getLang = function getLang(locale) {
-		var idx = locale.indexOf('-');
-
-		if (idx !== -1) {
-			return locale.substring(0, idx);
-		}
-
-		return locale;
-	};
-
-	var replaceLang = function replaceLang(locale, desiredLang) {
-		var idx = locale.indexOf('-');
-
-		if (idx !== -1) {
-			return desiredLang + locale.substring(idx);
-		}
-
-		return desiredLang;
-	};
 
 	var DEFAULT_LOCALE = 'en-US';
 	var DEFAULT_LOCALE_FALLBACKS = {
@@ -29323,6 +29321,60 @@ function queryKey(uri, query) {
 		'ru': 'ru-RU',
 		'ja': 'ja-JP'
 	};
+
+	var PLURALS = {};
+
+	function definePluralFn(locales, fn) {
+		for (var i = 0, len = locales.length; i < len; i++) {
+			PLURALS[locales[i]] = fn;
+		}
+	}
+
+	function getLang(locale) {
+		var idx = locale.indexOf('-');
+
+		if (idx !== -1) {
+			return locale.substring(0, idx);
+		}
+
+		return locale;
+	}
+
+	function replaceLang(locale, desiredLang) {
+		var idx = locale.indexOf('-');
+
+		if (idx !== -1) {
+			return desiredLang + locale.substring(idx);
+		}
+
+		return desiredLang;
+	}
+
+	function findAvailableLocale(desiredLocale, availableLocales) {
+		if (availableLocales[desiredLocale]) {
+			return desiredLocale;
+		}
+
+		var fallback = DEFAULT_LOCALE_FALLBACKS[desiredLocale];
+
+		if (fallback && availableLocales[fallback]) {
+			return fallback;
+		}
+
+		var lang = getLang(desiredLocale);
+		fallback = DEFAULT_LOCALE_FALLBACKS[lang];
+
+		if (availableLocales[fallback]) {
+			return fallback;
+		}
+
+		if (availableLocales[lang]) {
+			return lang;
+		}
+
+		return DEFAULT_LOCALE;
+	}
+
 	definePluralFn(['ja', 'ko', 'th', 'vi', 'zh', 'id'], function (n) {
 		return 0;
 	});
@@ -29411,342 +29463,9 @@ function queryKey(uri, query) {
 	});
 	var DEFAULT_PLURAL_FN = PLURALS[getLang(DEFAULT_LOCALE)];
 
-	var getPluralFn = function getPluralFn(lang) {
+	function getPluralFn(lang) {
 		return PLURALS[lang] || DEFAULT_PLURAL_FN;
-	};
-
-	var I18n = function (_EventHandler) {
-		_inheritsLoose(I18n, _EventHandler);
-
-		function I18n(app) {
-			var _this;
-
-			_this = _EventHandler.call(this) || this;
-
-			_this.destroy = function () {
-				this._translations = null;
-				this._availableLangs = null;
-				this._assets = null;
-				this._parser = null;
-				this.off();
-			};
-
-			_this.locale = DEFAULT_LOCALE;
-			_this._translations = {};
-			_this._availableLangs = {};
-			_this._app = app;
-			_this._assets = [];
-			_this._parser = new I18nParser();
-			return _this;
-		}
-
-		I18n.findAvailableLocale = function findAvailableLocale(desiredLocale, availableLocales) {
-			if (availableLocales[desiredLocale]) {
-				return desiredLocale;
-			}
-
-			var fallback = DEFAULT_LOCALE_FALLBACKS[desiredLocale];
-
-			if (fallback && availableLocales[fallback]) {
-				return fallback;
-			}
-
-			var lang = getLang(desiredLocale);
-			fallback = DEFAULT_LOCALE_FALLBACKS[lang];
-
-			if (availableLocales[fallback]) {
-				return fallback;
-			}
-
-			if (availableLocales[lang]) {
-				return lang;
-			}
-
-			return DEFAULT_LOCALE;
-		};
-
-		var _proto = I18n.prototype;
-
-		_proto.getText = function getText(key, locale) {
-			var result = key;
-			var lang;
-
-			if (!locale) {
-				locale = this._locale;
-				lang = this._lang;
-			}
-
-			var translations = this._translations[locale];
-
-			if (!translations) {
-				if (!lang) {
-					lang = getLang(locale);
-				}
-
-				locale = this._findFallbackLocale(locale, lang);
-				translations = this._translations[locale];
-			}
-
-			if (translations && translations.hasOwnProperty(key)) {
-				result = translations[key];
-
-				if (Array.isArray(result)) {
-					result = result[0];
-				}
-
-				if (result === null || result === undefined) {
-					result = key;
-				}
-			}
-
-			return result;
-		};
-
-		_proto.getPluralText = function getPluralText(key, n, locale) {
-			var result = key;
-			var pluralFn;
-			var lang;
-
-			if (!locale) {
-				locale = this._locale;
-				lang = this._lang;
-				pluralFn = this._pluralFn;
-			} else {
-				lang = getLang(locale);
-				pluralFn = getPluralFn(lang);
-			}
-
-			var translations = this._translations[locale];
-
-			if (!translations) {
-				locale = this._findFallbackLocale(locale, lang);
-				lang = getLang(locale);
-				pluralFn = getPluralFn(lang);
-				translations = this._translations[locale];
-			}
-
-			if (translations && translations[key] && pluralFn) {
-				var index = pluralFn(n);
-				result = translations[key][index];
-
-				if (result === null || result === undefined) {
-					result = key;
-				}
-			}
-
-			return result;
-		};
-
-		_proto.addData = function addData(data) {
-			var parsed;
-
-			try {
-				parsed = this._parser.parse(data);
-			} catch (err) {
-				console.error(err);
-				return;
-			}
-
-			for (var i = 0, len = parsed.length; i < len; i++) {
-				var entry = parsed[i];
-				var locale = entry.info.locale;
-				var messages = entry.messages;
-
-				if (!this._translations[locale]) {
-					this._translations[locale] = {};
-					var lang = getLang(locale);
-
-					if (!this._availableLangs[lang]) {
-						this._availableLangs[lang] = locale;
-					}
-				}
-
-				Object.assign(this._translations[locale], messages);
-				this.fire('data:add', locale, messages);
-			}
-		};
-
-		_proto.removeData = function removeData(data) {
-			var parsed;
-			var key;
-
-			try {
-				parsed = this._parser.parse(data);
-			} catch (err) {
-				console.error(err);
-				return;
-			}
-
-			for (var i = 0, len = parsed.length; i < len; i++) {
-				var entry = parsed[i];
-				var locale = entry.info.locale;
-				var translations = this._translations[locale];
-				if (!translations) continue;
-				var messages = entry.messages;
-
-				for (key in messages) {
-					delete translations[key];
-				}
-
-				var hasAny = false;
-
-				for (key in translations) {
-					hasAny = true;
-					break;
-				}
-
-				if (!hasAny) {
-					delete this._translations[locale];
-					delete this._availableLangs[getLang(locale)];
-				}
-
-				this.fire('data:remove', locale, messages);
-			}
-		};
-
-		_proto._findFallbackLocale = function _findFallbackLocale(locale, lang) {
-			var result = DEFAULT_LOCALE_FALLBACKS[locale];
-
-			if (result && this._translations[result]) {
-				return result;
-			}
-
-			result = DEFAULT_LOCALE_FALLBACKS[lang];
-
-			if (result && this._translations[result]) {
-				return result;
-			}
-
-			result = this._availableLangs[lang];
-
-			if (result && this._translations[result]) {
-				return result;
-			}
-
-			return DEFAULT_LOCALE;
-		};
-
-		_proto._onAssetAdd = function _onAssetAdd(asset) {
-			asset.on('load', this._onAssetLoad, this);
-			asset.on('change', this._onAssetChange, this);
-			asset.on('remove', this._onAssetRemove, this);
-			asset.on('unload', this._onAssetUnload, this);
-
-			if (asset.resource) {
-				this._onAssetLoad(asset);
-			}
-		};
-
-		_proto._onAssetLoad = function _onAssetLoad(asset) {
-			this.addData(asset.resource);
-		};
-
-		_proto._onAssetChange = function _onAssetChange(asset) {
-			if (asset.resource) {
-				this.addData(asset.resource);
-			}
-		};
-
-		_proto._onAssetRemove = function _onAssetRemove(asset) {
-			asset.off('load', this._onAssetLoad, this);
-			asset.off('change', this._onAssetChange, this);
-			asset.off('remove', this._onAssetRemove, this);
-			asset.off('unload', this._onAssetUnload, this);
-
-			if (asset.resource) {
-				this.removeData(asset.resource);
-			}
-
-			this._app.assets.once('add:' + asset.id, this._onAssetAdd, this);
-		};
-
-		_proto._onAssetUnload = function _onAssetUnload(asset) {
-			if (asset.resource) {
-				this.removeData(asset.resource);
-			}
-		};
-
-		_createClass(I18n, [{
-			key: "locale",
-			get: function get() {
-				return this._locale;
-			},
-			set: function set(value) {
-				if (this._locale === value) {
-					return;
-				}
-
-				var lang = getLang(value);
-
-				if (lang === 'in') {
-					lang = 'id';
-					value = replaceLang(value, lang);
-
-					if (this._locale === value) {
-						return;
-					}
-				}
-
-				var old = this._locale;
-				this._locale = value;
-				this._lang = lang;
-				this._pluralFn = getPluralFn(this._lang);
-				this.fire('set:locale', value, old);
-			}
-		}, {
-			key: "assets",
-			get: function get() {
-				return this._assets;
-			},
-			set: function set(value) {
-				var i;
-				var len;
-				var id;
-				var asset;
-				var index = {};
-
-				for (i = 0, len = value.length; i < len; i++) {
-					id = value[i] instanceof Asset ? value[i].id : value[i];
-					index[id] = true;
-				}
-
-				i = this._assets.length;
-
-				while (i--) {
-					id = this._assets[i];
-
-					if (!index[id]) {
-						this._app.assets.off('add:' + id, this._onAssetAdd, this);
-
-						asset = this._app.assets.get(id);
-
-						if (asset) {
-							this._onAssetRemove(asset);
-						}
-
-						this._assets.splice(i, 1);
-					}
-				}
-
-				for (id in index) {
-					id = parseInt(id, 10);
-					if (this._assets.indexOf(id) !== -1) continue;
-
-					this._assets.push(id);
-
-					asset = this._app.assets.get(id);
-
-					if (!asset) {
-						this._app.assets.once('add:' + id, this._onAssetAdd, this);
-					} else {
-						this._onAssetAdd(asset);
-					}
-				}
-			}
-		}]);
-
-		return I18n;
-	}(EventHandler);
+	}
 
 	var ABSOLUTE_URL = new RegExp('^' + '\\s*' + '(?:' + '(?:' + '[a-z]+[a-z0-9\\-\\+\\.]*' + ':' + ')?' + '//' + '|' + 'data:' + '|blob:' + ')', 'i');
 	var ASSET_ANIMATION = 'animation';
@@ -29909,7 +29628,7 @@ function queryKey(uri, query) {
 		};
 
 		_proto.getLocalizedAssetId = function getLocalizedAssetId(locale) {
-			locale = I18n.findAvailableLocale(locale, this._i18n);
+			locale = findAvailableLocale(locale, this._i18n);
 			return this._i18n[locale] || null;
 		};
 
@@ -30085,81 +29804,6 @@ function queryKey(uri, query) {
 
 		return Asset;
 	}(EventHandler);
-
-	var AnimBinder = function () {
-		function AnimBinder() {}
-
-		AnimBinder.joinPath = function joinPath(pathSegments, character) {
-			character = character || '.';
-
-			var escape = function escape(string) {
-				return string.replace(/\\/g, '\\\\').replace(new RegExp('\\' + character, 'g'), '\\' + character);
-			};
-
-			return pathSegments.map(escape).join(character);
-		};
-
-		AnimBinder.splitPath = function splitPath(path, character) {
-			character = character || '.';
-			var result = [];
-			var curr = "";
-			var i = 0;
-
-			while (i < path.length) {
-				var c = path[i++];
-
-				if (c === '\\' && i < path.length) {
-					c = path[i++];
-
-					if (c === '\\' || c === character) {
-						curr += c;
-					} else {
-						curr += '\\' + c;
-					}
-				} else if (c === character) {
-					result.push(curr);
-					curr = '';
-				} else {
-					curr += c;
-				}
-			}
-
-			if (curr.length > 0) {
-				result.push(curr);
-			}
-
-			return result;
-		};
-
-		var _proto = AnimBinder.prototype;
-
-		_proto.resolve = function resolve(path) {
-			return null;
-		};
-
-		_proto.unresolve = function unresolve(path) {};
-
-		_proto.update = function update(deltaTime) {};
-
-		return AnimBinder;
-	}();
-
-	var AnimPropertyLocator = function () {
-		function AnimPropertyLocator() {}
-
-		var _proto = AnimPropertyLocator.prototype;
-
-		_proto.encode = function encode(locator) {
-			return AnimBinder.joinPath([AnimBinder.joinPath(locator[0]), locator[1], AnimBinder.joinPath(locator[2])], '/');
-		};
-
-		_proto.decode = function decode(locator) {
-			var locatorSections = AnimBinder.splitPath(locator, '/');
-			return [AnimBinder.splitPath(locatorSections[0]), locatorSections[1], AnimBinder.splitPath(locatorSections[2])];
-		};
-
-		return AnimPropertyLocator;
-	}();
 
 	var isDataURI = function isDataURI(uri) {
 		return /^data:.*,.*$/i.test(uri);
@@ -30921,9 +30565,9 @@ function queryKey(uri, query) {
 						options.name = targets.length.toString(10);
 					}
 
-					targets.push(new MorphTarget(device, options));
+					targets.push(new MorphTarget(options));
 				});
-				mesh.morph = new Morph(targets);
+				mesh.morph = new Morph(targets, device);
 
 				if (gltfMesh.hasOwnProperty('weights')) {
 					for (var i = 0; i < gltfMesh.weights.length; ++i) {
@@ -31249,7 +30893,6 @@ function queryKey(uri, query) {
 		}
 
 		var quatArrays = [];
-		var propertyLocator = new AnimPropertyLocator();
 		var transformSchema = {
 			'translation': 'localPosition',
 			'rotation': 'localRotation',
@@ -31262,7 +30905,11 @@ function queryKey(uri, query) {
 			var target = channel.target;
 			var curve = curves[channel.sampler];
 
-			curve._paths.push(propertyLocator.encode([[nodes[target.node].name], 'graph', [transformSchema[target.path]]]));
+			curve._paths.push(AnimBinder.encode({
+				entityPath: [nodes[target.node].path],
+				component: 'graph',
+				propertyPath: [transformSchema[target.path]]
+			}));
 
 			if (target.path.startsWith('rotation') && curve.interpolation !== INTERPOLATION_CUBIC) {
 				quatArrays.push(curve.output);
@@ -37615,18 +37262,18 @@ function queryKey(uri, query) {
 			none: BASIS_FORMAT.cTFRGBA4444
 		};
 		var basisToEngineMapping = {};
-		basisToEngineMapping[BASIS_FORMAT.cTFETC1] = PIXELFORMAT_ETC1;
-		basisToEngineMapping[BASIS_FORMAT.cTFETC2] = PIXELFORMAT_ETC2_RGBA;
-		basisToEngineMapping[BASIS_FORMAT.cTFBC1] = PIXELFORMAT_DXT1;
-		basisToEngineMapping[BASIS_FORMAT.cTFBC3] = PIXELFORMAT_DXT5;
-		basisToEngineMapping[BASIS_FORMAT.cTFPVRTC1_4_RGB] = PIXELFORMAT_PVRTC_4BPP_RGB_1;
-		basisToEngineMapping[BASIS_FORMAT.cTFPVRTC1_4_RGBA] = PIXELFORMAT_PVRTC_4BPP_RGBA_1;
-		basisToEngineMapping[BASIS_FORMAT.cTFASTC_4x4] = PIXELFORMAT_ASTC_4x4;
-		basisToEngineMapping[BASIS_FORMAT.cTFATC_RGB] = PIXELFORMAT_ATC_RGB;
-		basisToEngineMapping[BASIS_FORMAT.cTFATC_RGBA_INTERPOLATED_ALPHA] = PIXELFORMAT_ATC_RGBA;
-		basisToEngineMapping[BASIS_FORMAT.cTFRGBA32] = PIXELFORMAT_R8_G8_B8_A8;
-		basisToEngineMapping[BASIS_FORMAT.cTFRGB565] = PIXELFORMAT_R5_G6_B5;
-		basisToEngineMapping[BASIS_FORMAT.cTFRGBA4444] = PIXELFORMAT_R4_G4_B4_A4;
+		basisToEngineMapping[BASIS_FORMAT.cTFETC1] = 21;
+		basisToEngineMapping[BASIS_FORMAT.cTFETC2] = 23;
+		basisToEngineMapping[BASIS_FORMAT.cTFBC1] = 8;
+		basisToEngineMapping[BASIS_FORMAT.cTFBC3] = 10;
+		basisToEngineMapping[BASIS_FORMAT.cTFPVRTC1_4_RGB] = 26;
+		basisToEngineMapping[BASIS_FORMAT.cTFPVRTC1_4_RGBA] = 27;
+		basisToEngineMapping[BASIS_FORMAT.cTFASTC_4x4] = 28;
+		basisToEngineMapping[BASIS_FORMAT.cTFATC_RGB] = 29;
+		basisToEngineMapping[BASIS_FORMAT.cTFATC_RGBA_INTERPOLATED_ALPHA] = 30;
+		basisToEngineMapping[BASIS_FORMAT.cTFRGBA32] = 7;
+		basisToEngineMapping[BASIS_FORMAT.cTFRGB565] = 3;
+		basisToEngineMapping[BASIS_FORMAT.cTFRGBA4444] = 5;
 		var hasPerformance = typeof performance !== 'undefined';
 
 		var unswizzleGGGR = function unswizzleGGGR(data) {
@@ -37904,7 +37551,7 @@ function queryKey(uri, query) {
 	}
 
 	function basisInitialize(basisCode, basisModule, callback) {
-		var code = ["/* basis.js */", basisCode, "/* mappings */", "var PIXELFORMAT_ETC1 = " + PIXELFORMAT_ETC1 + ";", "var PIXELFORMAT_ETC2_RGBA = " + PIXELFORMAT_ETC2_RGBA + ";", "var PIXELFORMAT_DXT1 = " + PIXELFORMAT_DXT1 + ";", "var PIXELFORMAT_DXT5 = " + PIXELFORMAT_DXT5 + ";", "var PIXELFORMAT_PVRTC_4BPP_RGB_1 = " + PIXELFORMAT_PVRTC_4BPP_RGB_1 + ";", "var PIXELFORMAT_PVRTC_4BPP_RGBA_1 = " + PIXELFORMAT_PVRTC_4BPP_RGBA_1 + ";", "var PIXELFORMAT_ASTC_4x4 = " + PIXELFORMAT_ASTC_4x4 + ";", "var PIXELFORMAT_ATC_RGB = " + PIXELFORMAT_ATC_RGB + ";", "var PIXELFORMAT_ATC_RGBA = " + PIXELFORMAT_ATC_RGBA + ";", "var PIXELFORMAT_R8_G8_B8_A8 = " + PIXELFORMAT_R8_G8_B8_A8 + ";", "var PIXELFORMAT_R5_G6_B5 = " + PIXELFORMAT_R5_G6_B5 + ";", "var PIXELFORMAT_R4_G4_B4_A4 = " + PIXELFORMAT_R4_G4_B4_A4 + ";", "", "/* worker */", '(' + BasisWorker.toString() + ')()\n\n'].join('\n');
+		var code = ["/* basis.js */", basisCode, "", "/* worker */", '(' + BasisWorker.toString() + ')()\n\n'].join('\n');
 		var blob = new Blob([code], {
 			type: 'application/javascript'
 		});
@@ -39585,6 +39232,370 @@ function queryKey(uri, query) {
 		return ScriptRegistry;
 	}(EventHandler);
 
+	var I18nParser = function () {
+		function I18nParser() {}
+
+		var _proto = I18nParser.prototype;
+
+		_proto._validate = function _validate(data) {
+			if (!data.header) {
+				throw new Error('pc.I18n#addData: Missing "header" field');
+			}
+
+			if (!data.header.version) {
+				throw new Error('pc.I18n#addData: Missing "header.version" field');
+			}
+
+			if (data.header.version !== 1) {
+				throw new Error('pc.I18n#addData: Invalid "header.version" field');
+			}
+
+			if (!data.data) {
+				throw new Error('pc.I18n#addData: Missing "data" field');
+			} else if (!Array.isArray(data.data)) {
+				throw new Error('pc.I18n#addData: "data" field must be an array');
+			}
+
+			for (var i = 0, len = data.data.length; i < len; i++) {
+				var entry = data.data[i];
+
+				if (!entry.info) {
+					throw new Error('pc.I18n#addData: missing "data[' + i + '].info" field');
+				}
+
+				if (!entry.info.locale) {
+					throw new Error('pc.I18n#addData: missing "data[' + i + '].info.locale" field');
+				}
+
+				if (typeof entry.info.locale !== 'string') {
+					throw new Error('pc.I18n#addData: "data[' + i + '].info.locale" must be a string');
+				}
+
+				if (!entry.messages) {
+					throw new Error('pc.I18n#addData: missing "data[' + i + '].messages" field');
+				}
+			}
+		};
+
+		_proto.parse = function parse(data) {
+			return data.data;
+		};
+
+		return I18nParser;
+	}();
+
+	var I18n = function (_EventHandler) {
+		_inheritsLoose(I18n, _EventHandler);
+
+		function I18n(app) {
+			var _this;
+
+			_this = _EventHandler.call(this) || this;
+
+			_this.destroy = function () {
+				this._translations = null;
+				this._availableLangs = null;
+				this._assets = null;
+				this._parser = null;
+				this.off();
+			};
+
+			_this.locale = DEFAULT_LOCALE;
+			_this._translations = {};
+			_this._availableLangs = {};
+			_this._app = app;
+			_this._assets = [];
+			_this._parser = new I18nParser();
+			return _this;
+		}
+
+		I18n.findAvailableLocale = function findAvailableLocale$1(desiredLocale, availableLocales) {
+			return findAvailableLocale(desiredLocale, availableLocales);
+		};
+
+		var _proto = I18n.prototype;
+
+		_proto.getText = function getText(key, locale) {
+			var result = key;
+			var lang;
+
+			if (!locale) {
+				locale = this._locale;
+				lang = this._lang;
+			}
+
+			var translations = this._translations[locale];
+
+			if (!translations) {
+				if (!lang) {
+					lang = getLang(locale);
+				}
+
+				locale = this._findFallbackLocale(locale, lang);
+				translations = this._translations[locale];
+			}
+
+			if (translations && translations.hasOwnProperty(key)) {
+				result = translations[key];
+
+				if (Array.isArray(result)) {
+					result = result[0];
+				}
+
+				if (result === null || result === undefined) {
+					result = key;
+				}
+			}
+
+			return result;
+		};
+
+		_proto.getPluralText = function getPluralText(key, n, locale) {
+			var result = key;
+			var pluralFn;
+			var lang;
+
+			if (!locale) {
+				locale = this._locale;
+				lang = this._lang;
+				pluralFn = this._pluralFn;
+			} else {
+				lang = getLang(locale);
+				pluralFn = getPluralFn(lang);
+			}
+
+			var translations = this._translations[locale];
+
+			if (!translations) {
+				locale = this._findFallbackLocale(locale, lang);
+				lang = getLang(locale);
+				pluralFn = getPluralFn(lang);
+				translations = this._translations[locale];
+			}
+
+			if (translations && translations[key] && pluralFn) {
+				var index = pluralFn(n);
+				result = translations[key][index];
+
+				if (result === null || result === undefined) {
+					result = key;
+				}
+			}
+
+			return result;
+		};
+
+		_proto.addData = function addData(data) {
+			var parsed;
+
+			try {
+				parsed = this._parser.parse(data);
+			} catch (err) {
+				console.error(err);
+				return;
+			}
+
+			for (var i = 0, len = parsed.length; i < len; i++) {
+				var entry = parsed[i];
+				var locale = entry.info.locale;
+				var messages = entry.messages;
+
+				if (!this._translations[locale]) {
+					this._translations[locale] = {};
+					var lang = getLang(locale);
+
+					if (!this._availableLangs[lang]) {
+						this._availableLangs[lang] = locale;
+					}
+				}
+
+				Object.assign(this._translations[locale], messages);
+				this.fire('data:add', locale, messages);
+			}
+		};
+
+		_proto.removeData = function removeData(data) {
+			var parsed;
+			var key;
+
+			try {
+				parsed = this._parser.parse(data);
+			} catch (err) {
+				console.error(err);
+				return;
+			}
+
+			for (var i = 0, len = parsed.length; i < len; i++) {
+				var entry = parsed[i];
+				var locale = entry.info.locale;
+				var translations = this._translations[locale];
+				if (!translations) continue;
+				var messages = entry.messages;
+
+				for (key in messages) {
+					delete translations[key];
+				}
+
+				var hasAny = false;
+
+				for (key in translations) {
+					hasAny = true;
+					break;
+				}
+
+				if (!hasAny) {
+					delete this._translations[locale];
+					delete this._availableLangs[getLang(locale)];
+				}
+
+				this.fire('data:remove', locale, messages);
+			}
+		};
+
+		_proto._findFallbackLocale = function _findFallbackLocale(locale, lang) {
+			var result = DEFAULT_LOCALE_FALLBACKS[locale];
+
+			if (result && this._translations[result]) {
+				return result;
+			}
+
+			result = DEFAULT_LOCALE_FALLBACKS[lang];
+
+			if (result && this._translations[result]) {
+				return result;
+			}
+
+			result = this._availableLangs[lang];
+
+			if (result && this._translations[result]) {
+				return result;
+			}
+
+			return DEFAULT_LOCALE;
+		};
+
+		_proto._onAssetAdd = function _onAssetAdd(asset) {
+			asset.on('load', this._onAssetLoad, this);
+			asset.on('change', this._onAssetChange, this);
+			asset.on('remove', this._onAssetRemove, this);
+			asset.on('unload', this._onAssetUnload, this);
+
+			if (asset.resource) {
+				this._onAssetLoad(asset);
+			}
+		};
+
+		_proto._onAssetLoad = function _onAssetLoad(asset) {
+			this.addData(asset.resource);
+		};
+
+		_proto._onAssetChange = function _onAssetChange(asset) {
+			if (asset.resource) {
+				this.addData(asset.resource);
+			}
+		};
+
+		_proto._onAssetRemove = function _onAssetRemove(asset) {
+			asset.off('load', this._onAssetLoad, this);
+			asset.off('change', this._onAssetChange, this);
+			asset.off('remove', this._onAssetRemove, this);
+			asset.off('unload', this._onAssetUnload, this);
+
+			if (asset.resource) {
+				this.removeData(asset.resource);
+			}
+
+			this._app.assets.once('add:' + asset.id, this._onAssetAdd, this);
+		};
+
+		_proto._onAssetUnload = function _onAssetUnload(asset) {
+			if (asset.resource) {
+				this.removeData(asset.resource);
+			}
+		};
+
+		_createClass(I18n, [{
+			key: "locale",
+			get: function get() {
+				return this._locale;
+			},
+			set: function set(value) {
+				if (this._locale === value) {
+					return;
+				}
+
+				var lang = getLang(value);
+
+				if (lang === 'in') {
+					lang = 'id';
+					value = replaceLang(value, lang);
+
+					if (this._locale === value) {
+						return;
+					}
+				}
+
+				var old = this._locale;
+				this._locale = value;
+				this._lang = lang;
+				this._pluralFn = getPluralFn(this._lang);
+				this.fire('set:locale', value, old);
+			}
+		}, {
+			key: "assets",
+			get: function get() {
+				return this._assets;
+			},
+			set: function set(value) {
+				var i;
+				var len;
+				var id;
+				var asset;
+				var index = {};
+
+				for (i = 0, len = value.length; i < len; i++) {
+					id = value[i] instanceof Asset ? value[i].id : value[i];
+					index[id] = true;
+				}
+
+				i = this._assets.length;
+
+				while (i--) {
+					id = this._assets[i];
+
+					if (!index[id]) {
+						this._app.assets.off('add:' + id, this._onAssetAdd, this);
+
+						asset = this._app.assets.get(id);
+
+						if (asset) {
+							this._onAssetRemove(asset);
+						}
+
+						this._assets.splice(i, 1);
+					}
+				}
+
+				for (id in index) {
+					id = parseInt(id, 10);
+					if (this._assets.indexOf(id) !== -1) continue;
+
+					this._assets.push(id);
+
+					asset = this._app.assets.get(id);
+
+					if (!asset) {
+						this._app.assets.once('add:' + id, this._onAssetAdd, this);
+					} else {
+						this._onAssetAdd(asset);
+					}
+				}
+			}
+		}]);
+
+		return I18n;
+	}(EventHandler);
+
 	var FILLMODE_NONE = 'NONE';
 	var FILLMODE_FILL_WINDOW = 'FILL_WINDOW';
 	var FILLMODE_KEEP_ASPECT = 'KEEP_ASPECT';
@@ -39828,6 +39839,8 @@ function queryKey(uri, query) {
 		function VrManager(app) {
 			var _this;
 
+			_this = _EventHandler.call(this) || this;
+
 			var self = _assertThisInitialized(_this);
 
 			_this.isSupported = VrManager.isSupported;
@@ -39852,7 +39865,7 @@ function queryKey(uri, query) {
 				}
 			});
 
-			return _assertThisInitialized(_this);
+			return _this;
 		}
 
 		var _proto = VrManager.prototype;
@@ -42843,15 +42856,12 @@ function queryKey(uri, query) {
 
 	var DefaultAnimBinder = function () {
 		function DefaultAnimBinder(graph) {
-			this.propertyLocator = new AnimPropertyLocator();
+			this.graph = graph;
 			if (!graph) return;
 			var nodes = {};
 
 			var flatten = function flatten(node) {
-				nodes[node.name] = {
-					node: node,
-					count: 0
-				};
+				nodes[node.name] = node;
 
 				for (var i = 0; i < node.children.length; ++i) {
 					flatten(node.children[i]);
@@ -42859,6 +42869,7 @@ function queryKey(uri, query) {
 			};
 
 			flatten(graph);
+			this.nodes = nodes;
 
 			var findMeshInstances = function findMeshInstances(node) {
 				var object = node;
@@ -42880,7 +42891,7 @@ function queryKey(uri, query) {
 				return meshInstances;
 			};
 
-			this.nodes = nodes;
+			this.nodeCounts = {};
 			this.activeNodes = [];
 			this.handlers = {
 				'localPosition': function localPosition(node) {
@@ -42971,40 +42982,48 @@ function queryKey(uri, query) {
 		var _proto = DefaultAnimBinder.prototype;
 
 		_proto.resolve = function resolve(path) {
-			var pathSections = this.propertyLocator.decode(path);
-			var node = this.nodes[pathSections[0][0] || ""];
+			var propertyLocation = AnimBinder.decode(path);
+			var node = this.graph.root.findByPath(this.graph.path + "/" + (propertyLocation.entityPath[0] || ""));
+
+			if (!node) {
+				var entityPath = AnimBinder.splitPath(propertyLocation.entityPath[0], '/');
+				node = this.nodes[entityPath[entityPath.length - 1] || ""];
+			}
 
 			if (!node) {
 				return null;
 			}
 
-			var handler = this.handlers[pathSections[2][0]];
+			var handler = this.handlers[propertyLocation.propertyPath[0]];
 
 			if (!handler) {
 				return null;
 			}
 
-			var target = handler(node.node);
+			var target = handler(node);
 
 			if (!target) {
 				return null;
 			}
 
-			if (node.count === 0) {
-				this.activeNodes.push(node.node);
+			if (!this.nodeCounts[node.path]) {
+				this.activeNodes.push(node);
+				this.nodeCounts[node.path] = 1;
+			} else {
+				this.nodeCounts[node.path]++;
 			}
 
-			node.count++;
 			return target;
 		};
 
 		_proto.unresolve = function unresolve(path) {
-			var pathSections = this.propertyLocator.decode(path);
-			if (pathSections[1] !== 'graph') return;
-			var node = this.nodes[pathSections[0][0]];
-			node.count--;
+			var propertyLocation = AnimBinder.decode(path);
+			if (propertyLocation.component !== 'graph') return;
+			var entityPath = AnimBinder.splitPath(propertyLocation.entityPath[0], '/');
+			var node = this.nodes[entityPath[entityPath.length - 1] || ""];
+			this.nodeCounts[node.path]--;
 
-			if (node.count === 0) {
+			if (this.nodeCounts[node.path] === 0) {
 				var activeNodes = this.activeNodes;
 				var i = activeNodes.indexOf(node.node);
 				var len = activeNodes.length;
@@ -43909,6 +43928,74 @@ function queryKey(uri, query) {
 
 	Component._buildAccessors(AnimationComponent.prototype, _schema);
 
+	var AnimNode = function () {
+		function AnimNode(state, parent, name, point, speed) {
+			if (speed === void 0) {
+				speed = 1;
+			}
+
+			this._state = state;
+			this._parent = parent;
+			this._name = name;
+			this._point = Array.isArray(point) ? new pc.Vec2(point) : point;
+			this._speed = speed;
+			this._weight = 1.0;
+			this._animTrack = null;
+		}
+
+		_createClass(AnimNode, [{
+			key: "parent",
+			get: function get() {
+				return this._parent;
+			}
+		}, {
+			key: "name",
+			get: function get() {
+				return this._name;
+			}
+		}, {
+			key: "path",
+			get: function get() {
+				return this._parent ? this._parent.path + '.' + this._name : this._name;
+			}
+		}, {
+			key: "point",
+			get: function get() {
+				return this._point;
+			}
+		}, {
+			key: "weight",
+			get: function get() {
+				return this._parent ? this._parent.weight * this._weight : this._weight;
+			},
+			set: function set(value) {
+				this._weight = value;
+			}
+		}, {
+			key: "normalizedWeight",
+			get: function get() {
+				var totalWeight = this._state.totalWeight;
+				if (totalWeight === 0.0) return 0.0;
+				return this.weight / totalWeight;
+			}
+		}, {
+			key: "speed",
+			get: function get() {
+				return this._speed;
+			}
+		}, {
+			key: "animTrack",
+			get: function get() {
+				return this._animTrack;
+			},
+			set: function set(value) {
+				this._animTrack = value;
+			}
+		}]);
+
+		return AnimNode;
+	}();
+
 	var ANIM_INTERRUPTION_NONE = 'NONE';
 	var ANIM_INTERRUPTION_PREV = 'PREV_STATE';
 	var ANIM_INTERRUPTION_NEXT = 'NEXT_STATE';
@@ -43931,6 +44018,1003 @@ function queryKey(uri, query) {
 	var ANIM_STATE_START = 'START';
 	var ANIM_STATE_END = 'END';
 	var ANIM_STATE_ANY = 'ANY';
+
+	function between(num, a, b, inclusive) {
+		var min = Math.min(a, b),
+				max = Math.max(a, b);
+		return inclusive ? num >= min && num <= max : num > min && num < max;
+	}
+
+	function getAngleRad(a, b) {
+		return Math.atan2(a.x * b.y - a.y * b.x, a.x * b.x + a.y * b.y);
+	}
+
+	function clamp(num, min, max) {
+		return num <= min ? min : num >= max ? max : num;
+	}
+
+	var AnimBlendTree = function (_AnimNode) {
+		_inheritsLoose(AnimBlendTree, _AnimNode);
+
+		function AnimBlendTree(state, parent, name, point, type, parameters, children, findParameter) {
+			var _this;
+
+			_this = _AnimNode.call(this, state, parent, name, point) || this;
+			_this._type = type;
+			_this._parameters = parameters;
+			_this._parameterValues = null;
+			_this._children = [];
+			_this._findParameter = findParameter;
+
+			for (var i = 0; i < children.length; i++) {
+				var child = children[i];
+
+				if (child.children) {
+					_this._children.push(new AnimBlendTree(state, _assertThisInitialized(_this), child.name, child.point, child.type, child.parameter ? [child.parameter] : child.parameters, child.children, findParameter));
+				} else {
+					_this._children.push(new AnimNode(state, _assertThisInitialized(_this), child.name, child.point, child.speed));
+				}
+			}
+
+			return _this;
+		}
+
+		var _proto = AnimBlendTree.prototype;
+
+		_proto.getChild = function getChild(name) {
+			for (var i = 0; i < this._children.length; i++) {
+				if (this._children[i].name === name) return this._children[i];
+			}
+		};
+
+		_proto.calculateWeights = function calculateWeights() {
+			var i, j, p, pi, pj, pip, pipj, parameterValues, minj, result, weightSum;
+
+			switch (this._type) {
+				case ANIM_BLEND_1D:
+					{
+						var parameterValue = this._findParameter(this._parameters[0]).value;
+
+						if (this._parameterValues && this._parameterValues[0] === parameterValue) {
+							return;
+						}
+
+						this._parameterValues = [parameterValue];
+						this._children[0].weight = 0.0;
+
+						for (i = 0; i < this._children.length - 1; i++) {
+							var child1 = this._children[i];
+							var child2 = this._children[i + 1];
+
+							if (between(parameterValue, child1.point, child2.point, true)) {
+								var child2Distance = Math.abs(child1.point - child2.point);
+								var parameterDistance = Math.abs(child1.point - parameterValue);
+								var weight = (child2Distance - parameterDistance) / child2Distance;
+								child1.weight = weight;
+								child2.weight = 1.0 - weight;
+							} else {
+								child2.weight = 0.0;
+							}
+						}
+
+						break;
+					}
+
+				case ANIM_BLEND_2D_CARTESIAN:
+					{
+						parameterValues = this._parameters.map(function (param) {
+							return this._findParameter(param).value;
+						}.bind(this));
+
+						if (this._parameterValues && JSON.stringify(this._parameterValues) === JSON.stringify(parameterValues)) {
+							return;
+						}
+
+						this._parameterValues = parameterValues;
+						p = new pc.Vec2(this._parameterValues);
+						weightSum = 0.0;
+
+						for (i = 0; i < this._children.length; i++) {
+							pi = this._children[i].point.clone();
+							minj = Number.MAX_VALUE;
+
+							for (j = 0; j < this._children.length; j++) {
+								if (i === j) continue;
+								pj = this._children[j].point.clone();
+								pipj = pj.clone().sub(pi);
+								pip = p.clone().sub(pi);
+								result = clamp(1.0 - pip.clone().dot(pipj) / pipj.lengthSq(), 0.0, 1.0);
+								if (result < minj) minj = result;
+							}
+
+							this._children[i].weight = minj;
+							weightSum += minj;
+						}
+
+						for (i = 0; i < this._children.length; i++) {
+							this._children[i].weight = this._children[i]._weight / weightSum;
+						}
+
+						break;
+					}
+
+				case ANIM_BLEND_2D_DIRECTIONAL:
+					{
+						parameterValues = this._parameters.map(function (param) {
+							return this._findParameter(param).value;
+						}.bind(this));
+
+						if (this._parameterValues && JSON.stringify(this._parameterValues) === JSON.stringify(parameterValues)) {
+							return;
+						}
+
+						this._parameterValues = parameterValues;
+						p = new pc.Vec2(this._parameterValues);
+						weightSum = 0.0;
+
+						for (i = 0; i < this._children.length; i++) {
+							pi = this._children[i].point.clone();
+							minj = Number.MAX_VALUE;
+
+							for (j = 0; j < this._children.length; j++) {
+								if (i === j) continue;
+								pj = this._children[j].point.clone();
+								var pipAngle = getAngleRad(pi, p);
+								var pipjAngle = getAngleRad(pi, pj);
+								pipj = new pc.Vec2((pj.length() - pi.length()) / ((pj.length() + pi.length()) / 2), pipjAngle * 2.0);
+								pip = new pc.Vec2((p.length() - pi.length()) / ((pj.length() + pi.length()) / 2), pipAngle * 2.0);
+								result = clamp(1.0 - Math.abs(pip.clone().dot(pipj) / pipj.lengthSq()), 0.0, 1.0);
+								if (result < minj) minj = result;
+							}
+
+							this._children[i].weight = minj;
+							weightSum += minj;
+						}
+
+						for (i = 0; i < this._children.length; i++) {
+							this._children[i].weight = this._children[i]._weight / weightSum;
+						}
+
+						break;
+					}
+
+				case ANIM_BLEND_DIRECT:
+					{
+						parameterValues = this._parameters.map(function (param) {
+							return this._findParameter(param).value;
+						}.bind(this));
+
+						if (this._parameterValues === parameterValues) {
+							return;
+						}
+
+						this._parameterValues = parameterValues;
+						weightSum = 0.0;
+
+						for (i = 0; i < this._children.length; i++) {
+							weightSum += clamp(this._parameterValues[i], 0.0, Number.MAX_VALUE);
+						}
+
+						for (i = 0; i < this._children.length; i++) {
+							this._children[i].weight = clamp(this._parameterValues[i], 0.0, Number.MAX_VALUE) / weightSum;
+						}
+
+						break;
+					}
+			}
+		};
+
+		_proto.getNodeCount = function getNodeCount() {
+			var count = 0;
+
+			for (var i = 0; i < this._children.length; i++) {
+				var child = this._children[i];
+
+				if (child.constructor === AnimBlendTree) {
+					count += this._children[i].getNodeCount();
+				} else {
+					count++;
+				}
+			}
+
+			return count;
+		};
+
+		_createClass(AnimBlendTree, [{
+			key: "parent",
+			get: function get() {
+				return this._parent;
+			}
+		}, {
+			key: "name",
+			get: function get() {
+				return this._name;
+			}
+		}, {
+			key: "point",
+			get: function get() {
+				return this._point;
+			}
+		}, {
+			key: "weight",
+			get: function get() {
+				this.calculateWeights();
+				return this._parent ? this._parent.weight * this._weight : this._weight;
+			},
+			set: function set(value) {
+				this._weight = value;
+			}
+		}, {
+			key: "speed",
+			get: function get() {
+				return this._speed;
+			}
+		}]);
+
+		return AnimBlendTree;
+	}(AnimNode);
+
+	var AnimState = function () {
+		function AnimState(controller, name, speed, loop, blendTree) {
+			this._controller = controller;
+			this._name = name;
+			this._animations = {};
+			this._animationList = [];
+			this._speed = speed || 1.0;
+			this._loop = loop === undefined ? true : loop;
+
+			var findParameter = this._controller.findParameter.bind(this._controller);
+
+			if (blendTree) {
+				this._blendTree = new AnimBlendTree(this, null, name, 1.0, blendTree.type, blendTree.parameter ? [blendTree.parameter] : blendTree.parameters, blendTree.children, findParameter);
+			} else {
+				this._blendTree = new AnimNode(this, null, name, 1.0, speed);
+			}
+		}
+
+		var _proto = AnimState.prototype;
+
+		_proto._getNodeFromPath = function _getNodeFromPath(path) {
+			var currNode = this._blendTree;
+
+			for (var i = 1; i < path.length; i++) {
+				currNode = currNode.getChild(path[i]);
+			}
+
+			return currNode;
+		};
+
+		_proto.addAnimation = function addAnimation(path, animTrack) {
+			var indexOfAnimation = this._animationList.findIndex(function (animation) {
+				return animation.path === path;
+			});
+
+			if (indexOfAnimation >= 0) {
+				this._animationList[indexOfAnimation].animTrack = animTrack;
+			} else {
+				var node = this._getNodeFromPath(path);
+
+				node.animTrack = animTrack;
+
+				this._animationList.push(node);
+			}
+		};
+
+		_createClass(AnimState, [{
+			key: "name",
+			get: function get() {
+				return this._name;
+			}
+		}, {
+			key: "animations",
+			get: function get() {
+				return this._animationList;
+			},
+			set: function set(value) {
+				this._animationList = value;
+			}
+		}, {
+			key: "speed",
+			get: function get() {
+				return this._speed;
+			}
+		}, {
+			key: "loop",
+			get: function get() {
+				return this._loop;
+			}
+		}, {
+			key: "nodeCount",
+			get: function get() {
+				if (!this._blendTree || !(this._blendTree.constructor === AnimBlendTree)) return 1;
+				return this._blendTree.getNodeCount();
+			}
+		}, {
+			key: "playable",
+			get: function get() {
+				return this.name === ANIM_STATE_START || this.name === ANIM_STATE_END || this.name === ANIM_STATE_ANY || this.animations.length === this.nodeCount;
+			}
+		}, {
+			key: "looping",
+			get: function get() {
+				if (this.animations.length > 0) {
+					var trackClipName = this.name + '.' + this.animations[0].animTrack.name;
+
+					var trackClip = this._controller.animEvaluator.findClip(trackClipName);
+
+					if (trackClip) {
+						return trackClip.loop;
+					}
+				}
+
+				return false;
+			}
+		}, {
+			key: "totalWeight",
+			get: function get() {
+				var sum = 0;
+				var i;
+
+				for (i = 0; i < this.animations.length; i++) {
+					sum += this.animations[i].weight;
+				}
+
+				return sum;
+			}
+		}, {
+			key: "timelineDuration",
+			get: function get() {
+				var duration = 0;
+				var i;
+
+				for (i = 0; i < this.animations.length; i++) {
+					var animation = this.animations[i];
+
+					if (animation.animTrack.duration > duration) {
+						duration = animation.animTrack.duration;
+					}
+				}
+
+				return duration;
+			}
+		}]);
+
+		return AnimState;
+	}();
+
+	var AnimTransition = function () {
+		function AnimTransition(controller, from, to, time, priority, conditions, exitTime, transitionOffset, interruptionSource) {
+			if (interruptionSource === void 0) {
+				interruptionSource = ANIM_INTERRUPTION_NONE;
+			}
+
+			this._controller = controller;
+			this._from = from;
+			this._to = to;
+			this._time = time;
+			this._priority = priority;
+			this._conditions = conditions || [];
+			this._exitTime = exitTime || null;
+			this._transitionOffset = transitionOffset || null;
+			this._interruptionSource = interruptionSource;
+		}
+
+		_createClass(AnimTransition, [{
+			key: "from",
+			get: function get() {
+				return this._from;
+			}
+		}, {
+			key: "to",
+			get: function get() {
+				return this._to;
+			}
+		}, {
+			key: "time",
+			get: function get() {
+				return this._time;
+			}
+		}, {
+			key: "priority",
+			get: function get() {
+				return this._priority;
+			}
+		}, {
+			key: "conditions",
+			get: function get() {
+				return this._conditions;
+			}
+		}, {
+			key: "exitTime",
+			get: function get() {
+				return this._exitTime;
+			}
+		}, {
+			key: "transitionOffset",
+			get: function get() {
+				return this._transitionOffset;
+			}
+		}, {
+			key: "interruptionSource",
+			get: function get() {
+				return this._interruptionSource;
+			}
+		}, {
+			key: "hasExitTime",
+			get: function get() {
+				return !!this.exitTime;
+			}
+		}, {
+			key: "hasConditionsMet",
+			get: function get() {
+				var conditionsMet = true;
+				var i;
+
+				for (i = 0; i < this.conditions.length; i++) {
+					var condition = this.conditions[i];
+
+					var parameter = this._controller.findParameter(condition.parameterName);
+
+					switch (condition.predicate) {
+						case ANIM_GREATER_THAN:
+							conditionsMet = conditionsMet && parameter.value > condition.value;
+							break;
+
+						case ANIM_LESS_THAN:
+							conditionsMet = conditionsMet && parameter.value < condition.value;
+							break;
+
+						case ANIM_GREATER_THAN_EQUAL_TO:
+							conditionsMet = conditionsMet && parameter.value >= condition.value;
+							break;
+
+						case ANIM_LESS_THAN_EQUAL_TO:
+							conditionsMet = conditionsMet && parameter.value <= condition.value;
+							break;
+
+						case ANIM_EQUAL_TO:
+							conditionsMet = conditionsMet && parameter.value === condition.value;
+							break;
+
+						case ANIM_NOT_EQUAL_TO:
+							conditionsMet = conditionsMet && parameter.value !== condition.value;
+							break;
+					}
+
+					if (!conditionsMet) return conditionsMet;
+				}
+
+				return conditionsMet;
+			}
+		}]);
+
+		return AnimTransition;
+	}();
+
+	var AnimController = function () {
+		function AnimController(animEvaluator, states, transitions, parameters, activate) {
+			this._animEvaluator = animEvaluator;
+			this._states = {};
+			this._stateNames = [];
+			var i;
+
+			for (i = 0; i < states.length; i++) {
+				this._states[states[i].name] = new AnimState(this, states[i].name, states[i].speed, states[i].loop, states[i].blendTree);
+
+				this._stateNames.push(states[i].name);
+			}
+
+			this._transitions = transitions.map(function (transition) {
+				return new AnimTransition(this, transition.from, transition.to, transition.time, transition.priority, transition.conditions, transition.exitTime, transition.transitionOffset, transition.interruptionSource);
+			}.bind(this));
+			this._findTransitionsFromStateCache = {};
+			this._findTransitionsBetweenStatesCache = {};
+			this._parameters = parameters;
+			this._previousStateName = null;
+			this._activeStateName = ANIM_STATE_START;
+			this._playing = false;
+			this._activate = activate;
+			this._currTransitionTime = 1.0;
+			this._totalTransitionTime = 1.0;
+			this._isTransitioning = false;
+			this._transitionInterruptionSource = ANIM_INTERRUPTION_NONE;
+			this._transitionPreviousStates = [];
+			this._timeInState = 0;
+			this._timeInStateBefore = 0;
+		}
+
+		var _proto = AnimController.prototype;
+
+		_proto._findState = function _findState(stateName) {
+			return this._states[stateName];
+		};
+
+		_proto._getActiveStateProgressForTime = function _getActiveStateProgressForTime(time) {
+			if (this.activeStateName === ANIM_STATE_START || this.activeStateName === ANIM_STATE_END || this.activeStateName === ANIM_STATE_ANY) return 1.0;
+
+			var activeClip = this._animEvaluator.findClip(this.activeStateAnimations[0].name);
+
+			if (activeClip) {
+				return time / activeClip.track.duration;
+			}
+
+			return null;
+		};
+
+		_proto._findTransitionsFromState = function _findTransitionsFromState(stateName) {
+			var transitions = this._findTransitionsFromStateCache[stateName];
+
+			if (!transitions) {
+				transitions = this._transitions.filter(function (transition) {
+					return transition.from === stateName;
+				});
+				transitions.sort(function (a, b) {
+					return a.priority < b.priority;
+				});
+				this._findTransitionsFromStateCache[stateName] = transitions;
+			}
+
+			return transitions;
+		};
+
+		_proto._findTransitionsBetweenStates = function _findTransitionsBetweenStates(sourceStateName, destinationStateName) {
+			var transitions = this._findTransitionsBetweenStatesCache[sourceStateName + '->' + destinationStateName];
+
+			if (!transitions) {
+				transitions = this._transitions.filter(function (transition) {
+					return transition.from === sourceStateName && transition.to === destinationStateName;
+				});
+				transitions.sort(function (a, b) {
+					return a.priority < b.priority;
+				});
+				this._findTransitionsBetweenStatesCache[sourceStateName + '->' + destinationStateName] = transitions;
+			}
+
+			return transitions;
+		};
+
+		_proto._findTransition = function _findTransition(from, to) {
+			var transitions = [];
+
+			if (from && to) {
+				transitions.concat(this._findTransitionsBetweenStates(from, to));
+			} else {
+				if (!this._isTransitioning) {
+					transitions = transitions.concat(this._findTransitionsFromState(this._activeStateName));
+					transitions = transitions.concat(this._findTransitionsFromState(ANIM_STATE_ANY));
+				} else {
+					switch (this._transitionInterruptionSource) {
+						case ANIM_INTERRUPTION_PREV:
+							transitions = transitions.concat(this._findTransitionsFromState(this._previousStateName));
+							transitions = transitions.concat(this._findTransitionsFromState(ANIM_STATE_ANY));
+							break;
+
+						case ANIM_INTERRUPTION_NEXT:
+							transitions = transitions.concat(this._findTransitionsFromState(this._activeStateName));
+							transitions = transitions.concat(this._findTransitionsFromState(ANIM_STATE_ANY));
+							break;
+
+						case ANIM_INTERRUPTION_PREV_NEXT:
+							transitions = transitions.concat(this._findTransitionsFromState(this._previousStateName));
+							transitions = transitions.concat(this._findTransitionsFromState(this._activeStateName));
+							transitions = transitions.concat(this._findTransitionsFromState(ANIM_STATE_ANY));
+							break;
+
+						case ANIM_INTERRUPTION_NEXT_PREV:
+							transitions = transitions.concat(this._findTransitionsFromState(this._activeStateName));
+							transitions = transitions.concat(this._findTransitionsFromState(this._previousStateName));
+							transitions = transitions.concat(this._findTransitionsFromState(ANIM_STATE_ANY));
+							break;
+					}
+				}
+			}
+
+			transitions = transitions.filter(function (transition) {
+				if (transition.to === this.activeStateName) {
+					return false;
+				}
+
+				if (transition.hasExitTime) {
+					var progressBefore = this._getActiveStateProgressForTime(this._timeInStateBefore);
+
+					var progress = this._getActiveStateProgressForTime(this._timeInState);
+
+					if (transition.exitTime < 1.0 && this.activeState.looping) {
+						progressBefore -= Math.floor(progressBefore);
+						progress -= Math.floor(progress);
+					}
+
+					if (!(transition.exitTime > progressBefore && transition.exitTime <= progress)) {
+						return null;
+					}
+				}
+
+				return transition.hasConditionsMet;
+			}.bind(this));
+
+			if (transitions.length > 0) {
+				return transitions[0];
+			}
+
+			return null;
+		};
+
+		_proto._updateStateFromTransition = function _updateStateFromTransition(transition) {
+			var i;
+			var j;
+			var state;
+			var animation;
+			var clip;
+			this.previousState = transition.from;
+			this.activeState = transition.to;
+
+			for (i = 0; i < transition.conditions.length; i++) {
+				var condition = transition.conditions[i];
+				var parameter = this.findParameter(condition.parameterName);
+
+				if (parameter.type === ANIM_PARAMETER_TRIGGER) {
+					parameter.value = false;
+				}
+			}
+
+			if (this.previousState) {
+				if (!this._isTransitioning) {
+					this._transitionPreviousStates = [];
+				}
+
+				this._transitionPreviousStates.push({
+					name: this._previousStateName,
+					weight: 1
+				});
+
+				var interpolatedTime = Math.min(this._currTransitionTime / this._totalTransitionTime, 1.0);
+
+				for (i = 0; i < this._transitionPreviousStates.length; i++) {
+					if (!this._isTransitioning) {
+						this._transitionPreviousStates[i].weight = 1.0;
+					} else if (i !== this._transitionPreviousStates.length - 1) {
+						this._transitionPreviousStates[i].weight *= 1.0 - interpolatedTime;
+					} else {
+						this._transitionPreviousStates[i].weight = interpolatedTime;
+					}
+
+					state = this._findState(this._transitionPreviousStates[i].name);
+
+					for (j = 0; j < state.animations.length; j++) {
+						animation = state.animations[j];
+						clip = this._animEvaluator.findClip(animation.name + '.previous.' + i);
+
+						if (!clip) {
+							clip = this._animEvaluator.findClip(animation.name);
+							clip.name = animation.name + '.previous.' + i;
+						}
+
+						if (i !== this._transitionPreviousStates.length - 1) {
+							clip.pause();
+						}
+					}
+				}
+			}
+
+			this._isTransitioning = true;
+			this._totalTransitionTime = transition.time;
+			this._currTransitionTime = 0;
+			this._transitionInterruptionSource = transition.interruptionSource;
+			var hasTransitionOffset = transition.transitionOffset && transition.transitionOffset > 0.0 && transition.transitionOffset < 1.0;
+			var activeState = this.activeState;
+
+			for (i = 0; i < activeState.animations.length; i++) {
+				clip = this._animEvaluator.findClip(activeState.animations[i].name);
+
+				if (!clip) {
+					var speed = Number.isFinite(activeState.animations[i].speed) ? activeState.animations[i].speed : activeState.speed;
+					clip = new AnimClip(activeState.animations[i].animTrack, 0, speed, true, activeState.loop);
+					clip.name = activeState.animations[i].name;
+
+					this._animEvaluator.addClip(clip);
+				} else {
+					clip.reset();
+				}
+
+				if (transition.time > 0) {
+					clip.blendWeight = 0.0;
+				} else {
+					clip.blendWeight = activeState.animations[i].normalizedWeight;
+				}
+
+				clip.play();
+
+				if (hasTransitionOffset) {
+					clip.time = activeState.timelineDuration * transition.transitionOffset;
+				} else {
+					var startTime = activeState.speed >= 0 ? 0 : this.activeStateDuration;
+					clip.time = startTime;
+				}
+			}
+
+			var timeInState = 0;
+			var timeInStateBefore = 0;
+
+			if (hasTransitionOffset) {
+				var offsetTime = activeState.timelineDuration * transition.transitionOffset;
+				timeInState = offsetTime;
+				timeInStateBefore = offsetTime;
+			}
+
+			this._timeInState = timeInState;
+			this._timeInStateBefore = timeInStateBefore;
+		};
+
+		_proto._transitionToState = function _transitionToState(newStateName) {
+			if (newStateName === this._activeStateName) {
+				return;
+			}
+
+			if (!this._findState(newStateName)) {
+				return;
+			}
+
+			var transition = this._findTransition(this._activeStateName, newStateName);
+
+			if (!transition) {
+				this._animEvaluator.removeClips();
+
+				transition = new AnimTransition(this, null, newStateName, 0, 0);
+			}
+
+			this._updateStateFromTransition(transition);
+		};
+
+		_proto.assignAnimation = function assignAnimation(pathString, animTrack) {
+			var path = pathString.split('.');
+
+			var state = this._findState(path[0]);
+
+			if (!state) {
+				return;
+			}
+
+			state.addAnimation(path, animTrack);
+
+			if (!this._playing && this._activate && this.playable) {
+				this.play();
+			}
+		};
+
+		_proto.removeNodeAnimations = function removeNodeAnimations(nodeName) {
+			var state = this._findState(nodeName);
+
+			if (!state) {
+				return;
+			}
+
+			state.animations = [];
+		};
+
+		_proto.play = function play(stateName) {
+			if (stateName) {
+				this._transitionToState(stateName);
+			}
+
+			this._playing = true;
+		};
+
+		_proto.pause = function pause() {
+			this._playing = false;
+		};
+
+		_proto.reset = function reset() {
+			this._previousStateName = null;
+			this._activeStateName = ANIM_STATE_START;
+			this._playing = false;
+			this._currTransitionTime = 1.0;
+			this._totalTransitionTime = 1.0;
+			this._isTransitioning = false;
+			this._timeInState = 0;
+			this._timeInStateBefore = 0;
+
+			this._animEvaluator.removeClips();
+		};
+
+		_proto.update = function update(dt) {
+			if (!this._playing) {
+				return;
+			}
+
+			var i;
+			var j;
+			var state;
+			var animation;
+			var clip;
+			this._timeInStateBefore = this._timeInState;
+			this._timeInState += dt;
+
+			var transition = this._findTransition(this._activeStateName);
+
+			if (transition) this._updateStateFromTransition(transition);
+
+			if (this._isTransitioning) {
+				this._currTransitionTime += dt;
+
+				if (this._currTransitionTime <= this._totalTransitionTime) {
+					var interpolatedTime = this._currTransitionTime / this._totalTransitionTime;
+
+					for (i = 0; i < this._transitionPreviousStates.length; i++) {
+						state = this._findState(this._transitionPreviousStates[i].name);
+						var stateWeight = this._transitionPreviousStates[i].weight;
+
+						for (j = 0; j < state.animations.length; j++) {
+							animation = state.animations[j];
+							clip = this._animEvaluator.findClip(animation.name + '.previous.' + i);
+
+							if (clip) {
+								clip.blendWeight = (1.0 - interpolatedTime) * animation.normalizedWeight * stateWeight;
+							}
+						}
+					}
+
+					state = this.activeState;
+
+					for (i = 0; i < state.animations.length; i++) {
+						animation = state.animations[i];
+						this._animEvaluator.findClip(animation.name).blendWeight = interpolatedTime * animation.normalizedWeight;
+					}
+				} else {
+					this._isTransitioning = false;
+					var activeClips = this.activeStateAnimations.length;
+					var totalClips = this._animEvaluator.clips.length;
+
+					for (i = 0; i < totalClips - activeClips; i++) {
+						this._animEvaluator.removeClip(0);
+					}
+
+					this._transitionPreviousStates = [];
+					state = this.activeState;
+
+					for (i = 0; i < state.animations.length; i++) {
+						animation = state.animations[i];
+						clip = this._animEvaluator.findClip(animation.name);
+
+						if (clip) {
+							clip.blendWeight = animation.normalizedWeight;
+						}
+					}
+				}
+			} else {
+				if (this.activeState._blendTree.constructor === AnimBlendTree) {
+					state = this.activeState;
+
+					for (i = 0; i < state.animations.length; i++) {
+						animation = state.animations[i];
+						clip = this._animEvaluator.findClip(animation.name);
+
+						if (clip) {
+							clip.blendWeight = animation.normalizedWeight;
+						}
+					}
+				}
+			}
+
+			this._animEvaluator.update(dt);
+		};
+
+		_proto.findParameter = function findParameter(name) {
+			return this._parameters[name];
+		};
+
+		_createClass(AnimController, [{
+			key: "animEvaluator",
+			get: function get() {
+				return this._animEvaluator;
+			}
+		}, {
+			key: "activeState",
+			get: function get() {
+				return this._findState(this._activeStateName);
+			},
+			set: function set(stateName) {
+				this._activeStateName = stateName;
+			}
+		}, {
+			key: "activeStateName",
+			get: function get() {
+				return this._activeStateName;
+			}
+		}, {
+			key: "activeStateAnimations",
+			get: function get() {
+				return this.activeState.animations;
+			}
+		}, {
+			key: "previousState",
+			get: function get() {
+				return this._findState(this._previousStateName);
+			},
+			set: function set(stateName) {
+				this._previousStateName = stateName;
+			}
+		}, {
+			key: "previousStateName",
+			get: function get() {
+				return this._previousStateName;
+			}
+		}, {
+			key: "playable",
+			get: function get() {
+				var playable = true;
+				var i;
+
+				for (i = 0; i < this._stateNames.length; i++) {
+					if (!this._states[this._stateNames[i]].playable) {
+						playable = false;
+					}
+				}
+
+				return playable;
+			}
+		}, {
+			key: "playing",
+			get: function get() {
+				return this._playing;
+			},
+			set: function set(value) {
+				this._playing = value;
+			}
+		}, {
+			key: "activeStateProgress",
+			get: function get() {
+				return this._getActiveStateProgressForTime(this._timeInState);
+			}
+		}, {
+			key: "activeStateDuration",
+			get: function get() {
+				if (this.activeStateName === ANIM_STATE_START || this.activeStateName === ANIM_STATE_END) return 0.0;
+				var maxDuration = 0.0;
+
+				for (var i = 0; i < this.activeStateAnimations.length; i++) {
+					var activeClip = this._animEvaluator.findClip(this.activeStateAnimations[i].name);
+
+					maxDuration = Math.max(maxDuration, activeClip.track.duration);
+				}
+
+				return maxDuration;
+			}
+		}, {
+			key: "activeStateCurrentTime",
+			get: function get() {
+				return this._timeInState;
+			},
+			set: function set(time) {
+				this._timeInStateBefore = time;
+				this._timeInState = time;
+
+				for (var i = 0; i < this.activeStateAnimations.length; i++) {
+					var clip = this.animEvaluator.findClip(this.activeStateAnimations[i].name);
+
+					if (clip) {
+						clip.time = time;
+					}
+				}
+			}
+		}, {
+			key: "transitioning",
+			get: function get() {
+				return this._isTransitioning;
+			}
+		}, {
+			key: "transitionProgress",
+			get: function get() {
+				return this._currTransitionTime / this._totalTransitionTime;
+			}
+		}, {
+			key: "states",
+			get: function get() {
+				return this._stateNames;
+			}
+		}]);
+
+		return AnimController;
+	}();
 
 	var v2 = new Vec2();
 	var v3 = new Vec3();
@@ -43997,35 +45081,37 @@ function queryKey(uri, query) {
 		var _proto = AnimComponentBinder.prototype;
 
 		_proto.resolve = function resolve(path) {
-			var pathSections = this.propertyLocator.decode(path);
-			var entityHierarchy = pathSections[0];
-			var component = pathSections[1];
-			var propertyHierarchy = pathSections[2];
+			var propertyLocation = AnimBinder.decode(path);
 
-			var entity = this._getEntityFromHierarchy(entityHierarchy);
+			var entity = this._getEntityFromHierarchy(propertyLocation.entityPath);
 
 			if (!entity) return null;
 			var propertyComponent;
 
-			switch (component) {
+			switch (propertyLocation.component) {
 				case 'entity':
 					propertyComponent = entity;
 					break;
 
 				case 'graph':
-					if (!this.nodes || !this.nodes[entityHierarchy[0]]) {
-						return null;
+					if (entity.model && entity.model.model && entity.model.model.graph) {
+						propertyComponent = pc.app.root.findByPath(entity.model.model.graph.path + "/" + propertyLocation.entityPath[0]);
 					}
 
-					propertyComponent = this.nodes[entityHierarchy[0]].node;
+					if (!propertyComponent) {
+						var entityPath = AnimBinder.splitPath(propertyLocation.entityPath[0], '/');
+						propertyComponent = this.nodes[entityPath[entityPath.length - 1] || ""];
+					}
+
+					if (!propertyComponent) return null;
 					break;
 
 				default:
-					propertyComponent = entity.findComponent(component);
+					propertyComponent = entity.findComponent(propertyLocation.component);
 					if (!propertyComponent) return null;
 			}
 
-			return this._createAnimTargetForProperty(propertyComponent, propertyHierarchy);
+			return this._createAnimTargetForProperty(propertyComponent, propertyLocation.propertyPath);
 		};
 
 		_proto.update = function update(deltaTime) {
@@ -44284,1071 +45370,6 @@ function queryKey(uri, query) {
 		}]);
 
 		return AnimComponentLayer;
-	}();
-
-	var AnimNode = function () {
-		function AnimNode(state, parent, name, point, speed) {
-			if (speed === void 0) {
-				speed = 1;
-			}
-
-			this._state = state;
-			this._parent = parent;
-			this._name = name;
-			this._point = Array.isArray(point) ? new pc.Vec2(point) : point;
-			this._speed = speed;
-			this._weight = 1.0;
-			this._animTrack = null;
-		}
-
-		_createClass(AnimNode, [{
-			key: "parent",
-			get: function get() {
-				return this._parent;
-			}
-		}, {
-			key: "name",
-			get: function get() {
-				return this._name;
-			}
-		}, {
-			key: "path",
-			get: function get() {
-				return this._parent ? this._parent.path + '.' + this._name : this._name;
-			}
-		}, {
-			key: "point",
-			get: function get() {
-				return this._point;
-			}
-		}, {
-			key: "weight",
-			get: function get() {
-				return this._parent ? this._parent.weight * this._weight : this._weight;
-			},
-			set: function set(value) {
-				this._weight = value;
-			}
-		}, {
-			key: "normalizedWeight",
-			get: function get() {
-				var totalWeight = this._state.totalWeight;
-				if (totalWeight === 0.0) return 0.0;
-				return this.weight / totalWeight;
-			}
-		}, {
-			key: "speed",
-			get: function get() {
-				return this._speed;
-			}
-		}, {
-			key: "animTrack",
-			get: function get() {
-				return this._animTrack;
-			},
-			set: function set(value) {
-				this._animTrack = value;
-			}
-		}]);
-
-		return AnimNode;
-	}();
-
-	function between(num, a, b, inclusive) {
-		var min = Math.min(a, b),
-				max = Math.max(a, b);
-		return inclusive ? num >= min && num <= max : num > min && num < max;
-	}
-
-	function getAngleRad(a, b) {
-		return Math.atan2(a.x * b.y - a.y * b.x, a.x * b.x + a.y * b.y);
-	}
-
-	function clamp(num, min, max) {
-		return num <= min ? min : num >= max ? max : num;
-	}
-
-	var BlendTree = function (_AnimNode) {
-		_inheritsLoose(BlendTree, _AnimNode);
-
-		function BlendTree(state, parent, name, point, type, parameters, children, findParameter) {
-			var _this;
-
-			_this = _AnimNode.call(this, state, parent, name, point) || this;
-			_this._type = type;
-			_this._parameters = parameters;
-			_this._parameterValues = null;
-			_this._children = [];
-			_this._findParameter = findParameter;
-
-			for (var i = 0; i < children.length; i++) {
-				var child = children[i];
-
-				if (child.children) {
-					_this._children.push(new BlendTree(state, _assertThisInitialized(_this), child.name, child.point, child.type, child.parameter ? [child.parameter] : child.parameters, child.children, findParameter));
-				} else {
-					_this._children.push(new AnimNode(state, _assertThisInitialized(_this), child.name, child.point, child.speed));
-				}
-			}
-
-			return _this;
-		}
-
-		var _proto = BlendTree.prototype;
-
-		_proto.getChild = function getChild(name) {
-			for (var i = 0; i < this._children.length; i++) {
-				if (this._children[i].name === name) return this._children[i];
-			}
-		};
-
-		_proto.calculateWeights = function calculateWeights() {
-			var i, j, p, pi, pj, pip, pipj, parameterValues, minj, result, weightSum;
-
-			switch (this._type) {
-				case ANIM_BLEND_1D:
-					{
-						var parameterValue = this._findParameter(this._parameters[0]).value;
-
-						if (this._parameterValues && this._parameterValues[0] === parameterValue) {
-							return;
-						}
-
-						this._parameterValues = [parameterValue];
-						this._children[0].weight = 0.0;
-
-						for (i = 0; i < this._children.length - 1; i++) {
-							var child1 = this._children[i];
-							var child2 = this._children[i + 1];
-
-							if (between(parameterValue, child1.point, child2.point, true)) {
-								var child2Distance = Math.abs(child1.point - child2.point);
-								var parameterDistance = Math.abs(child1.point - parameterValue);
-								var weight = (child2Distance - parameterDistance) / child2Distance;
-								child1.weight = weight;
-								child2.weight = 1.0 - weight;
-							} else {
-								child2.weight = 0.0;
-							}
-						}
-
-						break;
-					}
-
-				case ANIM_BLEND_2D_CARTESIAN:
-					{
-						parameterValues = this._parameters.map(function (param) {
-							return this._findParameter(param).value;
-						}.bind(this));
-
-						if (this._parameterValues && this._parameterValues.equals(parameterValues)) {
-							return;
-						}
-
-						this._parameterValues = parameterValues;
-						p = new pc.Vec2(this._parameterValues);
-						weightSum = 0.0;
-
-						for (i = 0; i < this._children.length; i++) {
-							pi = this._children[i].point.clone();
-							minj = Number.MAX_VALUE;
-
-							for (j = 0; j < this._children.length; j++) {
-								if (i === j) continue;
-								pj = this._children[j].point.clone();
-								pipj = pj.clone().sub(pi);
-								pip = p.clone().sub(pi);
-								result = clamp(1.0 - pip.clone().dot(pipj) / pipj.lengthSq(), 0.0, 1.0);
-								if (result < minj) minj = result;
-							}
-
-							this._children[i].weight = minj;
-							weightSum += minj;
-						}
-
-						for (i = 0; i < this._children.length; i++) {
-							this._children[i].weight = this._children[i]._weight / weightSum;
-						}
-
-						break;
-					}
-
-				case ANIM_BLEND_2D_DIRECTIONAL:
-					{
-						parameterValues = this._parameters.map(function (param) {
-							return this._findParameter(param).value;
-						}.bind(this));
-
-						if (this._parameterValues && this._parameterValues.equals(parameterValues)) {
-							return;
-						}
-
-						this._parameterValues = parameterValues;
-						p = new pc.Vec2(this._parameterValues);
-						weightSum = 0.0;
-
-						for (i = 0; i < this._children.length; i++) {
-							pi = this._children[i].point.clone();
-							minj = Number.MAX_VALUE;
-
-							for (j = 0; j < this._children.length; j++) {
-								if (i === j) continue;
-								pj = this._children[j].point.clone();
-								var pipAngle = getAngleRad(pi, p);
-								var pipjAngle = getAngleRad(pi, pj);
-								pipj = new pc.Vec2((pj.length() - pi.length()) / ((pj.length() + pi.length()) / 2), pipjAngle * 2.0);
-								pip = new pc.Vec2((p.length() - pi.length()) / ((pj.length() + pi.length()) / 2), pipAngle * 2.0);
-								result = clamp(1.0 - Math.abs(pip.clone().dot(pipj) / pipj.lengthSq()), 0.0, 1.0);
-								if (result < minj) minj = result;
-							}
-
-							this._children[i].weight = minj;
-							weightSum += minj;
-						}
-
-						for (i = 0; i < this._children.length; i++) {
-							this._children[i].weight = this._children[i]._weight / weightSum;
-						}
-
-						break;
-					}
-
-				case ANIM_BLEND_DIRECT:
-					{
-						parameterValues = this._parameters.map(function (param) {
-							return this._findParameter(param).value;
-						}.bind(this));
-
-						if (this._parameterValues === parameterValues) {
-							return;
-						}
-
-						this._parameterValues = parameterValues;
-						weightSum = 0.0;
-
-						for (i = 0; i < this._children.length; i++) {
-							weightSum += clamp(this._parameterValues[i], 0.0, Number.MAX_VALUE);
-						}
-
-						for (i = 0; i < this._children.length; i++) {
-							this._children[i].weight = clamp(this._parameterValues[i], 0.0, Number.MAX_VALUE) / weightSum;
-						}
-
-						break;
-					}
-			}
-		};
-
-		_proto.getNodeCount = function getNodeCount() {
-			var count = 0;
-
-			for (var i = 0; i < this._children.length; i++) {
-				var child = this._children[i];
-
-				if (child.constructor === BlendTree) {
-					count += this._children[i].getNodeCount();
-				} else {
-					count++;
-				}
-			}
-
-			return count;
-		};
-
-		_createClass(BlendTree, [{
-			key: "parent",
-			get: function get() {
-				return this._parent;
-			}
-		}, {
-			key: "name",
-			get: function get() {
-				return this._name;
-			}
-		}, {
-			key: "point",
-			get: function get() {
-				return this._point;
-			}
-		}, {
-			key: "weight",
-			get: function get() {
-				this.calculateWeights();
-				return this._parent ? this._parent.weight * this._weight : this._weight;
-			},
-			set: function set(value) {
-				this._weight = value;
-			}
-		}, {
-			key: "speed",
-			get: function get() {
-				return this._speed;
-			}
-		}]);
-
-		return BlendTree;
-	}(AnimNode);
-
-	var AnimState = function () {
-		function AnimState(controller, name, speed, loop, blendTree) {
-			this._controller = controller;
-			this._name = name;
-			this._animations = {};
-			this._animationList = [];
-			this._speed = speed || 1.0;
-			this._loop = loop === undefined ? true : loop;
-
-			var findParameter = this._controller.findParameter.bind(this._controller);
-
-			if (blendTree) {
-				this._blendTree = new BlendTree(this, null, name, 1.0, blendTree.type, blendTree.parameter ? [blendTree.parameter] : blendTree.parameters, blendTree.children, findParameter);
-			} else {
-				this._blendTree = new AnimNode(this, null, name, 1.0, speed);
-			}
-		}
-
-		var _proto2 = AnimState.prototype;
-
-		_proto2._getNodeFromPath = function _getNodeFromPath(path) {
-			var currNode = this._blendTree;
-
-			for (var i = 1; i < path.length; i++) {
-				currNode = currNode.getChild(path[i]);
-			}
-
-			return currNode;
-		};
-
-		_proto2.addAnimation = function addAnimation(path, animTrack) {
-			var indexOfAnimation = this._animationList.findIndex(function (animation) {
-				return animation.path === path;
-			});
-
-			if (indexOfAnimation >= 0) {
-				this._animationList[indexOfAnimation].animTrack = animTrack;
-			} else {
-				var node = this._getNodeFromPath(path);
-
-				node.animTrack = animTrack;
-
-				this._animationList.push(node);
-			}
-		};
-
-		_createClass(AnimState, [{
-			key: "name",
-			get: function get() {
-				return this._name;
-			}
-		}, {
-			key: "animations",
-			get: function get() {
-				return this._animationList;
-			},
-			set: function set(value) {
-				this._animationList = value;
-			}
-		}, {
-			key: "speed",
-			get: function get() {
-				return this._speed;
-			}
-		}, {
-			key: "loop",
-			get: function get() {
-				return this._loop;
-			}
-		}, {
-			key: "nodeCount",
-			get: function get() {
-				if (!this._blendTree || !(this._blendTree.constructor === BlendTree)) return 1;
-				return this._blendTree.getNodeCount();
-			}
-		}, {
-			key: "playable",
-			get: function get() {
-				return this.name === ANIM_STATE_START || this.name === ANIM_STATE_END || this.name === ANIM_STATE_ANY || this.animations.length === this.nodeCount;
-			}
-		}, {
-			key: "looping",
-			get: function get() {
-				if (this.animations.length > 0) {
-					var trackClipName = this.name + '.' + this.animations[0].animTrack.name;
-
-					var trackClip = this._controller.animEvaluator.findClip(trackClipName);
-
-					if (trackClip) {
-						return trackClip.loop;
-					}
-				}
-
-				return false;
-			}
-		}, {
-			key: "totalWeight",
-			get: function get() {
-				var sum = 0;
-				var i;
-
-				for (i = 0; i < this.animations.length; i++) {
-					sum += this.animations[i].weight;
-				}
-
-				return sum;
-			}
-		}, {
-			key: "timelineDuration",
-			get: function get() {
-				var duration = 0;
-				var i;
-
-				for (i = 0; i < this.animations.length; i++) {
-					var animation = this.animations[i];
-
-					if (animation.animTrack.duration > duration) {
-						duration = animation.animTrack.duration;
-					}
-				}
-
-				return duration;
-			}
-		}]);
-
-		return AnimState;
-	}();
-
-	var AnimTransition = function () {
-		function AnimTransition(controller, from, to, time, priority, conditions, exitTime, transitionOffset, interruptionSource) {
-			if (interruptionSource === void 0) {
-				interruptionSource = ANIM_INTERRUPTION_NONE;
-			}
-
-			this._controller = controller;
-			this._from = from;
-			this._to = to;
-			this._time = time;
-			this._priority = priority;
-			this._conditions = conditions || [];
-			this._exitTime = exitTime || null;
-			this._transitionOffset = transitionOffset || null;
-			this._interruptionSource = interruptionSource;
-		}
-
-		_createClass(AnimTransition, [{
-			key: "from",
-			get: function get() {
-				return this._from;
-			}
-		}, {
-			key: "to",
-			get: function get() {
-				return this._to;
-			}
-		}, {
-			key: "time",
-			get: function get() {
-				return this._time;
-			}
-		}, {
-			key: "priority",
-			get: function get() {
-				return this._priority;
-			}
-		}, {
-			key: "conditions",
-			get: function get() {
-				return this._conditions;
-			}
-		}, {
-			key: "exitTime",
-			get: function get() {
-				return this._exitTime;
-			}
-		}, {
-			key: "transitionOffset",
-			get: function get() {
-				return this._transitionOffset;
-			}
-		}, {
-			key: "interruptionSource",
-			get: function get() {
-				return this._interruptionSource;
-			}
-		}, {
-			key: "hasExitTime",
-			get: function get() {
-				return !!this.exitTime;
-			}
-		}, {
-			key: "hasConditionsMet",
-			get: function get() {
-				var conditionsMet = true;
-				var i;
-
-				for (i = 0; i < this.conditions.length; i++) {
-					var condition = this.conditions[i];
-
-					var parameter = this._controller.findParameter(condition.parameterName);
-
-					switch (condition.predicate) {
-						case ANIM_GREATER_THAN:
-							conditionsMet = conditionsMet && parameter.value > condition.value;
-							break;
-
-						case ANIM_LESS_THAN:
-							conditionsMet = conditionsMet && parameter.value < condition.value;
-							break;
-
-						case ANIM_GREATER_THAN_EQUAL_TO:
-							conditionsMet = conditionsMet && parameter.value >= condition.value;
-							break;
-
-						case ANIM_LESS_THAN_EQUAL_TO:
-							conditionsMet = conditionsMet && parameter.value <= condition.value;
-							break;
-
-						case ANIM_EQUAL_TO:
-							conditionsMet = conditionsMet && parameter.value === condition.value;
-							break;
-
-						case ANIM_NOT_EQUAL_TO:
-							conditionsMet = conditionsMet && parameter.value !== condition.value;
-							break;
-					}
-
-					if (!conditionsMet) return conditionsMet;
-				}
-
-				return conditionsMet;
-			}
-		}]);
-
-		return AnimTransition;
-	}();
-
-	var AnimController = function () {
-		function AnimController(animEvaluator, states, transitions, parameters, activate) {
-			this._animEvaluator = animEvaluator;
-			this._states = {};
-			this._stateNames = [];
-			var i;
-
-			for (i = 0; i < states.length; i++) {
-				this._states[states[i].name] = new AnimState(this, states[i].name, states[i].speed, states[i].loop, states[i].blendTree);
-
-				this._stateNames.push(states[i].name);
-			}
-
-			this._transitions = transitions.map(function (transition) {
-				return new AnimTransition(this, transition.from, transition.to, transition.time, transition.priority, transition.conditions, transition.exitTime, transition.transitionOffset, transition.interruptionSource);
-			}.bind(this));
-			this._findTransitionsFromStateCache = {};
-			this._findTransitionsBetweenStatesCache = {};
-			this._parameters = parameters;
-			this._previousStateName = null;
-			this._activeStateName = ANIM_STATE_START;
-			this._playing = false;
-			this._activate = activate;
-			this._currTransitionTime = 1.0;
-			this._totalTransitionTime = 1.0;
-			this._isTransitioning = false;
-			this._transitionInterruptionSource = ANIM_INTERRUPTION_NONE;
-			this._transitionPreviousStates = [];
-			this._timeInState = 0;
-			this._timeInStateBefore = 0;
-		}
-
-		var _proto3 = AnimController.prototype;
-
-		_proto3._findState = function _findState(stateName) {
-			return this._states[stateName];
-		};
-
-		_proto3._getActiveStateProgressForTime = function _getActiveStateProgressForTime(time) {
-			if (this.activeStateName === ANIM_STATE_START || this.activeStateName === ANIM_STATE_END || this.activeStateName === ANIM_STATE_ANY) return 1.0;
-
-			var activeClip = this._animEvaluator.findClip(this.activeStateAnimations[0].name);
-
-			if (activeClip) {
-				return time / activeClip.track.duration;
-			}
-
-			return null;
-		};
-
-		_proto3._findTransitionsFromState = function _findTransitionsFromState(stateName) {
-			var transitions = this._findTransitionsFromStateCache[stateName];
-
-			if (!transitions) {
-				transitions = this._transitions.filter(function (transition) {
-					return transition.from === stateName;
-				});
-				transitions.sort(function (a, b) {
-					return a.priority < b.priority;
-				});
-				this._findTransitionsFromStateCache[stateName] = transitions;
-			}
-
-			return transitions;
-		};
-
-		_proto3._findTransitionsBetweenStates = function _findTransitionsBetweenStates(sourceStateName, destinationStateName) {
-			var transitions = this._findTransitionsBetweenStatesCache[sourceStateName + '->' + destinationStateName];
-
-			if (!transitions) {
-				transitions = this._transitions.filter(function (transition) {
-					return transition.from === sourceStateName && transition.to === destinationStateName;
-				});
-				transitions.sort(function (a, b) {
-					return a.priority < b.priority;
-				});
-				this._findTransitionsBetweenStatesCache[sourceStateName + '->' + destinationStateName] = transitions;
-			}
-
-			return transitions;
-		};
-
-		_proto3._findTransition = function _findTransition(from, to) {
-			var transitions = [];
-
-			if (from && to) {
-				transitions.concat(this._findTransitionsBetweenStates(from, to));
-			} else {
-				if (!this._isTransitioning) {
-					transitions = transitions.concat(this._findTransitionsFromState(this._activeStateName));
-					transitions = transitions.concat(this._findTransitionsFromState(ANIM_STATE_ANY));
-				} else {
-					switch (this._transitionInterruptionSource) {
-						case ANIM_INTERRUPTION_PREV:
-							transitions = transitions.concat(this._findTransitionsFromState(this._previousStateName));
-							transitions = transitions.concat(this._findTransitionsFromState(ANIM_STATE_ANY));
-							break;
-
-						case ANIM_INTERRUPTION_NEXT:
-							transitions = transitions.concat(this._findTransitionsFromState(this._activeStateName));
-							transitions = transitions.concat(this._findTransitionsFromState(ANIM_STATE_ANY));
-							break;
-
-						case ANIM_INTERRUPTION_PREV_NEXT:
-							transitions = transitions.concat(this._findTransitionsFromState(this._previousStateName));
-							transitions = transitions.concat(this._findTransitionsFromState(this._activeStateName));
-							transitions = transitions.concat(this._findTransitionsFromState(ANIM_STATE_ANY));
-							break;
-
-						case ANIM_INTERRUPTION_NEXT_PREV:
-							transitions = transitions.concat(this._findTransitionsFromState(this._activeStateName));
-							transitions = transitions.concat(this._findTransitionsFromState(this._previousStateName));
-							transitions = transitions.concat(this._findTransitionsFromState(ANIM_STATE_ANY));
-							break;
-					}
-				}
-			}
-
-			transitions = transitions.filter(function (transition) {
-				if (transition.to === this.activeStateName) {
-					return false;
-				}
-
-				if (transition.hasExitTime) {
-					var progressBefore = this._getActiveStateProgressForTime(this._timeInStateBefore);
-
-					var progress = this._getActiveStateProgressForTime(this._timeInState);
-
-					if (transition.exitTime < 1.0 && this.activeState.looping) {
-						progressBefore -= Math.floor(progressBefore);
-						progress -= Math.floor(progress);
-					}
-
-					if (!(transition.exitTime > progressBefore && transition.exitTime <= progress)) {
-						return null;
-					}
-				}
-
-				return transition.hasConditionsMet;
-			}.bind(this));
-
-			if (transitions.length > 0) {
-				return transitions[0];
-			}
-
-			return null;
-		};
-
-		_proto3._updateStateFromTransition = function _updateStateFromTransition(transition) {
-			var i;
-			var j;
-			var state;
-			var animation;
-			var clip;
-			this.previousState = transition.from;
-			this.activeState = transition.to;
-
-			for (i = 0; i < transition.conditions.length; i++) {
-				var condition = transition.conditions[i];
-				var parameter = this.findParameter(condition.parameterName);
-
-				if (parameter.type === ANIM_PARAMETER_TRIGGER) {
-					parameter.value = false;
-				}
-			}
-
-			if (this.previousState) {
-				if (!this._isTransitioning) {
-					this._transitionPreviousStates = [];
-				}
-
-				this._transitionPreviousStates.push({
-					name: this._previousStateName,
-					weight: 1
-				});
-
-				var interpolatedTime = Math.min(this._currTransitionTime / this._totalTransitionTime, 1.0);
-
-				for (i = 0; i < this._transitionPreviousStates.length; i++) {
-					if (!this._isTransitioning) {
-						this._transitionPreviousStates[i].weight = 1.0;
-					} else if (i !== this._transitionPreviousStates.length - 1) {
-						this._transitionPreviousStates[i].weight *= 1.0 - interpolatedTime;
-					} else {
-						this._transitionPreviousStates[i].weight = interpolatedTime;
-					}
-
-					state = this._findState(this._transitionPreviousStates[i].name);
-
-					for (j = 0; j < state.animations.length; j++) {
-						animation = state.animations[j];
-						clip = this._animEvaluator.findClip(animation.name + '.previous.' + i);
-
-						if (!clip) {
-							clip = this._animEvaluator.findClip(animation.name);
-							clip.name = animation.name + '.previous.' + i;
-						}
-
-						if (i !== this._transitionPreviousStates.length - 1) {
-							clip.pause();
-						}
-					}
-				}
-			}
-
-			this._isTransitioning = true;
-			this._totalTransitionTime = transition.time;
-			this._currTransitionTime = 0;
-			this._transitionInterruptionSource = transition.interruptionSource;
-			var hasTransitionOffset = transition.transitionOffset && transition.transitionOffset > 0.0 && transition.transitionOffset < 1.0;
-			var activeState = this.activeState;
-
-			for (i = 0; i < activeState.animations.length; i++) {
-				clip = this._animEvaluator.findClip(activeState.animations[i].name);
-
-				if (!clip) {
-					var speed = Number.isFinite(activeState.animations[i].speed) ? activeState.animations[i].speed : activeState.speed;
-					clip = new AnimClip(activeState.animations[i].animTrack, 0, speed, true, activeState.loop);
-					clip.name = activeState.animations[i].name;
-
-					this._animEvaluator.addClip(clip);
-				} else {
-					clip.reset();
-				}
-
-				if (transition.time > 0) {
-					clip.blendWeight = 0.0;
-				} else {
-					clip.blendWeight = activeState.animations[i].normalizedWeight;
-				}
-
-				clip.play();
-
-				if (hasTransitionOffset) {
-					clip.time = activeState.timelineDuration * transition.transitionOffset;
-				} else {
-					var startTime = activeState.speed >= 0 ? 0 : this.activeStateDuration;
-					clip.time = startTime;
-				}
-			}
-
-			var timeInState = 0;
-			var timeInStateBefore = 0;
-
-			if (hasTransitionOffset) {
-				var offsetTime = activeState.timelineDuration * transition.transitionOffset;
-				timeInState = offsetTime;
-				timeInStateBefore = offsetTime;
-			}
-
-			this._timeInState = timeInState;
-			this._timeInStateBefore = timeInStateBefore;
-		};
-
-		_proto3._transitionToState = function _transitionToState(newStateName) {
-			if (newStateName === this._activeStateName) {
-				return;
-			}
-
-			if (!this._findState(newStateName)) {
-				return;
-			}
-
-			var transition = this._findTransition(this._activeStateName, newStateName);
-
-			if (!transition) {
-				this._animEvaluator.removeClips();
-
-				transition = new AnimTransition(this, null, newStateName, 0, 0);
-			}
-
-			this._updateStateFromTransition(transition);
-		};
-
-		_proto3.assignAnimation = function assignAnimation(pathString, animTrack) {
-			var path = pathString.split('.');
-
-			var state = this._findState(path[0]);
-
-			if (!state) {
-				return;
-			}
-
-			state.addAnimation(path, animTrack);
-
-			if (!this._playing && this._activate && this.playable) {
-				this.play();
-			}
-		};
-
-		_proto3.removeNodeAnimations = function removeNodeAnimations(nodeName) {
-			var state = this._findState(nodeName);
-
-			if (!state) {
-				return;
-			}
-
-			state.animations = [];
-		};
-
-		_proto3.play = function play(stateName) {
-			if (stateName) {
-				this._transitionToState(stateName);
-			}
-
-			this._playing = true;
-		};
-
-		_proto3.pause = function pause() {
-			this._playing = false;
-		};
-
-		_proto3.reset = function reset() {
-			this._previousStateName = null;
-			this._activeStateName = ANIM_STATE_START;
-			this._playing = false;
-			this._currTransitionTime = 1.0;
-			this._totalTransitionTime = 1.0;
-			this._isTransitioning = false;
-			this._timeInState = 0;
-			this._timeInStateBefore = 0;
-
-			this._animEvaluator.removeClips();
-		};
-
-		_proto3.update = function update(dt) {
-			if (!this._playing) {
-				return;
-			}
-
-			var i;
-			var j;
-			var state;
-			var animation;
-			var clip;
-			this._timeInStateBefore = this._timeInState;
-			this._timeInState += dt;
-
-			var transition = this._findTransition(this._activeStateName);
-
-			if (transition) this._updateStateFromTransition(transition);
-
-			if (this._isTransitioning) {
-				this._currTransitionTime += dt;
-
-				if (this._currTransitionTime <= this._totalTransitionTime) {
-					var interpolatedTime = this._currTransitionTime / this._totalTransitionTime;
-
-					for (i = 0; i < this._transitionPreviousStates.length; i++) {
-						state = this._findState(this._transitionPreviousStates[i].name);
-						var stateWeight = this._transitionPreviousStates[i].weight;
-
-						for (j = 0; j < state.animations.length; j++) {
-							animation = state.animations[j];
-							clip = this._animEvaluator.findClip(animation.name + '.previous.' + i);
-
-							if (clip) {
-								clip.blendWeight = (1.0 - interpolatedTime) * animation.normalizedWeight * stateWeight;
-							}
-						}
-					}
-
-					state = this.activeState;
-
-					for (i = 0; i < state.animations.length; i++) {
-						animation = state.animations[i];
-						this._animEvaluator.findClip(animation.name).blendWeight = interpolatedTime * animation.normalizedWeight;
-					}
-				} else {
-					this._isTransitioning = false;
-					var activeClips = this.activeStateAnimations.length;
-					var totalClips = this._animEvaluator.clips.length;
-
-					for (i = 0; i < totalClips - activeClips; i++) {
-						this._animEvaluator.removeClip(0);
-					}
-
-					this._transitionPreviousStates = [];
-					state = this.activeState;
-
-					for (i = 0; i < state.animations.length; i++) {
-						animation = state.animations[i];
-						clip = this._animEvaluator.findClip(animation.name);
-
-						if (clip) {
-							clip.blendWeight = animation.normalizedWeight;
-						}
-					}
-				}
-			} else {
-				if (this.activeState._blendTree.constructor === BlendTree) {
-					state = this.activeState;
-
-					for (i = 0; i < state.animations.length; i++) {
-						animation = state.animations[i];
-						clip = this._animEvaluator.findClip(animation.name);
-
-						if (clip) {
-							clip.blendWeight = animation.normalizedWeight;
-						}
-					}
-				}
-			}
-
-			this._animEvaluator.update(dt);
-		};
-
-		_proto3.findParameter = function findParameter(name) {
-			return this._parameters[name];
-		};
-
-		_createClass(AnimController, [{
-			key: "animEvaluator",
-			get: function get() {
-				return this._animEvaluator;
-			}
-		}, {
-			key: "activeState",
-			get: function get() {
-				return this._findState(this._activeStateName);
-			},
-			set: function set(stateName) {
-				this._activeStateName = stateName;
-			}
-		}, {
-			key: "activeStateName",
-			get: function get() {
-				return this._activeStateName;
-			}
-		}, {
-			key: "activeStateAnimations",
-			get: function get() {
-				return this.activeState.animations;
-			}
-		}, {
-			key: "previousState",
-			get: function get() {
-				return this._findState(this._previousStateName);
-			},
-			set: function set(stateName) {
-				this._previousStateName = stateName;
-			}
-		}, {
-			key: "previousStateName",
-			get: function get() {
-				return this._previousStateName;
-			}
-		}, {
-			key: "playable",
-			get: function get() {
-				var playable = true;
-				var i;
-
-				for (i = 0; i < this._stateNames.length; i++) {
-					if (!this._states[this._stateNames[i]].playable) {
-						playable = false;
-					}
-				}
-
-				return playable;
-			}
-		}, {
-			key: "playing",
-			get: function get() {
-				return this._playing;
-			},
-			set: function set(value) {
-				this._playing = value;
-			}
-		}, {
-			key: "activeStateProgress",
-			get: function get() {
-				return this._getActiveStateProgressForTime(this._timeInState);
-			}
-		}, {
-			key: "activeStateDuration",
-			get: function get() {
-				if (this.activeStateName === ANIM_STATE_START || this.activeStateName === ANIM_STATE_END) return 0.0;
-				var maxDuration = 0.0;
-
-				for (var i = 0; i < this.activeStateAnimations.length; i++) {
-					var activeClip = this._animEvaluator.findClip(this.activeStateAnimations[i].name);
-
-					maxDuration = Math.max(maxDuration, activeClip.track.duration);
-				}
-
-				return maxDuration;
-			}
-		}, {
-			key: "activeStateCurrentTime",
-			get: function get() {
-				return this._timeInState;
-			},
-			set: function set(time) {
-				this._timeInStateBefore = time;
-				this._timeInState = time;
-
-				for (var i = 0; i < this.activeStateAnimations.length; i++) {
-					var clip = this.animEvaluator.findClip(this.activeStateAnimations[i].name);
-
-					if (clip) {
-						clip.time = time;
-					}
-				}
-			}
-		}, {
-			key: "transitioning",
-			get: function get() {
-				return this._isTransitioning;
-			}
-		}, {
-			key: "transitionProgress",
-			get: function get() {
-				return this._currTransitionTime / this._totalTransitionTime;
-			}
-		}, {
-			key: "states",
-			get: function get() {
-				return this._stateNames;
-			}
-		}]);
-
-		return AnimController;
 	}();
 
 	var AnimComponent = function (_Component) {
@@ -70522,7 +70543,14 @@ function queryKey(uri, query) {
 			_this.createGrabPass();
 
 			VertexFormat.init(_assertThisInitialized(_this));
-			_this._areaLightLutFormat = _this.extTextureFloat ? PIXELFORMAT_RGBA32F : _this.extTextureHalfFloat && _this.textureHalfFloatUpdatable ? PIXELFORMAT_RGBA16F : PIXELFORMAT_R8_G8_B8_A8;
+			_this._areaLightLutFormat = PIXELFORMAT_R8_G8_B8_A8;
+
+			if (_this.extTextureHalfFloat && _this.textureHalfFloatUpdatable) {
+				_this._areaLightLutFormat = PIXELFORMAT_RGBA16F;
+			} else if (_this.extTextureFloat) {
+				_this._areaLightLutFormat = PIXELFORMAT_RGBA32F;
+			}
+
 			return _this;
 		}
 
@@ -73372,7 +73400,6 @@ function queryKey(uri, query) {
 			this.app = app;
 			this.device = app.graphicsDevice;
 			var device = this.device;
-			this.library = device.getProgramLibrary();
 			this.pickColor = new Float32Array(4);
 			this.pickColor[3] = 1;
 			this.mapping = [];
@@ -77377,7 +77404,6 @@ function queryKey(uri, query) {
 	exports.AnimCurve = AnimCurve;
 	exports.AnimData = AnimData;
 	exports.AnimEvaluator = AnimEvaluator;
-	exports.AnimPropertyLocator = AnimPropertyLocator;
 	exports.AnimSnapshot = AnimSnapshot;
 	exports.AnimStateGraph = AnimStateGraph;
 	exports.AnimStateGraphHandler = AnimStateGraphHandler;
@@ -80318,7 +80344,7 @@ class Decoder extends Emitter {
                 return typeof payload === "string" || typeof payload === "object";
             case PacketType.EVENT:
             case PacketType.BINARY_EVENT:
-                return Array.isArray(payload) && typeof payload[0] === "string";
+                return Array.isArray(payload) && payload.length > 0;
             case PacketType.ACK:
             case PacketType.BINARY_ACK:
                 return Array.isArray(payload);
@@ -82518,19 +82544,19 @@ var Entities = /** @class */ (function () {
         material.update();
         return material;
     };
-    Entities.prototype.animate = function (val) {
-        console.log("animate called with value: ", val);
-        if (val == "all" || val == "animAll")
+    Entities.prototype.animate = function (name, value) {
+        console.log("animate called with name and value: ", name, value);
+        if (name == "sceneParent" || name == "all" || name == "animAll" || value == "animAll")
             this.animations.restartInitAnimation();
-        if (val == "che") {
+        if (name == "che") {
             var che = this.app.root.findByName("che");
             if (che)
                 this.activateEntity(che, false);
         }
-        if (val == "turbines") {
+        if (name == "turbines") {
             this.stopStartEntities("wturbine", true);
         }
-        if (val == "close") {
+        if (name == "close") {
             this.xr.xrpanel.enabled = false;
         }
     };
@@ -82556,10 +82582,13 @@ var Entities = /** @class */ (function () {
                 console.log("button select:", entity.callFunc, entity.callVal);
                 if (entity.callFunc == "reescalar")
                     this.reescalar(entity.callVal, fromServer);
-                if (entity.callFunc == "teletransport")
+                else if (entity.callFunc == "teletransport")
                     this.teletransport(entity.callVal);
-                if (entity.callFunc == "anim")
+                else if (entity.callFunc == "anim") {
                     this.animate(entity.callVal);
+                    this.multiplayer.objectAction(entity.callVal, entity.callFunc);
+                    //this.multiplayer.objectAction('sceneParent','animAll')
+                }
             }
         }
         else if (entity && this.selEntityName != entity.name) {
@@ -82591,8 +82620,14 @@ var Entities = /** @class */ (function () {
         }
         else {
             entity.animar = !entity.animar;
-            if (result)
-                this.multiplayer.updateObjects([{ id: entity.name, animar: entity.animar }]);
+            if (result) {
+                if (entity.animationName) {
+                    this.multiplayer.objectAction(entity.name, entity.animationName);
+                }
+                else {
+                    this.multiplayer.objectState(entity.name, entity.animar);
+                }
+            }
             this.updatePathsState();
             if (entity.name != "ground") {
                 this.updateColors(entity);
@@ -82957,7 +82992,7 @@ var Entities = /** @class */ (function () {
             this.mainScale = Number(scale);
         var nval = Number(this.mainScale);
         if (!noEmit) {
-            this.multiplayer.updateObjects([{ id: 'sceneParent', val: nval }]);
+            this.multiplayer.objectState('sceneParent', nval);
         }
         var scaleText = '' + Math.round((this.mainScale + Number.EPSILON) * 100) / 100;
         console.log("scaleText", scaleText);
@@ -83115,7 +83150,7 @@ var Entities = /** @class */ (function () {
             { f: 'reescalar', id: 'gx3', text: 'x3', v: 3 },
             { f: 'reescalar', id: 'gmas', text: '+', v: '+' },
             { f: 'reescalar', id: 'gmenos', text: '-', v: '-' },
-            { f: 'anim', id: 'animAll', text: 'anim', v: 'all', animationName: 'all' }];
+            { f: 'anim', id: 'animAll', text: 'anim', v: 'sceneParent', animationName: 'animAll' }];
         for (var i = 0; i < values.length; i++) {
             this.createButton(parent, true, { scale: new playcanvas__WEBPACK_IMPORTED_MODULE_0__["Vec3"](0.3, 0.2, 0.01),
                 pos: new playcanvas__WEBPACK_IMPORTED_MODULE_0__["Vec3"](-1.5, 0.002, 1 + i * 0.24),
@@ -83225,7 +83260,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "getAssetPath", function() { return getAssetPath; });
 function getAssetPath(assetPath) {
     // @ts-ignore: path variable injected at build time
-    return (undefined ? undefined : './static/') + assetPath;
+    return (undefined ? undefined : '/static/') + assetPath;
 }
 
 
@@ -83353,39 +83388,85 @@ var Multiplayer = /** @class */ (function () {
                 _this.cont++;
             }
         });
-        this.socket.on('objects', function (objects) {
-            if (objects.id == _this.socket.id)
+        this.socket.on('objectState', function (obj) {
+            if (obj.id == _this.socket.id)
                 return;
-            console.log("multiplayer objects received");
-            console.log("objects", objects.ac, objects.objs, _this.socket.id, objects.id);
-            var entity;
-            objects.objs.forEach(function (obj) {
-                entity = _this.app.root.findByName(obj.id);
-                if (entity) {
-                    console.log("multi: entity.id:", entity.name, entity.animationName);
-                    if (objects.ac == 's') {
-                        _this.entities.execSelectEntity(entity, true);
-                    }
-                    else if (objects.ac == 'a') {
-                        if (obj.id == 'sceneParent') {
-                            console.log("reescalando sceneParent:", obj.val);
-                            _this.entities.reescalar(obj.val, true);
-                        }
-                        else if (entity.animationName) {
-                            console.log("multiplayer call entitie.animate", entity.animationName);
-                            _this.entities.animate(entity.name);
-                        }
-                        else {
-                            console.log("mult", entity);
+            console.log("objectState:", obj);
+            var entity = _this.app.root.findByName(obj.objId);
+            if (entity) {
+                console.log("encontrada:", obj.state, obj.objId);
+                if (obj.objId == 'sceneParent') {
+                    console.log("reescalando sceneParent:", obj.state);
+                    _this.entities.reescalar(obj.state, true);
+                }
+                else {
+                    entity.animar = obj.state;
+                    _this.entities.updateEntity(entity);
+                    _this.entities.updatePathsState();
+                }
+            }
+        });
+        this.socket.on('objectAction', function (obj) {
+            if (obj.id == _this.socket.id)
+                return;
+            console.log("objectAction:", obj);
+            var entity = _this.app.root.findByName(obj.objId);
+            if (entity) {
+                console.log("encontrada:", obj.objId, obj.action);
+                _this.entities.animate(obj.objId, obj.action);
+            }
+        });
+        this.socket.on('objectSel', function (obj) {
+            if (obj.id == _this.socket.id)
+                return;
+            console.log("objectSel:", obj);
+            var entity = _this.app.root.findByName(obj.objId);
+            if (entity)
+                _this.entities.execSelectEntity(entity, true);
+        });
+        /*
+        this.socket.on('objects',(objects:any) => {
+            if(objects.id == this.socket.id) return;
+            console.log("multiplayer objects received")
+            console.log("objects", objects.ac,objects.objs,this.socket.id, objects.id);
+            let entity;
+            objects.objs.forEach((obj:any) =>{
+                entity = this.app.root.findByName(obj.id) as Entity;
+                if(entity){ console.log("multi: entity.id:",entity.name , entity.animationName)
+                    if(objects.ac =='s'){
+                        this.entities.execSelectEntity(entity, true);
+                    }else if(objects.ac =='a'){
+                        if(obj.id == 'sceneParent'){
+                            console.log("reescalando sceneParent:",obj.val);
+                            this.entities.reescalar(obj.val,true);
+                        }else if(entity.animationName){ console.log("multiplayer call entitie.animate", entity.animationName)
+                            this.entities.animate(entity.name);
+                        }else{ console.log("mult",entity)
                             entity.animar = obj.animar;
-                            console.log("multiplayer animar", entity.name, entity.animationName);
-                            _this.entities.updateEntity(entity);
+                            console.log("multiplayer animar", entity.name,entity.animationName)
+                            this.entities.updateEntity(entity);
                         }
+                    }else if(objects.ac =='scale'){
+                        console.log("reescalando scale:",obj.val);
+                        this.entities.reescalar(obj.val,true);
                     }
-                    else if (objects.ac == 'scale') {
-                        console.log("reescalando scale:", obj.val);
-                        _this.entities.reescalar(obj.val, true);
-                    }
+                }
+            });
+            this.entities.updatePathsState();
+        });
+        */
+        this.socket.on('objectsState', function (objectsState) {
+            console.log("objectsState:", objectsState);
+            if (objectsState['sceneParent']) {
+                console.log("SCALE:", objectsState['sceneParent']);
+                _this.entities.reescalar(objectsState['sceneParent'], true);
+            }
+            Object.entries(objectsState).forEach(function (_a) {
+                var key = _a[0], value = _a[1];
+                var entity = _this.app.root.findByName(key);
+                if (entity) {
+                    entity.animar = Boolean(value);
+                    _this.entities.updateEntity(entity);
                 }
             });
             _this.entities.updatePathsState();
@@ -83413,10 +83494,15 @@ var Multiplayer = /** @class */ (function () {
         this.socket.emit('objects', { id: this.socket.id, ac: 'a',
             objs: objects });
     };
+    Multiplayer.prototype.objectAction = function (name, action) {
+        this.socket.emit('objectAction', { id: this.socket.id, objId: name, action: action });
+    };
+    Multiplayer.prototype.objectState = function (name, state) {
+        this.socket.emit('objectState', { id: this.socket.id, objId: name, state: state });
+    };
     Multiplayer.prototype.selectEntity = function (entity) {
         console.log("multiplayer emit select", entity);
-        this.socket.emit('objects', { id: this.socket.id, ac: 's',
-            objs: [{ id: entity.name }] });
+        this.socket.emit('objectSel', { id: this.socket.id, objId: entity.name });
     };
     return Multiplayer;
 }());
@@ -83855,7 +83941,7 @@ var XR = /** @class */ (function () {
             { f: 'reescalar', id: "pmas", text: '+', v: '+', px: 0.75, py: 0 + py, w: 0.5 },
             { f: 'reescalar', id: "pmenos", text: "-", v: "-", px: 1.25, py: 0 + py, w: 0.5 },
             { f: 'anim', id: "pclose", text: "close", v: "close", px: 2, py: 0 + py, w: 1, bgcolor: new playcanvas__WEBPACK_IMPORTED_MODULE_0__["Color"](0.6, 0.3, 0.3, 1) },
-            { f: 'anim', id: "panim1", text: 'animate all', v: "all", px: 0, py: 1 + py, w: 1 },
+            { f: 'anim', id: "panim1", text: 'animate all', v: "sceneParent", px: 0, py: 1 + py, w: 1 },
             { f: 'anim', id: "panim2", text: 'anim. che', v: "che", px: 1, py: 1 + py, w: 1 },
             { f: 'anim', id: "panim3", text: 'anim. wt', v: "turbines", px: 2, py: 1 + py, w: 1 },
             { f: 'teletransport', id: "wt1", text: 'wturbine1', v: "wturbine1", px: 0, py: 2 + py, w: 1 },
@@ -83990,12 +84076,12 @@ var XR = /** @class */ (function () {
                 if (result && result.entity) {
                     if (inputSource.handedness === playcanvas__WEBPACK_IMPORTED_MODULE_0__["XRHAND_RIGHT"]) {
                         if (inputSource.gamepad.buttons[4].pressed)
-                            _this.entities.activateEntity(result.entity, result);
+                            _this.entities.activateEntity(result.entity, true);
                         else
-                            _this.entities.selectEntity(result.entity, result);
+                            _this.entities.selectEntity(result.entity, true);
                     }
                     else
-                        _this.entities.activateEntity(result.entity, result);
+                        _this.entities.activateEntity(result.entity, true);
                 }
             });
             this.app.xr.input.on('devicechange', function (inputSource) {
@@ -84277,4 +84363,4 @@ else {
 /***/ })
 
 /******/ });
-//# sourceMappingURL=app.96b7ec118f605ff899d9.js.map
+//# sourceMappingURL=app.c2cb2f4d7dd2511d7910.js.map
