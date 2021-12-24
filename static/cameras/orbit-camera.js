@@ -453,11 +453,11 @@ OrbitCamera.prototype._calcPitch = function (quat, yaw) {
 
 
 OrbitCamera.prototype.preselectEntity = function(event){
-    console.log("preselectEntity")
 	this.selectedResult = this.selectObject(new pc.Vec2(event.x,event.y));
 	this.selectedEntity = this.selectedResult ? this.selectedResult.entity : null;
+    console.log("preselectEntity " + (this.selectedEntity? "name: "+ this.selectedEntity.name : ""))
 	if(this.selectedEntity) {
-		console.log(this.selectedEntity.name); 
+        return this.selectedEntity;
 	}
 }
 
@@ -473,7 +473,7 @@ OrbitCamera.prototype.unselectPreselectedEntity = function(){
     this.selectedResult = null;
 }
 
-OrbitCamera.prototype.selectEntity = function(event){
+OrbitCamera.prototype.selectEntity = function(event){ console.log("event.x:", event.x, event.y)
     var result = this.selectObject(new pc.Vec2(event.x,event.y));
     console.log("result",result)
 	if(result && result.entity) {
@@ -502,6 +502,7 @@ OrbitCamera.prototype.selectEntityAux = function(selected, event){
 
 OrbitCamera.prototype.updatePropertiesSelectedEntity = function (event){
 	var result = this.selectObject(new pc.Vec2(event.x,event.y));
+    console.log("result select2 " + (result? "ok ": "nok ") + event.x +" " + event.y)
 	if(result && result.entity == this.selectedEntity){
 		this.entities.activateEntity(result.entity, result);
 	}
@@ -509,8 +510,45 @@ OrbitCamera.prototype.updatePropertiesSelectedEntity = function (event){
 
 OrbitCamera.prototype.selectObject =function(pos){
     var result=this.doRayCast(pos?{x:pos.x,y:pos.y}:{x:this.app.mouse._lastX,y:this.app.mouse._lastY});
-    if(result && result.entity){
+    if(result && result.entity){        
+        if(result.entity.model?.meshInstances.length > 0){
+            for(let i=0; i < result.entity.model.meshInstances.length ; i++ ){
+                const ray = this.createRay(pos);  
+                let intersectResult = new pc.Vec3();   
+                //console.log("AABB", 
+                //    result.entity.model.meshInstances[i].node.name,
+                //    result.entity.model.meshInstances[i].aabb.intersectsRay(ray, intersectResult) );
+            }
+        } //console.log("meshInstances:",result.entity.model?.meshInstances.length)
 		return result;
+    }
+};
+
+OrbitCamera.prototype.createRay = function(screenPosition){
+    var camera=this.entity;
+    var from = camera.camera.screenToWorld(screenPosition.x, screenPosition.y, camera.camera.nearClip);
+    var to = camera.camera.screenToWorld(screenPosition.x, screenPosition.y, camera.camera.farClip);
+    var r = new pc.Vec3();
+    var dir = r.sub2(to, from);
+    dir.normalize();   
+    var ray = new pc.Ray(from, dir);
+    //console.log("ray:",ray);
+    return ray;
+}
+
+OrbitCamera.prototype.getFirstMeshSelectable =  function (screenPosition) {
+    var camera=this.entity;
+    var from = camera.camera.screenToWorld(screenPosition.x, screenPosition.y, camera.camera.nearClip);
+    var to = camera.camera.screenToWorld(screenPosition.x, screenPosition.y, camera.camera.farClip);
+    var result = this.app.systems.rigidbody.raycastFirst(from, to);
+    if(result  && result.entity){
+        //Recorrer MeshInstances
+        // Solo tratar los que empiezan por "puerta", "ventana"
+        // Lista de intersecciones OK + pto de interseccion Tupla [Mesh, intersectPoint]
+        // De la lista obtengo el que este más cerca del "from"
+
+        //Obtener objetos seleccionables y animables ("puerta", "ventana")
+        //Estos objetos los metes en una lista estados ( inicial, final, animar=false, 90, dirección)
     }
 };
 
@@ -617,12 +655,12 @@ OrbitCameraInputMouse.prototype.onMouseDown = function (event) {
 	this.drag = 0;
     switch (event.button) {
         case pc.MOUSEBUTTON_LEFT:
-            this.lookButtonDown = true;
+            this.lookButtonDown = true; console.log("mouseL")
 			this.orbitCamera.preselectEntity(event);
             break;
         case pc.MOUSEBUTTON_MIDDLE:
         case pc.MOUSEBUTTON_RIGHT:
-            this.panButtonDown = true;
+            this.panButtonDown = true; console.log("mouseR")
 			this.orbitCamera.preselectEntity(event);
             break;
     }
@@ -784,11 +822,28 @@ OrbitCameraInputTouch.prototype.calcMidPoint = function (pointA, pointB, result)
 OrbitCameraInputTouch.prototype.onTouchStartEndCancel = function (event) {
     // We only care about the first touch for camera rotation. As the user touches the screen,
     // we stored the current touch position
-	console.log("touch: " + this.drag);
+	console.log("ORB--> touch drag:  " + this.drag);
     var touches = event.touches;
 	if(touches.length == 0){
 		if(this.drag == 1){
-			this.orbitCamera.selectPreselectedEntity(event);/*
+            console.log("ORB--> drag1 and selectEntity: " + (this.orbitCamera.selectedEntity ? "ok" : "nok"))
+            
+            if( this.orbitCamera.oldSelect !== this.orbitCamera.selectedEntity){
+                this.newTime = new Date().getTime();
+                if(this.newTime - this.timeLastTap > 400){
+                    console.log("ORB--> activateEntity ",this.orbitCamera.selectedEntity.name,this.orbitCamera.selectedEntity)
+                    this.orbitCamera.entities.activateEntity(this.orbitCamera.selectedEntity, true);
+                    /*
+                    let che = this.app.root.findByName("che");
+			        if(che)
+                    this.orbitCamera.entities.activateEntity(che,true);
+                    */
+                }else{
+                    this.orbitCamera.selectPreselectedEntity(event);
+                }
+            }
+			    
+            /*
 			console.log("touched:", this.selectedEntity.name);
 			this.selectedEntity.animar = ! this.selectedEntity.animar;
 			this.orbitCamera.updateColors(this.selectedEntity);*/
@@ -798,15 +853,26 @@ OrbitCameraInputTouch.prototype.onTouchStartEndCancel = function (event) {
 		//this.selectedEntity = null;
 	}else if (touches.length == 1) {
 		this.drag++;
+        this.oldTimeLastTap = this.timeLastTap;
+        this.timeLastTap = new Date().getTime();
+        console.log("ORB-->DIF:", (this.timeLastTap - this.oldTimeLastTap))
         this.lastTouchPoint.set(touches[0].x, touches[0].y);
-		if(this.drag == 1) //Marcamos para selección
+		if(this.drag == 1) {//Marcamos para selección
+            this.oldSelect = this.orbitCamera.selectedEntity;
 			this.orbitCamera.preselectEntity(new pc.Vec2(touches[0].x, touches[0].y));
+            if( this.orbitCamera.oldSelect === this.orbitCamera.selectedEntity 
+                && (this.timeLastTap - this.oldTimeLastTap) < 700){ //Mismo entity en poco tiempo
+                    console.log("ORB--> ACTIVAMOS")
+                this.orbitCamera.entities.activateEntity(this.orbitCamera.selectedEntity, true);
+            }    
+        }
     } else if (touches.length == 2) {		
 		this.drag++;
         // If there are 2 touches on the screen, then set the pinch distance
         this.lastPinchDistance = this.getPinchDistance(touches[0], touches[1]);
         this.calcMidPoint(touches[0], touches[1], this.lastPinchMidPoint);
     }
+    event.preventDefault();
 };
 
 
