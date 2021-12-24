@@ -872,7 +872,7 @@ OrbitCameraInputTouch.prototype.onTouchStartEndCancel = function (event) {
         this.lastPinchDistance = this.getPinchDistance(touches[0], touches[1]);
         this.calcMidPoint(touches[0], touches[1], this.lastPinchMidPoint);
     }
-    event.preventDefault();
+   // event.event.preventDefault();
 };
 
 
