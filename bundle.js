@@ -63,7 +63,7 @@
 /******/
 /******/ 	var hotApplyOnUpdate = true;
 /******/ 	// eslint-disable-next-line no-unused-vars
-/******/ 	var hotCurrentHash = "bb0b09ee61bc55255dcf";
+/******/ 	var hotCurrentHash = "4fff060bfeed4686cdda";
 /******/ 	var hotRequestTimeout = 10000;
 /******/ 	var hotCurrentModuleData = {};
 /******/ 	var hotCurrentChildModule;
@@ -84015,7 +84015,8 @@ var XR = /** @class */ (function () {
             };
             //BUTTON
             var button = document.getElementById("vrbutton");
-            if (button) {
+            if (button && this.app.xr.supported && this.app.xr.isAvailable(playcanvas__WEBPACK_IMPORTED_MODULE_0__["XRTYPE_VR"])) {
+                console.log("showing VR Button");
                 button.classList.remove("oculto");
                 button.addEventListener('click', activate);
             }
@@ -84379,4 +84380,4 @@ else {
 /***/ })
 
 /******/ });
-//# sourceMappingURL=app.bb0b09ee61bc55255dcf.js.map
+//# sourceMappingURL=app.4fff060bfeed4686cdda.js.map
