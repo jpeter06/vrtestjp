@@ -63,7 +63,7 @@
 /******/
 /******/ 	var hotApplyOnUpdate = true;
 /******/ 	// eslint-disable-next-line no-unused-vars
-/******/ 	var hotCurrentHash = "c171125b9e37a0799307";
+/******/ 	var hotCurrentHash = "bb0b09ee61bc55255dcf";
 /******/ 	var hotRequestTimeout = 10000;
 /******/ 	var hotCurrentModuleData = {};
 /******/ 	var hotCurrentChildModule;
@@ -83144,7 +83144,7 @@ var Entities = /** @class */ (function () {
                 this.billboard.addCamera(orbitC);
             }
             //(this.orbitCameraS as any).resetAndLookAtEntity(this.flyCamera.getPosition(), this.ground );
-            if (orbitC.script)
+            if (orbitC.script && orbitC.script.scripts && (orbitC.script.scripts).orbitCameraInputMouse)
                 (orbitC.script.scripts).orbitCameraInputMouse.addEventsMouse();
             //this.orbitCamera.resetAndLookAtEntity(this.flyCamera.getPosition(), this.ground );
         }
@@ -84021,28 +84021,30 @@ var XR = /** @class */ (function () {
             }
             else {
                 //MOUSE
-                this.app.mouse.on("mousedown", function () {
-                    if (!_this.app.xr.active)
+                /*
+                this.app.mouse.on("mousedown",  () => {
+                    if (! this.app.xr.active)
                         activate();
-                });
+                });*/
             }
             //TOUCH
+            /*
             if (this.app.touch) {
-                this.app.touch.on("touchend", function (evt) {
-                    if (!_this.app.xr.active) {
+                this.app.touch.on("touchend",  (evt) =>{
+                    if (! this.app.xr.active) {
                         // if not in VR, activate
                         activate();
-                    }
-                    else {
+                    } else {
                         // otherwise reset camera
-                        if (_this.xrCamera.camera)
-                            _this.xrCamera.camera.endXr();
-                        _this.changeCameraXR();
+                        if(this.xrCamera.camera)
+                            this.xrCamera.camera.endXr();
+                        this.changeCameraXR();
                     }
+
                     evt.event.preventDefault();
                     evt.event.stopPropagation();
                 });
-            }
+            }*/
             // CONTROLLERS
             this.app.xr.input.on('add', function (inputSource) {
                 _this.createController(inputSource);
@@ -84377,4 +84379,4 @@ else {
 /***/ })
 
 /******/ });
-//# sourceMappingURL=app.c171125b9e37a0799307.js.map
+//# sourceMappingURL=app.bb0b09ee61bc55255dcf.js.map
